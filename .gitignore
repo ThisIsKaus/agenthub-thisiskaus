@@ -1,0 +1,11 @@
+models/
+kb/
+vault/
+inbox/
+state/
+logs/
+drafts/
+digests/
+*.db
+*.jsonl
+.env*
