@@ -1,0 +1,26 @@
+# AgentHub router v1.0 - single endpoint for local + API lanes
+# S3/finance jobs DO NOT use this router: they call http://127.0.0.1:1234/v1
+# directly (no cloud models exist there). Enforcement by impossibility.
+model_list:
+  - model_name: local-triage
+    litellm_params: {model: "openai/qwen3.5-4b", api_base: "http://127.0.0.1:1234/v1", api_key: "lm-studio"}
+  - model_name: local-brain
+    litellm_params: {model: "openai/qwen3.6-35b-a3b", api_base: "http://127.0.0.1:1234/v1", api_key: "lm-studio"}
+  - model_name: local-coder
+    litellm_params: {model: "openai/qwen3.6-27b", api_base: "http://127.0.0.1:1234/v1", api_key: "lm-studio"}
+  - model_name: local-tools
+    litellm_params: {model: "openai/openai/gpt-oss-20b", api_base: "http://127.0.0.1:1234/v1", api_key: "lm-studio"}
+  - model_name: local-embed
+    litellm_params: {model: "openai/text-embedding-nomic-embed-text-v1.5", api_base: "http://127.0.0.1:1234/v1", api_key: "lm-studio"}
+  - model_name: cloud-fast
+    litellm_params: {model: "anthropic/claude-haiku-4-5", api_key: "os.environ/ANTHROPIC_API_KEY"}
+  - model_name: cloud-work
+    litellm_params: {model: "anthropic/claude-sonnet-4-6", api_key: "os.environ/ANTHROPIC_API_KEY"}
+  - model_name: cloud-deep
+    litellm_params: {model: "anthropic/claude-opus-4-8", api_key: "os.environ/ANTHROPIC_API_KEY"}
+  - model_name: cloud-frontier
+    litellm_params: {model: "anthropic/claude-fable-5", api_key: "os.environ/ANTHROPIC_API_KEY"}
+  # OpenAI/Gemini fallback entries + budget alert wiring: Phase 5, against installed docs
+litellm_settings:
+  drop_params: true
+  num_retries: 2
