@@ -50,3 +50,9 @@ Authorities /common and /organizations are never used. Every Graph token's tid c
 asserted against the pinned value and mismatches hard-fail.
 Agenticality is NOT the Microsoft employer tenant. Microsoft employer systems, accounts,
 tenants and content remain permanently out of scope and are unreachable by construction.
+
+## Sensitivity refinement (v1.3, 24 Jul 2026)
+S3 covers Kos's own financial position only — banking, mortgage, tax, investments,
+salary. Business invoices and vendor billing are S1p, not S3: routing business admin
+into the local-only lane would restrict work without protecting anything. Security and
+account-access notifications are S0. Discovered while writing eval golden labels.

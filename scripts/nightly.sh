@@ -4,6 +4,7 @@ echo "=== nightly start $(date -Iseconds)"
 pmset -g batt | grep -q "AC Power" || { echo "skipped: on battery"; exit 0; }
 /usr/bin/caffeinate -i /bin/zsh -c '
   cd ~/AgentHub/kbtool && /opt/homebrew/bin/uv run ingest.py --incremental
+  cd ~/AgentHub/graphtool && /opt/homebrew/bin/uv run pipeline.py
   if security find-generic-password -a agenthub -s RESTIC_REPOSITORY -w >/dev/null 2>&1; then
     ~/AgentHub/scripts/with-secrets.sh /opt/homebrew/bin/restic backup ~/AgentHub --exclude ~/AgentHub/kbtool/.venv
   else
