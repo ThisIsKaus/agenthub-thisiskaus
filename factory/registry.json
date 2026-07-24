@@ -40,6 +40,16 @@
       "deploy_target": "tbd",
       "sensitivity": "S1p",
       "park_when": "set criteria"
+    },
+    {
+      "name": "metascan-optimizer",
+      "entity": "agenticality",
+      "stage": "operate",
+      "status": "active",
+      "repo": "~/Factory/metascan-optimizer",
+      "deploy_target": "tbd",
+      "sensitivity": "S1p",
+      "park_when": "set criteria"
     }
   ]
 }

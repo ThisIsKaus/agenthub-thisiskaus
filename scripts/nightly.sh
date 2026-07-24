@@ -8,6 +8,11 @@ pmset -g batt | grep -q "AC Power" || { echo "skipped: on battery"; exit 0; }
   ~/AgentHub/scripts/backup.sh
 '
 D=~/AgentHub/digests/$(date +%F).md
-[[ -f "$D" ]] && ~/AgentHub/scripts/notify.sh "Digest ready: $(tail -1 "$D" | tr -d '_*')"
+if [[ -f "$D" ]]; then
+  SUMMARY=$(grep '^_items' "$D" | tr -d '_*')
+  printf '\n## Factory\n' >> "$D"
+  ~/AgentHub/scripts/factory status >> "$D"
+  ~/AgentHub/scripts/notify.sh "Digest ready: $SUMMARY"
+fi
 ~/AgentHub/scripts/doctor.sh
 echo "=== nightly done $(date -Iseconds)"

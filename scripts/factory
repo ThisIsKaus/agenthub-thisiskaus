@@ -13,6 +13,7 @@ case "$1" in
           cd ~/Factory/$N && git init -q -b main
           sed "s/<PROJECT>/$N/g" ~/AgentHub/factory/templates/CLAUDE.md > CLAUDE.md
           cp ~/AgentHub/factory/templates/ci.yml .github/workflows/ci.yml
+          cp ~/AgentHub/factory/templates/release.yml .github/workflows/release.yml
           cp ~/AgentHub/factory/templates/gitignore .gitignore
           w ".projects += [{name:\"$N\",entity:\"agenticality\",stage:\"intake\",status:\"active\",repo:\"~/Factory/$N\",deploy_target:\"tbd\",sensitivity:\"S1p\",park_when:\"set criteria\"}]"
           echo "scaffolded ~/Factory/$N — next: write docs/prd.md, then factory publish $N" ;;
@@ -24,6 +25,16 @@ case "$1" in
   drop)   w "del(.projects[]|select(.name==\"$2\"))"; echo "removed from registry (files kept): $2" ;;
   secret) read -s "V?Value for agenthub.$2.$3 (hidden): "; echo
           security add-generic-password -U -a "agenthub.$2" -s "$3" -w "$V"; unset V; echo "stored" ;;
+  review) N="$2"; cd ~/Factory/$N || exit 1
+          gh pr diff | pbcopy
+          echo "PR diff copied — review in ChatGPT (different model family, D23)."
+          read "NOTES?Review outcome (addressed / waived + reason): "
+          gh pr comment --body "Second-model review (D23): $NOTES" >/dev/null && echo "recorded on PR"
+          ~/AgentHub/scripts/hub log "review station $N: $NOTES" ;;
+  ship)   N="$2"; cd ~/Factory/$N || exit 1
+          gh pr view --json comments -q '.comments[].body' 2>/dev/null | grep -q "Second-model review" \
+            || { echo "BLOCKED: no second-model review recorded. Run: factory review $N"; exit 1 }
+          gh pr merge --squash --delete-branch ;;
   publish) N="$2"; cd ~/Factory/$N || exit 1
           git add -A && git commit -qm "scaffold: $N" 2>/dev/null
           gh repo create "$N" --private --source . --remote origin --push || exit 1
@@ -33,5 +44,5 @@ case "$1" in
             -F "restrictions=null" >/dev/null 2>&1 \
             && echo "branch protection: ON" \
             || echo "branch protection unavailable (private repos need GitHub Pro/Team) — CI-green-before-merge is the control" ;;
-  *) echo "usage: factory list|status|new <n>|activate <n>|park <n>|stage <n> <s>|drop <n>|secret <proj> <KEY>|publish <n>" ;;
+  *) echo "usage: factory list|status|new <n>|activate <n>|park <n>|stage <n> <s>|review <n>|ship <n>|drop <n>|secret <proj> <KEY>|publish <n>" ;;
 esac
