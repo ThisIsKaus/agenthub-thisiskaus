@@ -43,7 +43,9 @@ def triage(text):
             "messages": [{"role": "system", "content": SYSTEM},
                          {"role": "user", "content": "<<<EXTERNAL DATA>>>\n" + text + "\n<<<END>>>"}]}
     try:
-        r = requests.post(ROUTER, json=body, timeout=300); r.raise_for_status()
+        r = requests.post(ROUTER, json=body, timeout=300)
+        if r.status_code >= 400:
+            return {"one_line": f"router {r.status_code}: {r.text[:160]}"}
         ch = r.json()["choices"][0]
         raw = (ch["message"].get("content") or "").strip()
         if not raw:

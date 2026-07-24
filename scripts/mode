@@ -1,0 +1,9 @@
+#!/bin/zsh
+case "$1" in
+  standard) lms unload --all; lms load qwen3.6-35b-a3b; lms load qwen3.5-4b ;;
+  coding)   lms unload --all; lms load qwen3.6-27b;     lms load qwen3.5-4b ;;
+  tools)    lms unload --all; lms load openai/gpt-oss-20b; lms load qwen3.5-4b ;;
+  light)    lms unload --all; lms load qwen3.5-4b ;;
+  *) echo "usage: mode standard|coding|tools|light"; exit 1 ;;
+esac
+lms ps
