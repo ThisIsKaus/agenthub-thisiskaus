@@ -1,0 +1,37 @@
+#!/bin/zsh
+REG=~/AgentHub/factory/registry.json
+w() { jq "$1" "$REG" > "$REG.tmp" && mv "$REG.tmp" "$REG" }
+active() { jq -r '[.projects[]|select(.status=="active")]|length' "$REG" }
+limit()  { jq -r '.wip_limit' "$REG" }
+case "$1" in
+  list)   jq -r '.projects[] | "\(.name)  [\(.entity) · \(.stage) · \(.status)]"' "$REG" ;;
+  status) echo "WIP $(active)/$(limit) active"
+          jq -r '.projects[]|select(.status=="active")|"  \(.name) -> \(.stage)"' "$REG" ;;
+  new)    N="$2"; [[ -z "$N" ]] && { echo "usage: factory new <name>"; exit 1 }
+          [[ $(active) -ge $(limit) ]] && { echo "WIP LIMIT $(active)/$(limit) — park something first"; exit 1 }
+          mkdir -p ~/Factory/$N/docs/adr ~/Factory/$N/.github/workflows
+          cd ~/Factory/$N && git init -q -b main
+          sed "s/<PROJECT>/$N/g" ~/AgentHub/factory/templates/CLAUDE.md > CLAUDE.md
+          cp ~/AgentHub/factory/templates/ci.yml .github/workflows/ci.yml
+          cp ~/AgentHub/factory/templates/gitignore .gitignore
+          w ".projects += [{name:\"$N\",entity:\"agenticality\",stage:\"intake\",status:\"active\",repo:\"~/Factory/$N\",deploy_target:\"tbd\",sensitivity:\"S1p\",park_when:\"set criteria\"}]"
+          echo "scaffolded ~/Factory/$N — next: write docs/prd.md, then factory publish $N" ;;
+  activate) N="$2"
+          [[ $(active) -ge $(limit) ]] && { echo "WIP LIMIT $(active)/$(limit) — park something first"; exit 1 }
+          w "(.projects[]|select(.name==\"$N\")|.status)=\"active\""; echo "active: $N" ;;
+  park)   w "(.projects[]|select(.name==\"$2\")|.status)=\"parked\""; echo "parked: $2" ;;
+  stage)  w "(.projects[]|select(.name==\"$2\")|.stage)=\"$3\""; echo "$2 -> $3" ;;
+  drop)   w "del(.projects[]|select(.name==\"$2\"))"; echo "removed from registry (files kept): $2" ;;
+  secret) read -s "V?Value for agenthub.$2.$3 (hidden): "; echo
+          security add-generic-password -U -a "agenthub.$2" -s "$3" -w "$V"; unset V; echo "stored" ;;
+  publish) N="$2"; cd ~/Factory/$N || exit 1
+          git add -A && git commit -qm "scaffold: $N" 2>/dev/null
+          gh repo create "$N" --private --source . --remote origin --push || exit 1
+          gh api "repos/$(gh api user -q .login)/$N/branches/main/protection" -X PUT \
+            -f "required_status_checks[strict]=true" -F "required_status_checks[contexts][]=test" \
+            -F "enforce_admins=true" -F "required_pull_request_reviews[required_approving_review_count]=0" \
+            -F "restrictions=null" >/dev/null 2>&1 \
+            && echo "branch protection: ON" \
+            || echo "branch protection unavailable (private repos need GitHub Pro/Team) — CI-green-before-merge is the control" ;;
+  *) echo "usage: factory list|status|new <n>|activate <n>|park <n>|stage <n> <s>|drop <n>|secret <proj> <KEY>|publish <n>" ;;
+esac
