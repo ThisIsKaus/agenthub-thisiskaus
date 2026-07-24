@@ -11,5 +11,7 @@ pmset -g batt | grep -q "AC Power" || { echo "skipped: on battery"; exit 0; }
     echo "restic parked - skipping offsite backup"
   fi
 '
+D=~/AgentHub/digests/$(date +%F).md
+[[ -f "$D" ]] && ~/AgentHub/scripts/notify.sh "Digest ready: $(tail -1 "$D" | tr -d '_*')"
 ~/AgentHub/scripts/doctor.sh
 echo "=== nightly done $(date -Iseconds)"
