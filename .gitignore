@@ -9,3 +9,5 @@ digests/
 *.db
 *.jsonl
 .env*
+__pycache__/
+*.pyc
