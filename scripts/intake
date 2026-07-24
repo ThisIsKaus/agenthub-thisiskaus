@@ -1,0 +1,2 @@
+#!/bin/zsh
+cd ~/AgentHub/graphtool && uv run pipeline.py

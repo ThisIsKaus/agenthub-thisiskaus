@@ -10,7 +10,7 @@ import msal, requests, keyring
 
 SERVICE = "agenthub"
 MSA_TID = "9188040d-6c67-4c5b-b112-36a304b66dad"   # well-known consumer tenant
-SCOPES  = ["Calendars.Read", "Mail.Read", "Tasks.ReadWrite"]
+SCOPES  = ["User.Read", "Calendars.Read", "Mail.Read", "Tasks.ReadWrite"]
 GRAPH   = "https://graph.microsoft.com/v1.0"
 
 def kc(name):
