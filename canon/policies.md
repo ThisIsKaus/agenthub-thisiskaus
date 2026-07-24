@@ -38,3 +38,15 @@ WIP limit: 2 active products. The Mac pushes, never serves; prod credentials liv
 
 ## Spend
 No hard cap (owner, 14 Jul 2026). API-lane alerts: US$100 and US$250/month. Batch API for async cloud work.
+
+## Identity map (v1.2, 24 Jul 2026)
+Three in-scope identities, each with a fixed access path:
+- bajpai.kaustubh@outlook.com — consumer MSA. Canonical personal calendar + tasks.
+  Graph authority /consumers ONLY.
+- kaustubh@agenticality.com — Kos's OWN business tenant (Agenticality). Class S1p.
+  Graph authority pinned to the Agenticality tenant GUID ONLY.
+- kb@thisiskaus.com — iCloud+ custom domain. Read via local Mail.app (no stored credential).
+Authorities /common and /organizations are never used. Every Graph token's tid claim is
+asserted against the pinned value and mismatches hard-fail.
+Agenticality is NOT the Microsoft employer tenant. Microsoft employer systems, accounts,
+tenants and content remain permanently out of scope and are unreachable by construction.
