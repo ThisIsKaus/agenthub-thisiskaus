@@ -2,7 +2,7 @@
 FAIL=""
 curl -sf -m 5 http://127.0.0.1:1234/v1/models >/dev/null || FAIL+="lms "
 curl -sf -m 5 http://127.0.0.1:4000/v1/models >/dev/null || FAIL+="router "
-pmset -g sched | grep -q wakeorpoweron || FAIL+="schedule "
+pmset -g sched | grep -Eq "wake(or)?poweron" || FAIL+="schedule "
 FREE=$(df -g / | awk 'NR==2{print $4}')
 [[ $FREE -ge 100 ]] || FAIL+="disk(${FREE}G) "
 if security find-generic-password -a agenthub -s RESTIC_REPOSITORY -w >/dev/null 2>&1; then
