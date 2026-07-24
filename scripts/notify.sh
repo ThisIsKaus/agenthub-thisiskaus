@@ -1,2 +1,2 @@
 #!/bin/zsh
-terminal-notifier -title "AgentHub" -message "$1" -group agenthub
+/opt/homebrew/bin/terminal-notifier -title "AgentHub" -message "$1" -group agenthub
