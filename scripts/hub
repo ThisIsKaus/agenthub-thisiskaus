@@ -1,0 +1,5 @@
+#!/bin/zsh
+if [[ "$1" == "log" ]]; then
+  echo "{\"ts\":\"$(date -Iseconds)\",\"note\":\"$2\"}" >> ~/AgentHub/logs/audit.jsonl
+  echo "logged."
+fi
