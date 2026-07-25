@@ -25,3 +25,5 @@ litellm_settings:
   callbacks: custom_callbacks.proxy_handler_instance
   drop_params: true
   num_retries: 2
+# Note (25 Jul): cloud-frontier (Fable 5) is a thinking model - reasoning consumes the
+# token budget before content is produced. Give it >=1000 max_tokens or it returns empty.

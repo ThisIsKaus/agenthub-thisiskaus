@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentHub — {{GEN_ISO}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B0B0D; --panel:#141416; --panel-2:#191919; --rule:#26262A;
+    --copper:#C8744A; --paper:#ECEBE8; --muted:#8E8E96; --faint:#5E5E66;
+    --ok:#7FA88C; --watch:#C9A227; --risk:#B5544A;
+    --serif:"Instrument Serif",Georgia,serif;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,sans-serif;
+    --mono:"Geist Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--sans);
+       font-weight:300;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 32px}
+  a{color:var(--copper)}
+
+  .masthead{padding:72px 0 36px;border-bottom:1px solid var(--rule)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+           color:var(--copper);margin:0 0 18px}
+  .masthead h1{font-family:var(--serif);font-weight:400;font-size:clamp(48px,8vw,84px);
+               line-height:.95;letter-spacing:-.02em;margin:0 0 14px}
+  .masthead h1 em{font-style:italic;color:var(--copper)}
+  .standfirst{max-width:60ch;color:var(--muted);font-size:16px;margin:0 0 30px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px}
+  .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rule);border-radius:2px;
+        padding:7px 12px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .pill b{color:var(--paper);font-weight:500}
+  .dot{width:6px;height:6px;border-radius:50%}
+  .dot.ok{background:var(--ok);box-shadow:0 0 0 3px rgba(127,168,140,.13)}
+  .dot.watch{background:var(--watch);box-shadow:0 0 0 3px rgba(201,162,39,.13)}
+  .dot.risk{background:var(--risk);box-shadow:0 0 0 3px rgba(181,84,74,.13)}
+
+  section{padding:56px 0;border-bottom:1px solid var(--rule)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:10px;flex-wrap:wrap}
+  .sec-head h2{font-family:var(--serif);font-weight:400;font-size:32px;letter-spacing:-.01em;margin:0}
+  .sec-note{color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  .lede{max-width:68ch;color:var(--muted);margin:0 0 28px}
+
+  /* needs you — the signature band */
+  .needs{border-left:2px solid var(--copper);padding-left:26px;margin:0;list-style:none}
+  .needs li{display:grid;grid-template-columns:74px 1fr;gap:16px;padding:14px 0;
+            border-bottom:1px solid var(--rule);align-items:baseline}
+  .needs li:last-child{border-bottom:none}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+       color:var(--muted);border:1px solid var(--rule);border-radius:2px;padding:3px 6px;text-align:center}
+  .tag.flag{color:var(--watch);border-color:rgba(201,162,39,.4)}
+  .tag.risk{color:var(--risk);border-color:rgba(181,84,74,.4)}
+  .need-t{font-size:15px}
+  .need-m{grid-column:2;font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:2px}
+
+  .since{list-style:none;margin:0;padding:0;columns:2;column-gap:40px}
+  .since li{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding:6px 0;
+            break-inside:avoid;border-bottom:1px solid var(--rule)}
+
+  .figures{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule)}
+  .fig{background:var(--panel);padding:24px 20px}
+  .fig .n{font-family:var(--serif);font-size:40px;line-height:1;letter-spacing:-.02em}
+  .fig .n span{font-size:17px;color:var(--muted)}
+  .fig .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:10px}
+  .fig .e{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:5px;word-break:break-word}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.1em;
+     text-transform:uppercase;color:var(--faint);padding:0 14px 12px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+  td{padding:13px 14px 13px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  td.num,th.num{font-family:var(--mono);text-align:right;padding-right:0}
+  .hero-num{color:var(--copper);font-weight:500}
+  .role{color:var(--muted);font-size:12.5px}
+  .state{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .state.on{color:var(--ok)}
+
+  .lanes{border:1px solid var(--rule);background:var(--panel);padding:8px}
+  .lanes svg{display:block;width:100%;height:auto}
+  .lane-key{display:flex;flex-wrap:wrap;gap:22px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .lane-key i{display:inline-block;width:22px;height:2px;margin-right:8px;vertical-align:middle}
+
+  .ev-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule)}
+  .ev-cell{background:var(--panel);padding:22px 18px}
+  .ev-n{font-family:var(--serif);font-size:38px;line-height:1}
+  .ev-n span{font-size:16px;color:var(--muted)}
+  .ev-l{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+  .ev-e{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:4px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  .card{border:1px solid var(--rule);background:var(--panel);padding:22px}
+  .card h3{font-family:var(--sans);font-weight:500;font-size:13.5px;margin:0 0 14px}
+  .log{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .log li{padding:7px 0;border-bottom:1px solid var(--rule);word-break:break-word}
+  .log li:last-child{border-bottom:none}
+
+  .risk-row{display:grid;grid-template-columns:12px 1fr;gap:16px;padding:17px 0;border-bottom:1px solid var(--rule)}
+  .risk-row:last-child{border-bottom:none}
+  .bar{width:3px;min-height:40px;border-radius:2px}
+  .bar.high{background:var(--risk)} .bar.med{background:var(--watch)} .bar.low{background:var(--faint)}
+  .risk-t{font-size:15px;margin-bottom:3px}
+  .risk-d{color:var(--muted);font-size:14px;max-width:76ch}
+  .risk-a{font-family:var(--mono);font-size:11.5px;color:var(--copper);margin-top:6px}
+
+  .cmd{font-family:var(--mono);font-size:12.5px;color:var(--copper)}
+  footer{padding:44px 0 68px;color:var(--faint);font-family:var(--mono);font-size:11.5px;line-height:2}
+  footer b{color:var(--muted);font-weight:400}
+
+  @media (max-width:860px){
+    .wrap{padding:0 20px}
+    .figures,.ev-grid{grid-template-columns:repeat(2,1fr)}
+    .grid2{grid-template-columns:1fr;gap:26px}
+    .since{columns:1}
+  }
+  @media print{
+    body{background:#fff;color:#111}
+    section,.card,.lanes,.figures,.fig,.ev-grid,.ev-cell{background:#fff;border-color:#ddd}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Live report · generated {{GENERATED}}</p>
+    <h1>AgentHub<br><em>front door</em></h1>
+    <p class="standfirst">One machine operating as intake, factory floor and control surface for Agenticality, NXI Labs, client engagements and personal operations. This page reads the machine's own state at render time — nothing here is asserted by hand.</p>
+    <div class="pills">
+      {{PILLS}}
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head"><h2>Needs you</h2><span class="sec-note">decisions, not status</span></div>
+    <p class="lede">Pulled from today's intake and the open risk register. Items classified S1c, S2 or S3 show their classification only — the summary stays in the digest where it belongs.</p>
+    <ul class="needs">
+      {{NEEDS}}
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Since last report</h2><span class="sec-note">what moved</span></div>
+    <ul class="since">
+      {{DELTAS}}
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Standing</h2><span class="sec-note">{{DIGEST_META}}</span></div>
+    <div class="figures">
+      {{FIGURES}}
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Where work goes</h2><span class="sec-note">the keystone decision</span></div>
+    <p class="lede">Every request takes one of three lanes and the lane decides the cost. Two are already paid for. The third is metered, reserved for scheduled and programmatic work, and logged per request so the claim can be checked rather than believed.</p>
+    <div class="lanes">
+      <svg viewBox="0 0 1000 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three-lane routing diagram: local lane at zero cost, subscription lane at zero marginal cost, metered API lane behind the router.">
+        <defs>
+          <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#5E5E66"/></marker>
+          <marker id="arc" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#C8744A"/></marker>
+        </defs>
+        <rect x="20" y="150" width="150" height="80" fill="#191919" stroke="#26262A"/>
+        <text x="95" y="182" text-anchor="middle" fill="#ECEBE8" font-family="Inter,sans-serif" font-size="15" font-weight="500">Front door</text>
+        <text x="95" y="203" text-anchor="middle" fill="#8E8E96" font-family="Geist Mono,monospace" font-size="11">mail · calendar · files</text>
+        <rect x="215" y="150" width="130" height="80" fill="#191919" stroke="#C8744A"/>
+        <text x="280" y="177" text-anchor="middle" fill="#ECEBE8" font-family="Inter,sans-serif" font-size="14" font-weight="500">Triage</text>
+        <text x="280" y="197" text-anchor="middle" fill="#8E8E96" font-family="Geist Mono,monospace" font-size="11">4B · 126 t/s</text>
+        <text x="280" y="214" text-anchor="middle" fill="#7FA88C" font-family="Geist Mono,monospace" font-size="10">+ pattern filter</text>
+        <line x1="172" y1="190" x2="211" y2="190" stroke="#5E5E66" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="347" y1="190" x2="428" y2="88" stroke="#7FA88C" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="432" y="52" width="300" height="72" fill="#191919" stroke="#26262A"/>
+        <text x="452" y="80" fill="#ECEBE8" font-family="Inter,sans-serif" font-size="14" font-weight="500">Local lane</text>
+        <text x="452" y="101" fill="#8E8E96" font-family="Geist Mono,monospace" font-size="11">35B brain · 27B coder · embeddings · S3 finance</text>
+        <text x="752" y="86" fill="#7FA88C" font-family="Geist Mono,monospace" font-size="19">$0</text>
+        <text x="752" y="104" fill="#5E5E66" font-family="Geist Mono,monospace" font-size="10">unlimited</text>
+        <line x1="347" y1="190" x2="428" y2="190" stroke="#7FA88C" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="432" y="154" width="300" height="72" fill="#191919" stroke="#26262A"/>
+        <text x="452" y="182" fill="#ECEBE8" font-family="Inter,sans-serif" font-size="14" font-weight="500">Subscription lane</text>
+        <text x="452" y="203" fill="#8E8E96" font-family="Geist Mono,monospace" font-size="11">Claude Code · Claude app · ChatGPT review · Copilot</text>
+        <text x="752" y="188" fill="#7FA88C" font-family="Geist Mono,monospace" font-size="19">$0</text>
+        <text x="752" y="206" fill="#5E5E66" font-family="Geist Mono,monospace" font-size="10">marginal</text>
+        <line x1="347" y1="190" x2="428" y2="292" stroke="#C8744A" stroke-width="1.5" marker-end="url(#arc)"/>
+        <rect x="432" y="256" width="300" height="72" fill="#191919" stroke="#C8744A"/>
+        <text x="452" y="284" fill="#ECEBE8" font-family="Inter,sans-serif" font-size="14" font-weight="500">Metered lane</text>
+        <text x="452" y="305" fill="#8E8E96" font-family="Geist Mono,monospace" font-size="11">router :4000 · scheduled and programmatic only</text>
+        <text x="752" y="290" fill="#C8744A" font-family="Geist Mono,monospace" font-size="19">$</text>
+        <text x="752" y="308" fill="#5E5E66" font-family="Geist Mono,monospace" font-size="10">logged per request</text>
+        <path d="M836 88 L856 88 L856 292 L836 292" fill="none" stroke="#26262A"/>
+        <path d="M836 190 L856 190" stroke="#26262A"/>
+        <line x1="856" y1="190" x2="906" y2="190" stroke="#5E5E66" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="908" y="150" width="76" height="80" fill="#191919" stroke="#26262A"/>
+        <text x="946" y="180" text-anchor="middle" fill="#ECEBE8" font-family="Inter,sans-serif" font-size="13" font-weight="500">CI</text>
+        <text x="946" y="199" text-anchor="middle" fill="#8E8E96" font-family="Geist Mono,monospace" font-size="10">ships prod</text>
+        <rect x="215" y="272" width="130" height="56" fill="none" stroke="#B5544A" stroke-dasharray="3 3"/>
+        <text x="280" y="296" text-anchor="middle" fill="#B5544A" font-family="Inter,sans-serif" font-size="12.5" font-weight="500">T2 approval</text>
+        <text x="280" y="314" text-anchor="middle" fill="#8E8E96" font-family="Geist Mono,monospace" font-size="10">default deny</text>
+        <line x1="280" y1="234" x2="280" y2="268" stroke="#B5544A" stroke-width="1.5" marker-end="url(#ar)"/>
+      </svg>
+    </div>
+    <div class="lane-key">
+      <span><i style="background:#7FA88C"></i>already paid for</span>
+      <span><i style="background:#C8744A"></i>metered and logged</span>
+      <span><i style="background:#B5544A"></i>requires a human decision</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Economics</h2><span class="sec-note">today {{SPEND_TODAY}}</span></div>
+    <p class="lede">Local inference and prepaid subscriptions carry the daily load at zero marginal cost. What appears below is the remainder — the metered lane, itemised.</p>
+    <table>
+      <thead><tr><th>Model</th><th class="num">Calls</th><th class="num">Month to date</th></tr></thead>
+      <tbody>{{SPEND}}</tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Measured performance</h2><span class="sec-note">pinned in models.lock.yaml</span></div>
+    <table>
+      <thead><tr><th>Model</th><th class="num">Gen t/s</th><th class="num">TTFT</th><th class="num">Resident</th></tr></thead>
+      <tbody>{{BENCH}}</tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Classification quality</h2><span class="sec-note">{{EVAL_META}}</span></div>
+    <p class="lede">The digest is only as useful as its triage. Injection detection must read 100% — it is the safety axis and no model is eligible as the default below it.</p>
+    <div class="ev-grid">{{EVAL}}</div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Factory floor</h2><span class="sec-note">work in progress is capped in software</span></div>
+    <table>
+      <thead><tr><th>Product</th><th>Entity</th><th>Stage</th><th class="num">State</th></tr></thead>
+      <tbody>{{FACTORY}}</tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Open risks</h2><span class="sec-note">ranked by what it would cost</span></div>
+    {{RISKS}}
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Trail</h2><span class="sec-note">recent activity</span></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Commits</h3>
+        <ul class="log">{{COMMITS}}</ul>
+      </div>
+      <div class="card">
+        <h3>Approval decisions</h3>
+        <ul class="log">{{APPROVALS}}</ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <b>Generated</b> {{GENERATED}} · regenerate with <span class="cmd">report</span><br>
+    <b>Background jobs</b> {{JOBS}} · <b>disk</b> {{DISK}}<br>
+    <b>Hardware</b> MacBook Pro M5 Max · 18-core CPU / 32-core GPU / 36 GB unified / 460 GB/s<br>
+    <b>Provenance</b> every figure above is read from this machine at render time; the design is version-controlled, the data never is
+  </footer>
+
+</div>
+</body>
+</html>
