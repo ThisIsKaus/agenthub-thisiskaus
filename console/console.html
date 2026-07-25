@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentHub Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0B0B0D;--panel:#141416;--panel-2:#191919;--rule:#26262A;--copper:#C8744A;
+        --paper:#ECEBE8;--muted:#8E8E96;--faint:#5E5E66;--ok:#7FA88C;--watch:#C9A227;--risk:#B5544A;
+        --serif:"Instrument Serif",Georgia,serif;--sans:"Inter",-apple-system,sans-serif;
+        --mono:"Geist Mono",ui-monospace,monospace;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--sans);font-weight:300;
+       font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+  header{border-bottom:1px solid var(--rule);padding:22px 32px;display:flex;align-items:baseline;
+         gap:22px;flex-wrap:wrap;position:sticky;top:0;background:var(--ink);z-index:10}
+  header h1{font-family:var(--serif);font-weight:400;font-size:28px;margin:0}
+  header h1 em{font-style:italic;color:var(--copper)}
+  #strip{display:flex;gap:7px;flex-wrap:wrap;margin-left:auto}
+  .pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--rule);border-radius:2px;
+        padding:5px 10px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .pill b{color:var(--paper);font-weight:500}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--faint)}
+  .dot.ok{background:var(--ok)}.dot.watch{background:var(--watch)}.dot.risk{background:var(--risk)}
+  nav{display:flex;gap:2px;padding:0 32px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+  nav button{background:none;border:none;border-bottom:2px solid transparent;padding:13px 16px;
+             color:var(--muted);cursor:pointer;font-size:14px}
+  nav button:hover{color:var(--paper)}
+  nav button.on{color:var(--paper);border-bottom-color:var(--copper)}
+  main{padding:34px 32px 80px;max-width:1180px}
+  .tab{display:none}.tab.on{display:block}
+  h2{font-family:var(--serif);font-weight:400;font-size:26px;margin:0 0 6px}
+  .lede{color:var(--muted);margin:0 0 24px;max-width:70ch}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;
+        background:var(--rule);border:1px solid var(--rule);margin-bottom:32px}
+  .cell{background:var(--panel);padding:20px}
+  .cell .n{font-family:var(--serif);font-size:34px;line-height:1}
+  .cell .n span{font-size:15px;color:var(--muted)}
+  .cell .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+           color:var(--muted);margin-top:9px}
+  .cell .e{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:4px;word-break:break-word}
+  .btn{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:10px 15px;
+       cursor:pointer;color:var(--paper)}
+  .btn:hover{border-color:var(--copper);color:var(--copper)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.primary{border-color:var(--copper);color:var(--copper)}
+  .btn small{font-family:var(--mono);font-size:10px;color:var(--faint);margin-left:7px}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+  .needs{border-left:2px solid var(--copper);padding-left:22px;margin:0 0 30px;list-style:none}
+  .needs li{display:grid;grid-template-columns:74px 1fr;gap:14px;padding:12px 0;
+            border-bottom:1px solid var(--rule);align-items:baseline}
+  .needs li:last-child{border-bottom:none}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+       color:var(--muted);border:1px solid var(--rule);border-radius:2px;padding:3px 5px;text-align:center}
+  .tag.flag{color:var(--watch);border-color:rgba(201,162,39,.4)}
+  .meta{grid-column:2;font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .split{display:grid;grid-template-columns:300px 1fr;gap:26px;align-items:start}
+  .list{border:1px solid var(--rule);background:var(--panel);max-height:64vh;overflow:auto}
+  .list button{display:block;width:100%;text-align:left;background:none;border:none;
+               border-bottom:1px solid var(--rule);padding:11px 14px;cursor:pointer;color:var(--muted)}
+  .list button:hover{color:var(--paper);background:var(--panel-2)}
+  .list button.on{color:var(--copper)}
+  .fname{font-size:13.5px}.fmeta{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+  .viewer{border:1px solid var(--rule);background:var(--panel);padding:26px;min-height:340px;
+          max-height:64vh;overflow:auto}
+  .viewer h1,.viewer h2,.viewer h3{font-family:var(--sans);font-weight:500}
+  .viewer h1{font-size:20px}.viewer h2{font-size:17px}.viewer h3{font-size:15px}
+  .viewer table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+  .viewer th,.viewer td{border-bottom:1px solid var(--rule);padding:8px 10px 8px 0;text-align:left}
+  .viewer code,.viewer pre{font-family:var(--mono);font-size:12.5px;background:var(--panel-2);
+                           border:1px solid var(--rule);border-radius:2px}
+  .viewer code{padding:1px 5px}
+  .viewer pre{padding:14px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+  textarea,input[type=text]{width:100%;background:var(--panel);border:1px solid var(--rule);
+                            border-radius:2px;padding:13px;resize:vertical}
+  textarea:focus,input:focus{outline:none;border-color:var(--copper)}
+  select{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:10px}
+  pre.out{font-family:var(--mono);font-size:12px;background:var(--panel);border:1px solid var(--rule);
+          padding:16px;max-height:44vh;overflow:auto;white-space:pre-wrap;word-break:break-word;color:var(--muted)}
+  .answer{border:1px solid var(--rule);background:var(--panel);padding:24px;margin-top:20px;white-space:pre-wrap}
+  .sources{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:16px}
+  .drop{border:1px dashed var(--rule);border-radius:2px;padding:28px;text-align:center;
+        color:var(--muted);cursor:pointer}
+  .drop.hot{border-color:var(--copper);color:var(--copper)}
+  .note{font-family:var(--mono);font-size:11.5px;color:var(--copper);margin-top:10px;min-height:16px}
+  .muted{color:var(--muted)}
+  .since{list-style:none;padding:0;margin:0 0 30px;columns:2;column-gap:36px}
+  .since li{font-family:var(--mono);font-size:12px;color:var(--muted);padding:5px 0;
+            border-bottom:1px solid var(--rule);break-inside:avoid}
+  @media (max-width:900px){.split{grid-template-columns:1fr}.since{columns:1}
+    main{padding:26px 20px 70px}header{padding:18px 20px}nav{padding:0 20px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>AgentHub <em>Console</em></h1>
+  <div id="strip"><span class="pill"><span class="dot"></span>loading…</span></div>
+</header>
+<nav>
+  <button class="on" data-tab="overview">Overview</button>
+  <button data-tab="ask">Ask</button>
+  <button data-tab="artefacts">Artefacts</button>
+  <button data-tab="actions">Actions</button>
+  <button data-tab="capture">Capture</button>
+</nav>
+<main>
+  <section class="tab on" id="overview">
+    <h2>Needs you</h2>
+    <p class="lede">From the latest intake. Items classified S1c, S2 or S3 show their class only.</p>
+    <ul class="needs" id="needs"><li><span class="tag">…</span><span>loading</span></li></ul>
+    <h2>Since last report</h2>
+    <ul class="since" id="deltas"></ul>
+    <h2>Standing</h2>
+    <div class="grid" id="figs"></div>
+  </section>
+  <section class="tab" id="ask">
+    <h2>Ask</h2>
+    <p class="lede">Searches your knowledge base first, then answers on the lane you choose.</p>
+    <textarea id="q" rows="3" placeholder="Ask anything"></textarea>
+    <div class="btnrow" style="margin-top:12px">
+      <select id="lane">
+        <option value="local-brain">Local brain · 35B · $0</option>
+        <option value="local-coder">Local coder · 27B · $0</option>
+        <option value="cloud-work">Cloud work · Sonnet · metered</option>
+        <option value="cloud-deep">Cloud deep · Opus · metered</option>
+      </select>
+      <button class="btn primary" id="askBtn">Ask</button>
+      <button class="btn" id="saveBtn" disabled>Save to drafts</button>
+    </div>
+    <div class="answer" id="answer">Answers appear here.</div>
+    <div class="sources" id="sources"></div>
+  </section>
+  <section class="tab" id="artefacts">
+    <h2>Artefacts</h2>
+    <p class="lede">Everything the factory has produced. The vault is unreadable from here by design.</p>
+    <div class="btnrow" id="kinds"></div>
+    <div class="split">
+      <div class="list" id="files"></div>
+      <div class="viewer" id="viewer"><span class="muted">Select a file.</span></div>
+    </div>
+  </section>
+  <section class="tab" id="actions">
+    <h2>Actions</h2>
+    <p class="lede">Each button runs the same script as its terminal equivalent.</p>
+    <div class="btnrow" id="cmds"></div>
+    <pre class="out" id="out">No job run yet.</pre>
+  </section>
+  <section class="tab" id="capture">
+    <h2>Capture</h2>
+    <p class="lede">Drop a thought or a document into the front door.</p>
+    <textarea id="note" rows="5" placeholder="A thought, a decision, a reminder…"></textarea>
+    <div class="btnrow" style="margin-top:12px"><button class="btn primary" id="noteBtn">Save to inbox</button></div>
+    <div class="drop" id="drop">Drop a .md, .txt or .pdf here — or click to choose
+      <input type="file" id="fileInput" hidden accept=".md,.txt,.pdf"></div>
+    <div class="note" id="capNote"></div>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const money = n => n >= 0.01 ? "$" + n.toFixed(2) : "$" + n.toFixed(4);
+let lastAnswer = null;
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.remove("on"));
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("on"));
+  b.classList.add("on"); $("#" + b.dataset.tab).classList.add("on");
+});
+
+async function loadState(){
+  let s;
+  try { s = await (await fetch("/api/state")).json(); }
+  catch { $("#strip").innerHTML = '<span class="pill"><span class="dot risk"></span>console offline</span>'; return; }
+  const pill = (c,l,v) => '<span class="pill"><span class="dot ' + c + '"></span>' + esc(l) + ' <b>' + esc(v) + '</b></span>';
+  $("#strip").innerHTML = [
+    pill(s.lms?"ok":"risk","Serving", s.lms ? (s.resident||[]).length + " resident" : "down"),
+    pill(s.router?"ok":"risk","Router", s.router ? s.aliases + " aliases" : "down"),
+    pill(s.doctor_ok?"ok":"watch","Doctor", s.doctor_ok ? "OK" : "check"),
+    pill(s.spend.mtd>=100?"watch":"ok","MTD", money(s.spend.mtd)),
+    pill(s.factory.wip<=s.factory.limit?"ok":"risk","Active", s.factory.wip+"/"+s.factory.limit)
+  ].join("");
+  const needs = (s.digest && s.digest.needs ? s.digest.needs : []).map(r =>
+    '<li><span class="tag ' + (r.flag?"flag":"") + '">' + esc(r.flag?"FLAG":r.cls) + '</span><span>' +
+    (esc(r.one) || "(no summary)") + '</span><span class="meta">' + esc(r.src) + ' · ' + esc(r.ent) +
+    ' · ' + esc(r.sen) + '</span></li>').join("");
+  $("#needs").innerHTML = needs || '<li><span class="tag">CLEAR</span><span>Nothing needs a decision today.</span></li>';
+  $("#deltas").innerHTML = (s.deltas||[]).map(d => "<li>" + esc(d) + "</li>").join("");
+  const cell = (n,l,e) => '<div class="cell"><div class="n">' + n + '</div><div class="l">' + esc(l) +
+                          '</div><div class="e">' + esc(e) + '</div></div>';
+  const dg = s.digest || {};
+  $("#figs").innerHTML = [
+    cell(money(s.spend.mtd), "Spend, month to date", s.spend.requests + " metered calls"),
+    cell((s.resident||[]).length, "Resident models", (s.resident||[]).join(", ") || "none loaded"),
+    cell(s.factory.wip + '<span>/' + s.factory.limit + '</span>', "Active products",
+         (s.factory.active||[]).map(p=>p.name).join(", ") || "none active"),
+    cell(s.approvals.today, "Approvals today", "all logged"),
+    cell(dg.items == null ? "—" : dg.items, "Items triaged", (dg.flags||0) + " flagged · " + (dg.date||"no digest")),
+    cell(s.disk_free_gb + '<span>GB</span>', "Disk free", (s.jobs||[]).length + " background jobs")
+  ].join("");
+  $("#cmds").innerHTML = (s.commands||[]).map(c =>
+    '<button class="btn" data-cmd="' + esc(c.key) + '">' + esc(c.label) +
+    '<small>' + esc(c.tier) + '</small></button>').join("");
+  document.querySelectorAll("[data-cmd]").forEach(b => b.onclick = () => runCmd(b.dataset.cmd));
+}
+
+async function runCmd(key){
+  document.querySelectorAll("[data-cmd]").forEach(b => b.disabled = true);
+  $("#out").textContent = "starting " + key + "…\n";
+  try{
+    const fd = new FormData(); fd.append("key", key);
+    const r = await fetch("/api/run", {method:"POST", body:fd});
+    if(!r.ok){ $("#out").textContent = "refused: " + (await r.text()); return; }
+    const d = await r.json();
+    while(true){
+      await new Promise(z => setTimeout(z, 900));
+      const j = await (await fetch("/api/job?id=" + d.job)).json();
+      $("#out").textContent = j.out || "(no output yet)";
+      $("#out").scrollTop = $("#out").scrollHeight;
+      if(!j.running){ $("#out").textContent += "\n— finished, exit " + j.code; break; }
+    }
+  } finally {
+    document.querySelectorAll("[data-cmd]").forEach(b => b.disabled = false);
+    loadState();
+  }
+}
+
+$("#askBtn").onclick = async () => {
+  const q = $("#q").value.trim(); if(!q) return;
+  $("#askBtn").disabled = true; $("#answer").textContent = "thinking…"; $("#sources").textContent = "";
+  try{
+    const fd = new FormData(); fd.append("q", q); fd.append("model", $("#lane").value);
+    const d = await (await fetch("/api/ask", {method:"POST", body:fd})).json();
+    $("#answer").textContent = d.answer;
+    $("#sources").textContent = "sources · " + (d.sources||[]).map(x => x.file + " (" + x.distance + ")").join("  ·  ");
+    lastAnswer = {title: q.slice(0,70), body: d.answer};
+    $("#saveBtn").disabled = false;
+  } catch(e){ $("#answer").textContent = "error: " + e; }
+  finally { $("#askBtn").disabled = false; }
+};
+
+$("#saveBtn").onclick = async () => {
+  if(!lastAnswer) return;
+  const fd = new FormData(); fd.append("title", lastAnswer.title); fd.append("body", lastAnswer.body);
+  const d = await (await fetch("/api/draft", {method:"POST", body:fd})).json();
+  $("#sources").textContent = "saved to drafts as " + d.name;
+};
+
+const KINDS = ["digests","evals","docs","canon","drafts","factory"];
+$("#kinds").innerHTML = KINDS.map((k,i) =>
+  '<button class="btn ' + (i===0?"primary":"") + '" data-kind="' + k + '">' + k + '</button>').join("");
+document.querySelectorAll("[data-kind]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-kind]").forEach(x => x.classList.remove("primary"));
+  b.classList.add("primary"); loadFiles(b.dataset.kind);
+});
+
+async function loadFiles(kind){
+  $("#files").innerHTML = '<button class="muted">loading…</button>';
+  const d = await (await fetch("/api/artefacts?kind=" + kind)).json();
+  $("#files").innerHTML = (d.items||[]).map(f =>
+    '<button data-path="' + esc(f.path) + '"><div class="fname">' + esc(f.rel||f.name) +
+    '</div><div class="fmeta">' + esc(f.modified) + ' · ' + f.size + ' B</div></button>').join("")
+    || '<button class="muted">nothing here yet</button>';
+  document.querySelectorAll("[data-path]").forEach(b => b.onclick = async () => {
+    document.querySelectorAll("[data-path]").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    $("#viewer").innerHTML = '<span class="muted">loading…</span>';
+    const r = await fetch("/api/artefact?path=" + encodeURIComponent(b.dataset.path));
+    $("#viewer").innerHTML = r.ok ? (await r.json()).html : '<span class="muted">refused</span>';
+  });
+}
+
+$("#noteBtn").onclick = async () => {
+  const t = $("#note").value.trim(); if(!t) return;
+  const fd = new FormData(); fd.append("text", t);
+  const d = await (await fetch("/api/capture", {method:"POST", body:fd})).json();
+  $("#note").value = ""; $("#capNote").textContent = "saved to inbox · " + d.saved.split("/").pop();
+};
+
+const drop = $("#drop"), fileInput = $("#fileInput");
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => { if(fileInput.files[0]) sendFile(fileInput.files[0]); };
+["dragenter","dragover"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("hot"); }));
+["dragleave","drop"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove("hot"); }));
+drop.addEventListener("drop", ev => { if(ev.dataTransfer.files[0]) sendFile(ev.dataTransfer.files[0]); });
+
+async function sendFile(f){
+  $("#capNote").textContent = "uploading " + f.name + "…";
+  const fd = new FormData(); fd.append("file", f);
+  const r = await fetch("/api/upload", {method:"POST", body:fd});
+  $("#capNote").textContent = r.ok
+    ? "saved · run Ingest documents in Actions to add it to the knowledge base"
+    : "refused · only .md, .txt and .pdf are ingestable";
+}
+
+loadState(); loadFiles("digests"); setInterval(loadState, 60000);
+</script>
+</body>
+</html>
