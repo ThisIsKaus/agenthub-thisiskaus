@@ -5,7 +5,7 @@ from pathlib import Path
 import requests, lancedb
 
 HOME = Path.home()
-SOURCES = [HOME/"AgentHub/canon", HOME/"AgentHub/inbox"]
+SOURCES = [HOME/"AgentHub/canon", HOME/"AgentHub/inbox", HOME/"AgentHub/docs", HOME/"AgentHub/drafts"]
 DB_PATH = HOME/"AgentHub/kb"
 TABLE = "kb_main"
 EMBED_URL = "http://127.0.0.1:4000/v1/embeddings"
@@ -43,9 +43,9 @@ def main():
 
     db = lancedb.connect(str(DB_PATH))
     existing = {}
-    if TABLE in db.table_names() and args.rebuild:
+    if TABLE in db.list_tables() and args.rebuild:
         db.drop_table(TABLE)
-    if TABLE in db.table_names():
+    if TABLE in db.list_tables():
         tbl = db.open_table(TABLE)
         df = tbl.to_pandas()[["path", "mtime"]].drop_duplicates()
         existing = dict(zip(df["path"], df["mtime"]))
@@ -56,6 +56,8 @@ def main():
              for p in src.rglob("*") if p.suffix.lower() in EXTS and p.is_file()]
     added = skipped = 0
     for p in files:
+        if "/clients/" in str(p):
+            continue
         mtime = p.stat().st_mtime
         key = str(p)
         if key in existing and abs(existing[key] - mtime) < 1:
