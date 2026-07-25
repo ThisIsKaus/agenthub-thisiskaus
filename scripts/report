@@ -1,0 +1,2 @@
+#!/bin/zsh
+python3 ~/AgentHub/report/build_report.py && open ~/AgentHub/report/index.html

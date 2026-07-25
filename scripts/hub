@@ -1,5 +1,80 @@
 #!/bin/zsh
-if [[ "$1" == "log" ]]; then
-  echo "{\"ts\":\"$(date -Iseconds)\",\"note\":\"$2\"}" >> ~/AgentHub/logs/audit.jsonl
-  echo "logged."
-fi
+H=~/AgentHub
+ok(){   print -P "  %F{green}●%f $1" }
+bad(){  print -P "  %F{red}●%f $1" }
+warn(){ print -P "  %F{yellow}●%f $1" }
+
+case "${1:-status}" in
+  status)
+    print -P "%BAgentHub%b · $(date '+%a %d %b %Y · %H:%M')"; echo
+    curl -sf -m 3 http://127.0.0.1:1234/v1/models >/dev/null \
+      && ok "LM Studio :1234" || bad "LM Studio :1234 — fix: lms server start"
+    N=$(curl -sf -m 3 http://127.0.0.1:4000/v1/models 2>/dev/null | jq -r '.data|length' 2>/dev/null)
+    [[ -n "$N" ]] && ok "Router    :4000 · $N aliases" \
+      || bad "Router    :4000 — fix: launchctl kickstart -k gui/$(id -u)/com.agenthub.router"
+    R=$(lms ps 2>/dev/null | grep -v IDENTIFIER | awk 'NF{printf "%s ", $1}')
+    [[ -n "$R" ]] && ok "Models    $R" || warn "Models    none resident — fix: hub mode standard"
+    echo
+    D=$H/digests/$(date +%F).md
+    [[ -f $D ]] && ok "Digest    today · $(grep '^_items' $D | tr -d '_*')" \
+                || warn "Digest    none today — fix: hub now"
+    B=$(tail -1 $H/logs/backup.log 2>/dev/null)
+    [[ "$B" == *done* ]] && ok "Backup    ${B%% *}" || warn "Backup    ${B:-never} — fix: hub backup"
+    T=$(tail -1 $H/logs/doctor.log 2>/dev/null)
+    [[ "$T" == *OK* ]] && ok "Doctor    $T" || bad "Doctor    ${T:-never run} — fix: hub doctor"
+    echo; print -P "%BFactory%b"; $H/scripts/factory status | sed 's/^/  /'
+    A=$(grep -c "$(date +%F)" $H/logs/approvals.log 2>/dev/null)
+    echo; print -P "  Disk $(df -h / | awk 'NR==2{print $4}') free · T2 dialogs today: ${A:-0}"
+    ;;
+  brief) D=$H/digests/$(date +%F).md; [[ -f $D ]] && cat $D || echo "No digest today. Run: hub now" ;;
+  now)   $H/scripts/intake ;;
+  ask)   shift; $H/scripts/kb "$@" ;;
+  chat)  shift
+         curl -s http://127.0.0.1:4000/v1/chat/completions -H "Content-Type: application/json" \
+           -d "$(jq -n --arg p "$*" '{model:"local-brain",max_tokens:2500,messages:[{role:"user",content:$p}]}')" \
+           | jq -r '.choices[0].message.content' ;;
+  mode)      shift; $H/scripts/mode "$@" ;;
+  factory)   shift; $H/scripts/factory "$@" ;;
+  doctor)    $H/scripts/doctor.sh; tail -1 $H/logs/doctor.log ;;
+  eval)      $H/scripts/eval ;;
+  backup)    $H/scripts/backup.sh; tail -2 $H/logs/backup.log ;;
+  approvals) tail -20 $H/logs/approvals.log ;;
+  log)       echo "{\"ts\":\"$(date -Iseconds)\",\"note\":\"$2\"}" >> $H/logs/audit.jsonl; echo "logged." ;;
+  monthly)
+    cat <<'CHK'
+MONTHLY REVIEW — first Saturday, ~45 min
+ 1. hub doctor                  all green
+ 2. hub eval                    score vs last month; add real misclassifications as golden tasks
+ 3. hub factory list            stages honest? WIP <= 2? apply park_when without sentiment
+ 4. brew update && brew upgrade then re-run hub eval (runtime changes move numbers)
+ 5. API spend at console.anthropic.com vs the $100/$250 alerts
+ 6. gh run list per active repo  no lingering reds; Actions files unchanged except by you
+ 7. sudo lsof -iTCP -sTCP:LISTEN -P -n   any new non-loopback listener?
+ 8. Rotate unused keys and per-project tokens
+ 9. hub log "monthly review: <notes>"
+QUARTERLY, additionally: hub restore-test · re-run both injection canaries
+CHK
+    ;;
+  restore-test)
+    rm -rf /tmp/rt && mkdir -p /tmp/rt
+    $H/scripts/with-secrets.sh /opt/homebrew/bin/restic restore latest --target /tmp/rt --include $HOME/AgentHub/canon
+    if diff -q /tmp/rt$HOME/AgentHub/canon/policies.md $H/canon/policies.md >/dev/null 2>&1; then
+      print -P "%F{green}RESTORE VERIFIED — byte-identical%f"; $H/scripts/hub log "restore drill passed"
+    else print -P "%F{red}RESTORE MISMATCH — investigate before trusting backups%f"; fi
+    rm -rf /tmp/rt ;;
+  *)
+    cat <<'USAGE'
+hub                     health dashboard
+hub brief               today's digest
+hub now                 run intake now
+hub ask "question"      search your knowledge base
+hub chat "prompt"       quick local answer, $0
+hub mode standard|coding|tools|light
+hub factory list|status|new|activate|park|stage|review|ship|publish
+hub doctor | eval | backup | approvals
+hub monthly             review checklist
+hub restore-test        prove backups restore
+hub log "note"          append to audit trail
+USAGE
+    ;;
+esac

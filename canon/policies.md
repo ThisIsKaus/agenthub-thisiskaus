@@ -56,3 +56,15 @@ S3 covers Kos's own financial position only — banking, mortgage, tax, investme
 salary. Business invoices and vendor billing are S1p, not S3: routing business admin
 into the local-only lane would restrict work without protecting anything. Security and
 account-access notifications are S0. Discovered while writing eval golden labels.
+
+## Eval label discipline (v1.4, 25 Jul 2026)
+Golden labels may be corrected ONLY when they contradict the written rubric, never merely
+because a model disagrees with them. Every correction is recorded with its reason and the set
+is re-scored; any score obtained before a relabel is void.
+Correction 25 Jul: e05, e09, e13, e15 entity unknown -> personal. The rubric defines personal
+as vendor mail about his own accounts, and all four are subscribed or vendor mail arriving in
+his own mailbox. `unknown` is reserved for genuinely unattributable provenance (e04), not used
+as a default for newsletters.
+Left unchanged and flagged as contested, not corrected: e03 (a booked exam - commitment or
+task?) and e12 (a statement being available - does it require action?). The rubric does not
+settle either; the owner rules at the monthly review.
