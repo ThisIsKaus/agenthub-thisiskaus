@@ -14,5 +14,6 @@ if [[ -f "$D" ]]; then
   ~/AgentHub/scripts/factory status >> "$D"
   ~/AgentHub/scripts/notify.sh "Digest ready: $SUMMARY"
 fi
+/opt/homebrew/bin/uv run --python 3.12 ~/AgentHub/report/build_report.py
 ~/AgentHub/scripts/doctor.sh
 echo "=== nightly done $(date -Iseconds)"

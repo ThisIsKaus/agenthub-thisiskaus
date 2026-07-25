@@ -12,3 +12,6 @@ digests/
 __pycache__/
 *.pyc
 .DS_Store
+report/index.html
+report/state-prev.json
+report/state-history.jsonl
