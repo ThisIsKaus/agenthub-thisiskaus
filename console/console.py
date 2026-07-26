@@ -25,6 +25,11 @@ UI = H / "console" / "console.html"
 ROUTER = "http://127.0.0.1:4000/v1"
 LMS = "http://127.0.0.1:1234/v1"
 
+sys.path.insert(0, str(H / "console"))
+try:
+    import sessions
+except Exception:
+    sessions = None
 sys.path.insert(0, str(H / "report"))
 try:
     import build_report as br
@@ -50,6 +55,9 @@ COMMANDS = {
     "report":        {"argv": ["/opt/homebrew/bin/uv", "run", "--python", "3.12",
                                str(H / "report/build_report.py")], "label": "Rebuild report", "tier": "T0"},
     "repair":        {"argv": [str(H / "scripts/repair")], "label": "Repair to known-good", "tier": "T1"},
+    "summarise":     {"argv": ["/opt/homebrew/bin/uv", "run", "--project", str(H / "console"),
+                               "python", str(H / "console/sessions.py"), "summarise"],
+                      "label": "Write memory note", "tier": "T1"},
 }
 
 JOBS = {}
@@ -148,6 +156,14 @@ def index():
     if not UI.exists():
         return HTMLResponse("<h1>console.html missing</h1>", status_code=500)
     return UI.read_text()
+
+
+@app.get("/api/memory")
+def memory(q: str = "", n: int = 25):
+    if not sessions:
+        raise HTTPException(500, "session memory unavailable")
+    return {"stats": sessions.stats(),
+            "events": sessions.search(q, n) if q.strip() else sessions.recent(n)}
 
 
 @app.get("/api/health")
@@ -334,6 +350,8 @@ def ask(q: str = Form(...), model: str = Form("local-brain"), k: int = Form(5)):
         m = r.json()["choices"][0]["message"]
         answer = (m.get("content") or "").strip() or (m.get("reasoning_content") or "").strip()
         audit(f"ask via {model}")
+        if sessions:
+            sessions.log("ask", q, answer, model, sources)
         return {"answer": answer or "(empty response)", "sources": sources, "model": model}
     except Exception as ex:
         return {"answer": f"error: {ex}", "sources": sources}
@@ -487,6 +505,9 @@ def eval_correct(text: str = Form(...), cls: str = Form(...), entity: str = Form
     with open(p, "a") as f:
         f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     audit(f"eval correction {rec['id']}")
+    if sessions:
+        sessions.log("correction", text[:400],
+                     f"{cls}/{entity}/{sensitivity} injection={injection}")
     git_commit(f"eval: real-world correction {rec['id']}")
     return {"added": rec["id"], "total": len(existing) + 1}
 

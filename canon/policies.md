@@ -68,3 +68,12 @@ as a default for newsletters.
 Left unchanged and flagged as contested, not corrected: e03 (a booked exam - commitment or
 task?) and e12 (a statement being available - does it require action?). The rubric does not
 settle either; the owner rules at the monthly review.
+
+## Retrieval eval labels (v1.5, 26 Jul 2026)
+A question may have several correct sources; a label naming only one measures the labeller,
+not the system. Golden entries therefore list every document that legitimately contains the
+answer, and grounding is checked against any one distinctive token rather than all of them.
+Correction 26 Jul: q04 and q06 scored as recall failures while returning correct sources
+(D20 and D22 in the decision log); q03 demanded the token "35" for a question about speed and
+memory, so a correct answer scored weak. Both are test defects, corrected before re-scoring.
+The refusal axis is unchanged and must stay perfect.

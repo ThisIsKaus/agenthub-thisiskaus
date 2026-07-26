@@ -265,6 +265,19 @@
   <table><tbody id="costDays"></tbody></table>
 </section>
 
+<section class="tab" id="t-memory">
+  <h2>Memory</h2>
+  <p class="lede">Every question, answer and correction, searchable across sessions. Nightly, the day is distilled into a note that enters the knowledge base — so the system remembers not just your documents but your reasoning.</p>
+  <div class="grid" id="memFigs"></div>
+  <div class="btnrow">
+    <input type="text" id="memQ" placeholder="search past sessions" style="max-width:420px">
+    <button class="btn primary" id="memSearch">Search</button>
+    <button class="btn" id="memRecent">Recent</button>
+    <button class="btn" data-cmd="summarise">Write memory note</button>
+  </div>
+  <div id="memRows"></div>
+</section>
+
 <section class="tab" id="t-health">
   <h2>Health</h2>
   <p class="lede">The self-test exercises every component end to end. It runs nightly and on demand.</p>
@@ -289,14 +302,14 @@ let lastAnswer=null, curFile=null, curDir=null, editing=false, curPrompt=null;
 
 const TABS=[["overview","Overview"],["ask","Ask"],["digest","Digest"],["files","Files"],
             ["knowledge","Knowledge"],["models","Models"],["prompts","Prompts"],["evals","Evals"],
-            ["factory","Factory"],["cost","Cost"],["health","Health"]];
+            ["factory","Factory"],["cost","Cost"],["memory","Memory"],["health","Health"]];
 $("#nav").innerHTML=TABS.map(([k,l],i)=>'<button class="'+(i===0?"on":"")+'" data-tab="'+k+'">'+l+'</button>').join("");
 $$("#nav button").forEach(b=>b.onclick=()=>{
   $$("#nav button").forEach(x=>x.classList.remove("on"));
   $$(".tab").forEach(x=>x.classList.remove("on"));
   b.classList.add("on"); $("#t-"+b.dataset.tab).classList.add("on");
   const load={knowledge:loadKB,models:loadModels,prompts:loadPrompts,digest:loadDigest,
-              evals:loadEvals,factory:loadFactory,cost:loadCost,health:loadHealth,files:()=>loadTree(curDir)};
+              evals:loadEvals,factory:loadFactory,cost:loadCost,health:loadHealth,memory:()=>loadMemory(""),files:()=>loadTree(curDir)};
   if(load[b.dataset.tab])load[b.dataset.tab]();
 });
 
@@ -592,6 +605,25 @@ async function loadHealth(){
 }
 $("#healthRefresh").onclick=loadHealth;
 
+async function loadMemory(q){
+  let d;try{d=await get("/api/memory"+(q?"?q="+encodeURIComponent(q):""))}catch(e){
+    $("#memRows").innerHTML='<p class="muted">'+esc(e.message)+'</p>';return}
+  const cell=(n,l,e)=>'<div class="cell"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div><div class="e">'+esc(e)+'</div></div>';
+  const s=d.stats||{};
+  $("#memFigs").innerHTML=cell(s.events||0,"Interactions recorded","since "+(s.since||"—"))+
+    cell(s.days||0,"Days of history",(s.by_kind||[]).map(k=>k.kind+" "+k.n).join(" · "));
+  $("#memRows").innerHTML=(d.events||[]).map(r=>
+    '<div style="border-bottom:1px solid var(--rule);padding:13px 0">'+
+    '<div class="mono muted">'+esc(r.ts)+' · '+esc(r.kind)+(r.model?' · '+esc(r.model):'')+'</div>'+
+    (r.question?'<div style="margin-top:5px">'+esc(r.question)+'</div>':'')+
+    (r.answer?'<div class="muted" style="margin-top:5px;white-space:pre-wrap">'+esc(r.answer)+'</div>':'')+
+    ((r.sources&&r.sources.length)?'<div class="mono" style="color:var(--faint);margin-top:6px">'+
+      r.sources.map(x=>esc(x.file||x)).join(" · ")+'</div>':'')+'</div>').join("")
+    ||'<p class="muted">nothing recorded yet — ask something</p>';
+}
+$("#memSearch").onclick=()=>loadMemory($("#memQ").value.trim());
+$("#memRecent").onclick=()=>loadMemory("");
+$("#memQ").addEventListener("keydown",e=>{if(e.key==="Enter")loadMemory($("#memQ").value.trim())});
 loadState();loadRoots();setInterval(loadState,60000);
 </script>
 </body>

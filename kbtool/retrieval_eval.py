@@ -53,13 +53,15 @@ def main():
         a = answer(t["q"], ctx)
 
         if t["answerable"]:
-            in5 = t["source"] in names
-            in1 = names and names[0] == t["source"]
+            want = t.get("sources") or ([t["source"]] if t.get("source") else [])
+            in5 = any(w in names for w in want)
+            in1 = bool(names) and names[0] in want
             hit5 += in5
             hit1 += bool(in1)
-            tok = all(x.lower() in a.lower() for x in t["terms"]) and REFUSAL not in a
+            need = t.get("must_any") or t.get("terms") or []
+            tok = (not need or any(x.lower() in a.lower() for x in need)) and REFUSAL not in a
             terms_ok += tok
-            rows.append((t["id"], "PASS" if in5 else f"want {t['source']}",
+            rows.append((t["id"], "PASS" if in5 else f"want {'/'.join(want)}",
                          "top1" if in1 else names[0] if names else "-",
                          f"{res[0][1]}" if res else "-",
                          "grounded" if tok else "weak answer"))
