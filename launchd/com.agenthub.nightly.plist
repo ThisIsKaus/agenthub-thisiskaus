@@ -5,7 +5,7 @@
   <key>Label</key><string>com.agenthub.nightly</string>
   <key>ProgramArguments</key>
   <array><string>/Users/thisiskaus/AgentHub/scripts/nightly.sh</string></array>
-  <key>StartCalendarInterval</key>
-  <dict><key>Hour</key><integer>3</integer><key>Minute</key><integer>5</integer></dict>
+  <key>StartInterval</key><integer>7200</integer>
+  <key>RunAtLoad</key><true/>
 </dict>
 </plist>

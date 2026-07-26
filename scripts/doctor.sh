@@ -2,6 +2,8 @@
 FAIL=""
 curl -sf -m 5 http://127.0.0.1:1234/v1/models >/dev/null || FAIL+="lms "
 curl -sf -m 5 http://127.0.0.1:4000/v1/models >/dev/null || FAIL+="router "
+curl -sf -m 20 http://127.0.0.1:4000/v1/embeddings -H "Content-Type: application/json" \
+  -d '{"model":"local-embed","input":"probe"}' | grep -q embedding || FAIL+="embeddings "
 pmset -g sched | grep -Eq "wake(or)?poweron" || FAIL+="schedule "
 FREE=$(df -g / | awk 'NR==2{print $4}')
 [[ $FREE -ge 100 ]] || FAIL+="disk(${FREE}G) "

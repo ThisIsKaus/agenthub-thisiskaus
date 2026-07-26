@@ -1,9 +1,10 @@
 #!/bin/zsh
+E=text-embedding-nomic-embed-text-v1.5
 case "$1" in
-  standard) lms unload --all; lms load qwen3.6-35b-a3b; lms load qwen3.5-4b ;;
-  coding)   lms unload --all; lms load qwen3.6-27b;     lms load qwen3.5-4b ;;
-  tools)    lms unload --all; lms load openai/gpt-oss-20b; lms load qwen3.5-4b ;;
-  light)    lms unload --all; lms load qwen3.5-4b ;;
+  standard) lms unload --all; lms load qwen3.6-35b-a3b;    lms load qwen3.5-4b; lms load $E ;;
+  coding)   lms unload --all; lms load qwen3.6-27b;        lms load qwen3.5-4b; lms load $E ;;
+  tools)    lms unload --all; lms load openai/gpt-oss-20b; lms load qwen3.5-4b; lms load $E ;;
+  light)    lms unload --all; lms load qwen3.5-4b;         lms load $E ;;
   *) echo "usage: mode standard|coding|tools|light"; exit 1 ;;
 esac
 lms ps

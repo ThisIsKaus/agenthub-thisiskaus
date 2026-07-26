@@ -43,13 +43,16 @@ def main():
 
     db = lancedb.connect(str(DB_PATH))
     existing = {}
-    if TABLE in db.list_tables() and args.rebuild:
-        db.drop_table(TABLE)
-    if TABLE in db.list_tables():
+    if args.rebuild:
+        try:
+            db.drop_table(TABLE)
+        except Exception:
+            pass
+    try:
         tbl = db.open_table(TABLE)
         df = tbl.to_pandas()[["path", "mtime"]].drop_duplicates()
         existing = dict(zip(df["path"], df["mtime"]))
-    else:
+    except Exception:
         tbl = None
 
     files = [p for src in SOURCES if src.exists()
