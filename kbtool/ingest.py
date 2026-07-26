@@ -11,9 +11,12 @@ TABLE = "kb_main"
 EMBED_URL = "http://127.0.0.1:4000/v1/embeddings"
 EMBED_MODEL = "local-embed"
 CHUNK, OVERLAP, BATCH = 1600, 200, 32
-EXTS = {".md", ".txt", ".pdf"}
+EXTS = {".md", ".txt", ".pdf", ".docx"}
 
 def read_text(p: Path) -> str:
+    if p.suffix.lower() == ".docx":
+        import docx
+        return "\n".join(x.text for x in docx.Document(str(p)).paragraphs if x.text.strip())
     if p.suffix == ".pdf":
         import fitz
         with fitz.open(p) as doc:

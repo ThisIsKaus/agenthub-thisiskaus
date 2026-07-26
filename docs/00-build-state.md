@@ -9,7 +9,7 @@
 |---|---|---|
 | Phase 0 — tooling, repo, Claude Code | ✅ DONE | 9 tools verified; `ThisIsKaus/agenthub-config` pushed; claude 2.1.215 |
 | P1.1 — firewall, zero inbound | ✅ DONE | State = 2, block-all, stealth on, remote login off |
-| P1.2 — secrets in Keychain | ✅ DONE | `sk-ant-a` prefix verified; repo grep clean |
+| P1.2 — secrets in Keychain | ✅ DONE | `[key prefix redacted]` prefix verified; repo grep clean |
 | P1.5 — config-as-code | ✅ DONE | Brewfile + chezmoi (.zshrc, .zprofile, .ssh/config) + canon seeded + pushed |
 | **FileVault** | ✅ On | ⚠ confirm Recovery Key stored off-Mac; if not captured: `sudo fdesetup changerecovery -personal` |
 | **AirPlay Receiver** | ❌ ON (:5000/:7000 listening) | → Tonight, Step 2 |

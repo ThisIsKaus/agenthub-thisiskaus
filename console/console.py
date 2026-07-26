@@ -41,7 +41,7 @@ COMMANDS = {
     "report":        {"argv": ["/opt/homebrew/bin/uv", "run", "--python", "3.12",
                                str(H / "report/build_report.py")], "label": "Rebuild report", "tier": "T0"},
     "ingest":        {"argv": ["/opt/homebrew/bin/uv", "run", "--project", str(H / "kbtool"),
-                               "ingest.py", "--incremental"], "label": "Ingest documents", "tier": "T1"},
+                               "python", str(H / "kbtool/ingest.py"), "--incremental"], "label": "Ingest documents", "tier": "T1"},
     "mode-standard": {"argv": [str(H / "scripts/mode"), "standard"], "label": "Standard set", "tier": "T0"},
     "mode-coding":   {"argv": [str(H / "scripts/mode"), "coding"], "label": "Coding set", "tier": "T0"},
     "mode-light":    {"argv": [str(H / "scripts/mode"), "light"], "label": "Light set", "tier": "T0"},
@@ -82,8 +82,10 @@ def approve(action, source):
 def run_job(job_id, argv):
     j = JOBS[job_id]
     try:
+        env = {k: v for k, v in os.environ.items()
+               if k not in ("VIRTUAL_ENV", "PYTHONHOME", "PYTHONPATH", "UV_PROJECT_ENVIRONMENT")}
         pr = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                              text=True, bufsize=1, cwd=str(H))
+                              text=True, bufsize=1, cwd=str(H), env=env)
         for line in pr.stdout:
             j["out"] += line
             if len(j["out"]) > 200000:

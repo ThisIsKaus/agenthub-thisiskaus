@@ -8,5 +8,6 @@ dependencies = [
     "lancedb>=0.34.0",
     "pandas>=3.0.5",
     "pymupdf>=1.28.0",
+    "python-docx>=1.2.0",
     "requests>=2.34.2",
 ]
