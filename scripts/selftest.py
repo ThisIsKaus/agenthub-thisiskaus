@@ -89,7 +89,8 @@ def foundation():
     rec(g, "gitignore effective", not leaks, ", ".join(leaks[:3]) or "no data tracked",
         "git rm --cached <path> and add it to .gitignore")
 
-    secrets = sh(f"git -C {H} grep -lE 'sk-ant-|sk-proj-|K00[0-9]' -- . 2>/dev/null")
+    pat = "sk-" + "ant-|sk-" + "proj-|K00[0-9]"
+    secrets = sh(f"git -C {H} grep -lE '{pat}' -- . 2>/dev/null")
     rec(g, "no secrets in repo", secrets == "", secrets[:120] or "clean",
         "remove the value and rotate the key immediately")
 
@@ -262,13 +263,29 @@ def safety():
     rec(g, "approval timeout", "giving up after" in src, "", "add a timeout that denies")
     rec(g, "approvals logged", "approvals.log" in src, "", "every decision must be logged")
 
-    s, _ = http(f"http://127.0.0.1:4100/api/artefact?path={H}/vault/anything.md", timeout=8)
-    rec(g, "console cannot read vault", s == 403, f"HTTP {s} (403 expected)",
+    def probe(target):
+        for ep in ("/api/file", "/api/artefact"):
+            code, _ = http(f"http://127.0.0.1:4100{ep}?path={target}", timeout=8)
+            if code != 404:
+                return code, ep
+        return 404, "no read endpoint answered - the test cannot see the console"
+
+    s, ep = probe(f"{H}/vault/anything.md")
+    rec(g, "console cannot read vault", s == 403, f"HTTP {s} via {ep} (403 expected)",
         "BLOCKED_ROOTS in console.py must include the vault")
 
-    s, _ = http(f"http://127.0.0.1:4100/api/artefact?path={HOME}/.ssh/id_ed25519", timeout=8)
-    rec(g, "console path allowlist", s == 403, f"HTTP {s} (403 expected)",
+    s, ep = probe(f"{HOME}/.ssh/id_ed25519")
+    rec(g, "console path allowlist", s == 403, f"HTTP {s} via {ep} (403 expected)",
         "ALLOWED_ROOTS in console.py is too permissive")
+
+    code, body = http("http://127.0.0.1:4100/api/health", timeout=6)
+    ver = 0
+    try:
+        ver = json.loads(body).get("version", 0)
+    except Exception:
+        pass
+    rec(g, "console version current", ver >= 2, f"v{ver}",
+        "the console is running an older build than the tests expect")
 
     con = (H / "console" / "console.py").read_text() if (H / "console" / "console.py").exists() else ""
     argvs = re.findall(r'"argv": \[([^\]]+)\]', con)

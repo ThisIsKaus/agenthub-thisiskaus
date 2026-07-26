@@ -15,3 +15,4 @@ __pycache__/
 report/index.html
 report/state-prev.json
 report/state-history.jsonl
+*.bak
