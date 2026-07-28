@@ -1,0 +1,2 @@
+#!/bin/zsh
+cd ~/AgentHub/kbtool && uv run python kb_audit.py "$@"

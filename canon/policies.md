@@ -105,3 +105,12 @@ Duplicate detection is by content hash at ingest: git worktrees and copies of th
 project were producing four identical copies of every document, crowding genuinely distinct
 sources out of the result set. The first copy of any content wins; the rest are counted and
 skipped.
+
+## Lovable coupling (v1.9, 28 Jul 2026)
+The remote companion app is a separate repository in React/TypeScript. Lovable's agent
+cannot edit Python or shell — its own system prompt states it supports only React, Vite,
+Tailwind and TypeScript — so agenthub-config is never imported there. Coupling is by
+contract, not by code: the agent's PUBLISH_ALLOWLIST defines what exists, and
+`lovable-context.py` generates the context document from live state so it cannot drift.
+Regenerate and re-paste it into Project Knowledge whenever the allowlist, job kinds or
+design tokens change. The remote may never display anything classed S1c, S2 or S3.

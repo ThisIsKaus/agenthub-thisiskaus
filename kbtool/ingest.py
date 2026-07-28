@@ -28,7 +28,8 @@ TABLE = "kb_main"
 EMBED_URL = "http://127.0.0.1:4000/v1/embeddings"
 EMBED_MODEL = "local-embed"
 CHUNK, OVERLAP, BATCH = 1600, 200, 32
-EXTS = {".md", ".txt", ".pdf", ".docx", ".xlsx", ".pptx", ".csv", ".html", ".htm"}
+EXTS = {".md", ".txt", ".pdf", ".docx", ".xlsx", ".pptx", ".csv", ".html", ".htm",
+        ".doc", ".xls", ".ppt", ".rtf"}
 
 SOURCES = [H / "canon", H / "inbox", H / "docs", H / "drafts"]
 EXTRA = H / "kbtool" / "sources.json"
@@ -46,7 +47,8 @@ EMPLOYER = re.compile(
 SECRETS = re.compile(
     r"(1password|lastpass|bitwarden|keepass|emergency[\s_-]?kit|recovery[\s_-]?(key|code|kit)|"
     r"secret[\s_-]?key|master[\s_-]?password|seed[\s_-]?phrase|private[\s_-]?key|"
-    r"backup[\s_-]?code|credentials?\b|\.pem\b|\.p12\b|api[\s_-]?key)", re.I)
+    r"backup[\s_-]?code|credentials?\b|\bpasswords?\b|passwd|\bpwd\b|\.env\b|"
+    r"\.pem\b|\.p12\b|\.key\b|api[\s_-]?key|auth[\s_-]?token)", re.I)
 
 # Delivery artefacts from prior engagements: third-party confidential, no forward
 # value, and hundreds of near-identical machine-generated files that poison retrieval.

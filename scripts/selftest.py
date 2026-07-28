@@ -217,14 +217,41 @@ def memory():
         rec(g, f"{name}.py compiles", path.exists() and out == "", out[:100] or "ok",
             f"syntax error in {path}")
 
-    ing = H / "kbtool" / "ingest.py"
-    src = ing.read_text() if ing.exists() else ""
-    for want in ("docs", "drafts", "inbox", "canon"):
-        rec(g, f"ingest reads {want}", f'AgentHub/{want}' in src, "", "add it to SOURCES in ingest.py")
-    rec(g, "ingest skips clients", "/clients/" in src, "", "client isolation guard missing from ingest.py")
-    rec(g, "ingest handles docx", ".docx" in src, "docx supported" if ".docx" in src else "NOT supported",
-        "business documents are mostly Word - see the docx patch", warn=".docx" not in src)
-
+    probe = """
+import sys; sys.path.insert(0, str(__import__('pathlib').Path.home()/'AgentHub/kbtool'))
+import ingest, json
+from pathlib import Path
+H = str(Path.home())
+print(json.dumps({
+  "sources": [Path(x).name for x in ingest.SOURCES],
+  "exts": sorted(ingest.EXTS),
+  "client": ingest.classify(Path(H+'/x/clients/acme/scope.md')),
+  "secret": ingest.block_reason(Path(H+'/x/My Password.txt')),
+  "employer": ingest.block_reason(Path(H+'/x/Microsoft File Share/a.docx')),
+}))
+"""
+    _pf = H / "kbtool" / ".selftest_probe.py"
+    _pf.write_text(probe)
+    out = sh(f"cd {H}/kbtool && /opt/homebrew/bin/uv run python {_pf}", timeout=90)
+    try:
+        _pf.unlink()
+    except Exception:
+        pass
+    try:
+        info = json.loads(out.splitlines()[-1])
+    except Exception:
+        info = {}
+    for want in ("canon", "inbox", "docs", "drafts"):
+        rec(g, f"ingest reads {want}", want in info.get("sources", []),
+            ", ".join(info.get("sources", [])) or out[:70], "add it to SOURCES in ingest.py")
+    for fmt in (".pdf", ".docx", ".xlsx", ".pptx"):
+        rec(g, f"ingest handles {fmt}", fmt in info.get("exts", []), "", f"add {fmt} to EXTS")
+    rec(g, "client isolation", info.get("client") == "S1c", str(info.get("client")),
+        "client paths must classify S1c")
+    rec(g, "credentials blocked", info.get("secret") == "credentials", str(info.get("secret")),
+        "a file named Password must never be readable")
+    rec(g, "employer blocked", info.get("employer") == "employer", str(info.get("employer")),
+        "employer tool folders must be blocked")
 
 # ---------------------------------------------------------------- pipeline
 
