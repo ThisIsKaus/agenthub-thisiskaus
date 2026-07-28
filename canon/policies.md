@@ -77,3 +77,31 @@ Correction 26 Jul: q04 and q06 scored as recall failures while returning correct
 (D20 and D22 in the decision log); q03 demanded the token "35" for a question about speed and
 memory, so a correct answer scored weak. Both are test defects, corrected before re-scoring.
 The refusal axis is unchanged and must stay perfect.
+
+## Retrieval sensitivity (v1.6, 26 Jul 2026)
+Every knowledge-base chunk carries a sensitivity class assigned at ingest from its path.
+When a query targets a cloud lane, chunks classed S1c, S2 or S3 are excluded at the database
+query, before any prompt is assembled — the local-only rule is enforced in retrieval rather
+than trusted to the operator. Local lanes see everything. Files matching the employer
+boundary are never read and never embedded.
+
+## Corpus defaults (v1.7, 26 Jul 2026)
+Unrecognised personal material defaults to S3, not S0. Pattern matching cannot anticipate
+every filename — "Aadhar" not "aadhaar", "Drivers Licence" not "driver licence", scans named
+only by timestamp — so the default carries the safety rather than the patterns. The personal
+OneDrive root defaults S3; only material positively identified as business or product becomes
+cloud-eligible. Credential stores (password manager kits, recovery keys, private keys) are
+blocked outright and never embedded.
+Any change to the classifier invalidates existing sensitivity tags: ingest must be re-run with
+--rebuild, because a stale tag is a silent leak.
+
+## Prior-client artefacts and duplication (v1.8, 27 Jul 2026)
+Delivery artefacts from previous engagements — environment snapshots, entity metadata,
+privilege dumps, UAT scripts — are excluded from the corpus entirely, not reclassified.
+They are third-party confidential material, they carry no forward value, and hundreds of
+near-identical machine-generated documents actively degrade retrieval. Governance and
+accuracy point the same way here.
+Duplicate detection is by content hash at ingest: git worktrees and copies of the same
+project were producing four identical copies of every document, crowding genuinely distinct
+sources out of the result set. The first copy of any content wins; the rest are counted and
+skipped.

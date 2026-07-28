@@ -26,7 +26,7 @@ def search(q, k=K):
 
 
 def answer(q, ctx):
-    body = {"model": MODEL, "max_tokens": 2500, "messages": [
+    body = {"model": MODEL, "max_tokens": 2500, "temperature": 0, "messages": [
         {"role": "system", "content": SYSTEM},
         {"role": "user", "content": f"Context:\n{ctx}\n\nQuestion: {q}"}]}
     r = requests.post(f"{ROUTER}/chat/completions", json=body, timeout=300)

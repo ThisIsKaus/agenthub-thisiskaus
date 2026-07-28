@@ -210,6 +210,13 @@ def memory():
         f"best distance {min(dists):.3f}" if dists else "none",
         "below 0.80 indicates a genuine match; higher means the corpus lacks the answer", warn=True)
 
+    for name, path in (("ingest", H/"kbtool/ingest.py"), ("pipeline", H/"graphtool/pipeline.py"),
+                       ("console", H/"console/console.py"), ("report", H/"report/build_report.py"),
+                       ("sessions", H/"console/sessions.py")):
+        out = sh(f"/usr/bin/python3 -m py_compile {path} 2>&1")
+        rec(g, f"{name}.py compiles", path.exists() and out == "", out[:100] or "ok",
+            f"syntax error in {path}")
+
     ing = H / "kbtool" / "ingest.py"
     src = ing.read_text() if ing.exists() else ""
     for want in ("docs", "drafts", "inbox", "canon"):

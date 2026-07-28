@@ -1,4 +1,4 @@
-# Retrieval eval - local-brain - 2026-07-26
+# Retrieval eval - local-brain - 2026-07-27
 
 | id | source found | top hit | distance | answer |
 |---|---|---|---|---|
@@ -12,13 +12,13 @@
 | q08 | PASS | top1 | 0.506 | weak answer |
 | q09 | want 04-runbook.md/07-operators-manual.md | 06-ops-runbook.md | 0.739 | grounded |
 | q10 | PASS | top1 | 0.684 | grounded |
-| q11 | n/a | - | 0.398 | CONFABULATED |
 | q12 | n/a | - | 0.72 | refused correctly |
+| q11 | n/a | - | 0.692 | refused correctly |
 
 ## Score
 - recall@5: 7/10 (70%)
 - top-1 accuracy: 7/10 (70%)
 - grounded answers: 8/10 (80%)
-- correct refusals: 1/2 (50%)
+- correct refusals: 2/2 (100%)
 
 **Correct refusals must be 2/2. A system that invents an answer when the corpus is silent is worse than one that has no corpus at all.**

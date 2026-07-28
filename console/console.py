@@ -329,7 +329,13 @@ def ask(q: str = Form(...), model: str = Form("local-brain"), k: int = Form(5)):
         e.raise_for_status()
         vec = e.json()["data"][0]["embedding"]
         tbl = lancedb.connect(str(H / "kb")).open_table("kb_main")
-        rows = tbl.search(vec).limit(max(1, min(k, 12))).to_pandas()
+        q_ = tbl.search(vec).limit(max(1, min(k, 12)))
+        if model.startswith("cloud-"):
+            # S1c, S2 and S3 never leave this machine. This must FAIL CLOSED: if the filter
+            # cannot be applied, the outer handler returns without context rather than
+            # sending unfiltered chunks to a metered lane.
+            q_ = q_.where("sensitivity NOT IN ('S1c','S2','S3')")
+        rows = q_.to_pandas()
         for _, r in rows.iterrows():
             sources.append({"file": Path(r["path"]).name, "path": r["path"],
                             "distance": round(float(r["_distance"]), 3)})
@@ -340,7 +346,7 @@ def ask(q: str = Form(...), model: str = Form("local-brain"), k: int = Form(5)):
     system = ("You answer from Kos Bajpai's own knowledge base. Use the supplied context where it is "
               "relevant and say plainly when it does not cover the question. Be concise and concrete. "
               "Never invent a source.")
-    body = {"model": model, "max_tokens": 3000, "messages": [
+    body = {"model": model, "max_tokens": 3000, "temperature": 0, "messages": [
         {"role": "system", "content": system},
         {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {q}"}]}
     try:
