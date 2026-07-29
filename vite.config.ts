@@ -33,7 +33,10 @@ export default defineConfig({
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
-          navigationPreload: true,
+          // Preload races the SW fetch handler and fails hard when the device
+          // is fully offline, so navigations resolve from the cache instead.
+          navigationPreload: false,
+
           runtimeCaching: [
             {
               // HTML navigations: always try the network first, fall back to
