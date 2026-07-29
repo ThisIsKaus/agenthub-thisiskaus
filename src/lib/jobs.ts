@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 export type JobKind = "capture" | "factory_stage" | "ingest" | "intake" | "report";
 
@@ -14,7 +15,7 @@ export type JobRow = {
 };
 
 /** Queue work for the machine. It claims this within 30s on its next outbound poll. */
-export async function insertJob(kind: JobKind, payload: Record<string, unknown>) {
+export async function insertJob(kind: JobKind, payload: Record<string, Json>) {
   const { data } = await supabase.auth.getUser();
   const userId = data.user?.id;
   if (!userId) throw new Error("No session");
