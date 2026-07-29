@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
-import { Empty, Figure, Row, StatusPill, formatStamp } from "@/components/data";
+import { Empty, Figure, FigureSkeleton, Row, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { stateQueryOptions } from "@/lib/state";
 import { recentJobsQueryOptions } from "@/lib/jobs";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
@@ -38,7 +38,7 @@ const TWO_HOURS = 2 * 60 * 60 * 1000;
 
 function OverviewPage() {
   useRealtimeState();
-  const { data: state } = useQuery(stateQueryOptions);
+  const { data: state, isPending } = useQuery(stateQueryOptions);
   const { data: jobs } = useQuery(recentJobsQueryOptions);
   const { previous, firstVisit } = useLastSeen(state);
 
@@ -120,6 +120,13 @@ function OverviewPage() {
         />
       </div>
 
+      {isPending ? (
+        <div className="grid grid-cols-2 gap-px sm:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <FigureSkeleton key={index} />
+          ))}
+        </div>
+      ) : (
       <div className="grid grid-cols-2 gap-px sm:grid-cols-3">
         <Figure
           label="corpus chunks"
@@ -156,9 +163,16 @@ function OverviewPage() {
           tone={stale ? "copper" : "paper"}
         />
       </div>
+      )}
 
       <Panel title="Queue">
-        {jobs && jobs.length > 0 ? (
+        {!jobs ? (
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-4 w-full" />
+            ))}
+          </div>
+        ) : jobs.length > 0 ? (
           <div>
             {jobs.map((job) => (
               <Row
@@ -177,6 +191,15 @@ function OverviewPage() {
           <Empty>No jobs queued.</Empty>
         )}
       </Panel>
+
+      <p
+        className={`font-mono text-[11px] tabular-nums ${
+          healthTone === "risk" ? "text-risk" : healthTone === "watch" ? "text-watch" : "text-ok"
+        }`}
+      >
+        {Number(health.passed ?? 0)} checks passed · {warnings} warnings · {failed} failed
+        <span className="text-faint"> · {formatStamp(health.at)}</span>
+      </p>
     </div>
   );
 }
