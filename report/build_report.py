@@ -120,7 +120,9 @@ def collect():
             ts = r.get("ts", "")
             c = float(r.get("cost_usd") or 0)
             if ts.startswith(month):
-                mtd += c; n += 1
+                mtd += c
+                if c > 0:
+                    n += 1
                 m = r.get("model", "?")
                 b = by.setdefault(m, {"model": m, "usd": 0.0, "n": 0})
                 b["usd"] += c; b["n"] += 1

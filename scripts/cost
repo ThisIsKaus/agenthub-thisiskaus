@@ -5,5 +5,7 @@ M=$(date +%Y-%m)
 echo "Month-to-date ($M) — alert thresholds \$100 / \$250"
 grep "\"ts\": \"$M" $L 2>/dev/null | jq -s '
   {total_usd: (map(.cost_usd)|add|.*10000|round/10000),
-   requests: length,
-   by_model: (group_by(.model)|map({model: .[0].model, usd: (map(.cost_usd)|add|.*10000|round/10000), n: length}))}'
+   metered_calls: (map(select(.cost_usd > 0))|length),
+   local_calls: (map(select(.cost_usd == 0))|length),
+   by_model: (map(select(.cost_usd > 0))|group_by(.model)
+              |map({model: .[0].model, usd: (map(.cost_usd)|add|.*10000|round/10000), n: length}))}'
