@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 export type PendingCapture = {
   id: string;
   text: string;
-  tags: string[];
   captured_at: string;
 };
 
@@ -73,7 +72,7 @@ export async function insertCaptureJob(capture: PendingCapture) {
     created_by: userId,
     payload: {
       text: capture.text,
-      tags: capture.tags,
+      source: "remote",
       captured_at: capture.captured_at,
       client_id: capture.id,
     },
