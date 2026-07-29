@@ -91,6 +91,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
 
+      { title: "Agent Hub" },
+      { property: "og:title", content: "Agent Hub" },
+      { name: "twitter:title", content: "Agent Hub" },
+      { name: "description", content: "Private companion for a personal AI operations hub." },
+      { property: "og:description", content: "Private companion for a personal AI operations hub." },
+      { name: "twitter:description", content: "Private companion for a personal AI operations hub." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f4da9fa6-f68b-4376-9116-b0b2970350c0/id-preview-897e5751--a973cba5-7074-421e-a575-fa57185c3659.lovable.app-1785328174549.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f4da9fa6-f68b-4376-9116-b0b2970350c0/id-preview-897e5751--a973cba5-7074-421e-a575-fa57185c3659.lovable.app-1785328174549.png" },
     ],
     links: [
       {

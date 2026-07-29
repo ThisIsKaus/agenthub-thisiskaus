@@ -7,9 +7,9 @@ import { requestMagicLink } from "@/lib/auth.functions";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AgentHub Remote" },
+      { title: "Agent Hub" },
       { name: "description", content: "Private companion for a personal AI operations hub." },
-      { property: "og:title", content: "AgentHub Remote" },
+      { property: "og:title", content: "Agent Hub" },
       { property: "og:description", content: "Private companion for a personal AI operations hub." },
     ],
   }),
