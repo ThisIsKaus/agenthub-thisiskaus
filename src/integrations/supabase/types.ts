@@ -14,7 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      jobs: {
+        Row: {
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: string
+          kind: string
+          payload: Json
+          result: Json | null
+          status: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          kind: string
+          payload?: Json
+          result?: Json | null
+          status?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          kind?: string
+          payload?: Json
+          result?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
+      state: {
+        Row: {
+          corpus: Json
+          digest: Json
+          factory: Json
+          health: Json
+          id: string
+          models: Json
+          services: Json
+          spend: Json
+          updated_at: string
+        }
+        Insert: {
+          corpus?: Json
+          digest?: Json
+          factory?: Json
+          health?: Json
+          id?: string
+          models?: Json
+          services?: Json
+          spend?: Json
+          updated_at?: string
+        }
+        Update: {
+          corpus?: Json
+          digest?: Json
+          factory?: Json
+          health?: Json
+          id?: string
+          models?: Json
+          services?: Json
+          spend?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
