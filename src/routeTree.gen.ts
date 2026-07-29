@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
+import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -28,6 +29,11 @@ const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
   path: '/overview',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDigestRoute = AuthenticatedDigestRouteImport.update({
+  id: '/digest',
+  path: '/digest',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
   id: '/capture',
   path: '/capture',
@@ -37,11 +43,13 @@ const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/digest': typeof AuthenticatedDigestRoute
   '/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/digest': typeof AuthenticatedDigestRoute
   '/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRoutesById {
@@ -49,18 +57,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
+  '/_authenticated/digest': typeof AuthenticatedDigestRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/capture' | '/overview'
+  fullPaths: '/' | '/capture' | '/digest' | '/overview'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/capture' | '/overview'
+  to: '/' | '/capture' | '/digest' | '/overview'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/capture'
+    | '/_authenticated/digest'
     | '/_authenticated/overview'
   fileRoutesById: FileRoutesById
 }
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOverviewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/digest': {
+      id: '/_authenticated/digest'
+      path: '/digest'
+      fullPath: '/digest'
+      preLoaderRoute: typeof AuthenticatedDigestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/capture': {
       id: '/_authenticated/capture'
       path: '/capture'
@@ -104,11 +121,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
+  AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
+  AuthenticatedDigestRoute: AuthenticatedDigestRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
 }
 
