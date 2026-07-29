@@ -117,6 +117,12 @@ export function AppShell() {
       <main className="mx-auto w-full max-w-[1100px] px-4 py-8">
         <Outlet />
       </main>
+
+      <footer className="mt-8 border-t border-rule">
+        <p className="mx-auto w-full max-w-[1100px] px-4 py-6 font-mono text-[10px] leading-relaxed text-faint">
+          AgentHub Remote · reads published status only · the machine is never reachable from here
+        </p>
+      </footer>
     </div>
   );
 }
