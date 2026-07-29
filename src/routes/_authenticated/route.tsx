@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -9,8 +9,10 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) throw redirect({ to: "/" });
     return { user: data.user };
   },
-  component: () => <AppShell />,
+  component: AppShell,
+  notFoundComponent: () => (
+    <div className="p-8 font-mono text-sm text-faint">No such section.</div>
+  ),
 });
 
-// Outlet is rendered inside AppShell.
-export { Outlet };
+void Outlet;

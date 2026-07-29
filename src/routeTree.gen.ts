@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
 import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
+import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -40,6 +41,11 @@ const AuthenticatedDigestRoute = AuthenticatedDigestRouteImport.update({
   path: '/digest',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCostRoute = AuthenticatedCostRouteImport.update({
+  id: '/cost',
+  path: '/cost',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
   id: '/capture',
   path: '/capture',
@@ -49,6 +55,7 @@ const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
   '/factory': typeof AuthenticatedFactoryRoute
   '/overview': typeof AuthenticatedOverviewRoute
@@ -56,6 +63,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
   '/factory': typeof AuthenticatedFactoryRoute
   '/overview': typeof AuthenticatedOverviewRoute
@@ -65,20 +73,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
+  '/_authenticated/cost': typeof AuthenticatedCostRoute
   '/_authenticated/digest': typeof AuthenticatedDigestRoute
   '/_authenticated/factory': typeof AuthenticatedFactoryRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/capture' | '/digest' | '/factory' | '/overview'
+  fullPaths: '/' | '/capture' | '/cost' | '/digest' | '/factory' | '/overview'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/capture' | '/digest' | '/factory' | '/overview'
+  to: '/' | '/capture' | '/cost' | '/digest' | '/factory' | '/overview'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/capture'
+    | '/_authenticated/cost'
     | '/_authenticated/digest'
     | '/_authenticated/factory'
     | '/_authenticated/overview'
@@ -126,6 +136,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDigestRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/cost': {
+      id: '/_authenticated/cost'
+      path: '/cost'
+      fullPath: '/cost'
+      preLoaderRoute: typeof AuthenticatedCostRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/capture': {
       id: '/_authenticated/capture'
       path: '/capture'
@@ -138,6 +155,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
+  AuthenticatedCostRoute: typeof AuthenticatedCostRoute
   AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
   AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
@@ -145,6 +163,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
+  AuthenticatedCostRoute: AuthenticatedCostRoute,
   AuthenticatedDigestRoute: AuthenticatedDigestRoute,
   AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
