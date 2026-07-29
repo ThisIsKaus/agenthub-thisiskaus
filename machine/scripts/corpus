@@ -1,0 +1,54 @@
+#!/bin/zsh
+# corpus <folder> [--since YYYY-MM-DD] [--go]     dry run unless --go
+SRC="${1:?usage: corpus <folder> [--since YYYY-MM-DD] [--go]}"
+SINCE="2024-01-01"; GO=0
+shift
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --since) SINCE="$2"; shift 2 ;;
+    --go) GO=1; shift ;;
+    *) shift ;;
+  esac
+done
+DEST=~/AgentHub/inbox/corpus
+python3 - "$SRC" "$SINCE" "$GO" "$DEST" <<'PY'
+import os, shutil, sys, datetime as dt
+from pathlib import Path
+src, since, go, dest = Path(sys.argv[1]).expanduser(), sys.argv[2], sys.argv[3] == "1", Path(sys.argv[4])
+EXT = {".md", ".txt", ".pdf", ".docx"}
+SKIP = {"node_modules", ".git", "Library", "Caches", ".venv", "__pycache__", "clients", "vault"}
+cut = dt.datetime.fromisoformat(since).timestamp()
+found, total, skipped = [], 0, 0
+for root, dirs, files in os.walk(src):
+    dirs[:] = [d for d in dirs if d not in SKIP and not d.startswith(".")]
+    for f in files:
+        p = Path(root) / f
+        if p.suffix.lower() not in EXT or f.startswith("~$") or f.startswith("."):
+            continue
+        try:
+            st = p.stat()
+        except Exception:
+            continue
+        if st.st_mtime < cut or st.st_size > 10_000_000:
+            skipped += 1
+            continue
+        found.append((p, st.st_size))
+        total += st.st_size
+print(f"{len(found)} documents, {total/1e6:.1f} MB  (skipped {skipped}: too old, too large, or excluded)")
+for p, s in sorted(found, key=lambda x: -x[1])[:25]:
+    print(f"  {s/1024:8.0f} KB  {p}")
+if len(found) > 25:
+    print(f"  ... and {len(found)-25} more")
+if not go:
+    print("\ndry run — nothing copied. Re-run with --go to stage these for ingest.")
+    sys.exit(0)
+dest.mkdir(parents=True, exist_ok=True)
+n = 0
+for p, _ in found:
+    t = dest / p.name
+    i = 1
+    while t.exists():
+        t = dest / f"{p.stem}-{i}{p.suffix}"; i += 1
+    shutil.copy2(p, t); n += 1
+print(f"\nstaged {n} documents in {dest}\nnext: ingest")
+PY

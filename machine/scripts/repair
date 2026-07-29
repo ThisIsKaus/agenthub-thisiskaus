@@ -1,0 +1,11 @@
+#!/bin/zsh
+echo "restoring known-good state..."
+curl -sf -m 4 http://127.0.0.1:1234/v1/models >/dev/null || { echo "  starting LM Studio server"; lms server start }
+~/AgentHub/scripts/mode standard >/dev/null && echo "  standard model set loaded (with embedder)"
+for j in router console nightly backup; do
+  launchctl list | grep -q "com.agenthub.$j" || launchctl load ~/Library/LaunchAgents/com.agenthub.$j.plist 2>/dev/null
+done
+launchctl kickstart -k gui/$(id -u)/com.agenthub.router >/dev/null 2>&1 && echo "  router restarted"
+launchctl kickstart -k gui/$(id -u)/com.agenthub.console >/dev/null 2>&1 && echo "  console restarted"
+sleep 8
+~/AgentHub/scripts/doctor.sh && echo "  doctor OK"

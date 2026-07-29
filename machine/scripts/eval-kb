@@ -1,0 +1,2 @@
+#!/bin/zsh
+cd ~/AgentHub/kbtool && uv run python retrieval_eval.py

@@ -1,0 +1,2 @@
+#!/bin/zsh
+cd ~/AgentHub/kbtool && uv run python lane_test.py
