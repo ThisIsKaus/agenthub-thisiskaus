@@ -9,38 +9,105 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
+import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
+import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
+import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
+import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
 
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFactoryRoute = AuthenticatedFactoryRouteImport.update({
+  id: '/factory',
+  path: '/factory',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDigestRoute = AuthenticatedDigestRouteImport.update({
+  id: '/digest',
+  path: '/digest',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCostRoute = AuthenticatedCostRouteImport.update({
+  id: '/cost',
+  path: '/cost',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
+  id: '/capture',
+  path: '/capture',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/capture': typeof AuthenticatedCaptureRoute
+  '/cost': typeof AuthenticatedCostRoute
+  '/digest': typeof AuthenticatedDigestRoute
+  '/factory': typeof AuthenticatedFactoryRoute
+  '/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/capture': typeof AuthenticatedCaptureRoute
+  '/cost': typeof AuthenticatedCostRoute
+  '/digest': typeof AuthenticatedDigestRoute
+  '/factory': typeof AuthenticatedFactoryRoute
+  '/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/capture': typeof AuthenticatedCaptureRoute
+  '/_authenticated/cost': typeof AuthenticatedCostRoute
+  '/_authenticated/digest': typeof AuthenticatedDigestRoute
+  '/_authenticated/factory': typeof AuthenticatedFactoryRoute
+  '/_authenticated/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/capture' | '/cost' | '/digest' | '/factory' | '/overview'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/capture' | '/cost' | '/digest' | '/factory' | '/overview'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/_authenticated/capture'
+    | '/_authenticated/cost'
+    | '/_authenticated/digest'
+    | '/_authenticated/factory'
+    | '/_authenticated/overview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +115,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/overview': {
+      id: '/_authenticated/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof AuthenticatedOverviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/factory': {
+      id: '/_authenticated/factory'
+      path: '/factory'
+      fullPath: '/factory'
+      preLoaderRoute: typeof AuthenticatedFactoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/digest': {
+      id: '/_authenticated/digest'
+      path: '/digest'
+      fullPath: '/digest'
+      preLoaderRoute: typeof AuthenticatedDigestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cost': {
+      id: '/_authenticated/cost'
+      path: '/cost'
+      fullPath: '/cost'
+      preLoaderRoute: typeof AuthenticatedCostRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/capture': {
+      id: '/_authenticated/capture'
+      path: '/capture'
+      fullPath: '/capture'
+      preLoaderRoute: typeof AuthenticatedCaptureRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
+  AuthenticatedCostRoute: typeof AuthenticatedCostRoute
+  AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
+  AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
+  AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
+  AuthenticatedCostRoute: AuthenticatedCostRoute,
+  AuthenticatedDigestRoute: AuthenticatedDigestRoute,
+  AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
+  AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
