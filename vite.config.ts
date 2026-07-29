@@ -28,25 +28,21 @@ export default defineConfig({
         devOptions: { enabled: false },
         workbox: {
           globPatterns: ["**/*.{js,css,woff,woff2,png,svg,ico}"],
-          // SSR app: there is no prerendered shell to fall back to.
-          navigateFallback: undefined,
+          // Precache the app shell document itself so a cold, fully offline
+          // home-screen launch resolves without ever touching the network.
+          // Revisioned per build, so autoUpdate replaces it on deploy.
+          additionalManifestEntries: [{ url: "/", revision: `${Date.now()}` }],
+          navigateFallback: "/",
+          navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/_serverFn\//],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
-          navigationPreload: true,
+          // Preload races the SW fetch handler and fails hard when the device
+          // is fully offline, so navigations resolve from the cache instead.
+          navigationPreload: false,
+
           runtimeCaching: [
-            {
-              // HTML navigations: always try the network first, fall back to
-              // the last good copy of that page when offline.
-              urlPattern: ({ request, url }) =>
-                request.mode === "navigate" && !url.pathname.startsWith("/~oauth"),
-              handler: "NetworkFirst",
-              options: {
-                cacheName: "agenthub-pages",
-                networkTimeoutSeconds: 3,
-                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              },
-            },
+
             {
               urlPattern: ({ url, sameOrigin }) =>
                 sameOrigin && /\.(?:js|css|woff2?|png|svg|ico)$/.test(url.pathname),
