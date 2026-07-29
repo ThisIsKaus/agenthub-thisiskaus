@@ -1,3 +1,16 @@
+# agenthub-thisiskaus
+
+Two halves, one repository.
+
+- `src/`, `supabase/` — the unified console. React + Vite + Tailwind + TypeScript.
+  Built and maintained in Lovable, deployed to https://agenthub.thisiskaus.com
+- `machine/` — the local system. Python, zsh, launchd. Maintained outside Lovable.
+  **Lovable must not touch it.** See `machine/README.md`.
+- `docs/` — architecture, decisions, runbook, operator's manual, generated contracts.
+
+The web half never holds document content. Material classified S1c, S2 or S3 is read over
+loopback from the machine and rendered locally; it never transits the cloud.
+
 # Agent Hub
 
 # AgentHub — context for Lovable
