@@ -14,5 +14,3 @@ export const Route = createFileRoute("/_authenticated")({
     <div className="p-8 font-mono text-sm text-faint">No such section.</div>
   ),
 });
-
-void Outlet;
