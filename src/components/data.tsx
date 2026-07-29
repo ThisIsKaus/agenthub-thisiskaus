@@ -114,3 +114,17 @@ export function StatusPill({
     </span>
   );
 }
+
+/** Loading placeholder in panel grey. Never a spinner. */
+export function Skeleton({ className = "h-4 w-24" }: { className?: string }) {
+  return <div className={`skeleton bg-panel2 ${className}`} aria-hidden />;
+}
+
+export function FigureSkeleton() {
+  return (
+    <div className="border border-rule bg-panel2 px-4 py-5">
+      <Skeleton className="h-9 w-20" />
+      <Skeleton className="mt-3 h-2.5 w-16" />
+    </div>
+  );
+}
