@@ -2,10 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Panel } from "@/components/AppShell";
-import { Empty, Stat, formatStamp } from "@/components/data";
+import { Empty, Figure, StatusPill, formatStamp } from "@/components/data";
 import { stateQueryOptions } from "@/lib/state";
 import { insertJob } from "@/lib/jobs";
 import { useOnline } from "@/hooks/use-online";
+import { useRealtimeState } from "@/hooks/use-realtime-state";
 
 export const Route = createFileRoute("/_authenticated/factory")({
   head: () => ({
@@ -27,9 +28,25 @@ export const Route = createFileRoute("/_authenticated/factory")({
   component: FactoryPage,
 });
 
-type Project = { id?: string; ref?: string; stage?: string; status?: string };
+type Project = {
+  id?: string;
+  ref?: string;
+  name?: string;
+  entity?: string;
+  stage?: string;
+  status?: string;
+};
+
+const statusTone = (status?: string) => {
+  const value = (status ?? "").toLowerCase();
+  if (["active", "shipped", "green", "on track", "ok"].includes(value)) return "ok";
+  if (["blocked", "at risk", "red", "stalled"].includes(value)) return "risk";
+  if (["waiting", "review", "amber", "paused"].includes(value)) return "watch";
+  return "faint" as const;
+};
 
 function FactoryPage() {
+  useRealtimeState();
   const { data: state } = useQuery(stateQueryOptions);
   const queryClient = useQueryClient();
   const online = useOnline();
@@ -60,42 +77,73 @@ function FactoryPage() {
     <div className="space-y-4">
       <Panel title="Work in progress">
         <div className="grid grid-cols-2 gap-px">
-          <Stat label="wip" value={wip} tone={overLimit ? "risk" : "paper"} />
-          <Stat label="limit" value={limit || "—"} hint={overLimit ? "over limit" : "within limit"} />
+          <Figure
+            label="wip"
+            value={`${wip}/${limit || "—"} active`}
+            detail={overLimit ? "over the limit" : "within the limit"}
+            tone={overLimit ? "risk" : "paper"}
+          />
+          <Figure
+            label="products"
+            value={projects.length}
+            detail={`published ${formatStamp(state?.updated_at)}`}
+          />
         </div>
-        <p className="mt-4 font-mono text-[10px] text-faint">
-          Published {formatStamp(state?.updated_at)}
-        </p>
       </Panel>
 
-      <Panel title="Projects">
+      <Panel title="Products">
         {projects.length > 0 ? (
-          <ul>
-            {projects.map((project, index) => {
-              const ref = project.ref ?? project.id ?? `project-${index + 1}`;
-              return (
-                <li
-                  key={ref}
-                  className="flex flex-wrap items-baseline justify-between gap-3 border-t border-rule py-3 first:border-t-0"
-                >
-                  <span className="font-mono text-[13px] text-paper">{ref}</span>
-                  <span className="flex items-baseline gap-3 font-mono text-[11px]">
-                    <span className="text-muted-foreground">{project.stage ?? "—"}</span>
-                    <span className="text-faint">{project.status ?? "—"}</span>
-                  </span>
-                  <button
-                    onClick={() => queue(ref, "factory_stage", { project: ref, action: "advance" })}
-                    disabled={!online || pending === ref}
-                    className="border border-rule px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:text-faint disabled:hover:border-rule disabled:hover:text-faint"
-                  >
-                    {pending === ref ? "Queueing…" : "Advance stage"}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <table className="w-full min-w-[420px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-rule">
+                  {["name", "entity", "stage", "status", ""].map((heading, index) => (
+                    <th
+                      key={heading || index}
+                      scope="col"
+                      className="pb-2 font-mono text-[10px] uppercase tracking-[0.14em] font-normal text-faint"
+                    >
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map((project, index) => {
+                  const ref = project.ref ?? project.name ?? project.id ?? `project-${index + 1}`;
+                  return (
+                    <tr key={ref} className="border-b border-rule last:border-b-0 align-baseline">
+                      <td className="py-3 pr-3 text-[13px] text-paper">{ref}</td>
+                      <td className="py-3 pr-3 font-mono text-[11px] text-muted-foreground">
+                        {project.entity ?? "—"}
+                      </td>
+                      <td className="py-3 pr-3 font-mono text-[11px] text-muted-foreground">
+                        {project.stage ?? "—"}
+                      </td>
+                      <td className="py-3 pr-3">
+                        <StatusPill
+                          label=""
+                          value={project.status ?? "—"}
+                          tone={statusTone(project.status)}
+                        />
+                      </td>
+                      <td className="py-3 text-right">
+                        <button
+                          onClick={() => queue(ref, "factory_stage", { project: ref, action: "advance" })}
+                          disabled={!online || pending === ref}
+                          className="whitespace-nowrap border border-rule px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:text-faint disabled:hover:border-rule disabled:hover:text-faint"
+                        >
+                          {pending === ref ? "Queueing…" : "Advance stage"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <Empty>No projects published.</Empty>
+          <Empty>No products published.</Empty>
         )}
       </Panel>
 

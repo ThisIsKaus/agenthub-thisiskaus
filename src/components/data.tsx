@@ -56,3 +56,61 @@ export function formatStamp(value: string | null | undefined) {
     hour12: false,
   });
 }
+
+/** Editorial figure: large Instrument Serif number, monospace label, quiet detail. */
+export function Figure({
+  label,
+  value,
+  detail,
+  tone = "paper",
+}: {
+  label: string;
+  value: ReactNode;
+  detail?: string;
+  tone?: "paper" | "ok" | "watch" | "risk" | "copper";
+}) {
+  const toneClass = {
+    paper: "text-paper",
+    ok: "text-ok",
+    watch: "text-watch",
+    risk: "text-risk",
+    copper: "text-copper",
+  }[tone];
+
+  return (
+    <div className="border border-rule bg-panel2 px-4 py-5">
+      <div className={`font-serif text-[2.5rem] leading-none tabular-nums ${toneClass}`}>{value}</div>
+      <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        {label}
+      </div>
+      {detail && <div className="mt-1 font-mono text-[10px] text-faint">{detail}</div>}
+    </div>
+  );
+}
+
+/** Small monospace status pill. */
+export function StatusPill({
+  label,
+  value,
+  tone = "paper",
+}: {
+  label: string;
+  value: ReactNode;
+  tone?: "paper" | "ok" | "watch" | "risk" | "copper" | "faint";
+}) {
+  const toneClass = {
+    paper: "text-paper",
+    ok: "text-ok",
+    watch: "text-watch",
+    risk: "text-risk",
+    copper: "text-copper",
+    faint: "text-faint",
+  }[tone];
+
+  return (
+    <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px]">
+      <span className="uppercase tracking-[0.12em] text-faint">{label}</span>
+      <span className={`tabular-nums ${toneClass}`}>{value}</span>
+    </span>
+  );
+}
