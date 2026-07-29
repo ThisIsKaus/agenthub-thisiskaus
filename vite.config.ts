@@ -21,6 +21,8 @@ export default defineConfig({
         // The guarded wrapper in src/lib/pwa.ts is the only registrar.
         injectRegister: null,
         filename: "sw.js",
+        // The Nitro build serves dist/client as the site root.
+        outDir: "dist/client",
         // The manifest is authored by hand in public/manifest.webmanifest.
         manifest: false,
         devOptions: { enabled: false },
