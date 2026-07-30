@@ -14,7 +14,11 @@ const TABS = [
   { to: "/factory", label: "Factory" },
   { to: "/files", label: "Files" },
   { to: "/knowledge", label: "Knowledge" },
+  { to: "/models", label: "Models" },
+  { to: "/prompts", label: "Prompts" },
+  { to: "/memory", label: "Memory" },
   { to: "/cost", label: "Cost" },
+
 
 ] as const;
 
