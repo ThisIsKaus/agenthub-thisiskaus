@@ -39,15 +39,15 @@ export function Pill({
 }
 
 function PlanePill() {
-  const { available, machine } = useLocal();
+  const { available } = useLocal();
   return (
     <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px]">
       <span
         aria-hidden
-        className={`h-1.5 w-1.5 rounded-full ${available ? "bg-copper" : "bg-faint"}`}
+        className={`h-1.5 w-1.5 rounded-full ${available ? "bg-ok" : "bg-faint"}`}
       />
       <span className={available ? "text-paper" : "text-faint"}>
-        {available ? `local · ${machine?.posture ?? "—"}` : "remote"}
+        {available ? "local" : "remote"}
       </span>
     </span>
   );
