@@ -8,6 +8,7 @@ import { useLocal } from "@/lib/local-bridge";
 
 const TABS = [
   { to: "/overview", label: "Overview" },
+  { to: "/ask", label: "Ask" },
   { to: "/capture", label: "Capture" },
   { to: "/digest", label: "Digest" },
   { to: "/factory", label: "Factory" },
