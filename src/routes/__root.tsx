@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
-import { registerServiceWorker } from "@/lib/pwa";
+import { registerServiceWorker, installStaleShellRecovery } from "@/lib/pwa";
 import { flushQueue } from "@/lib/capture-queue";
 import { LocalBridgeProvider } from "@/lib/local-bridge";
 import { JobDrawerProvider } from "@/lib/job-drawer";
@@ -149,12 +149,14 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
+    installStaleShellRecovery();
     registerServiceWorker();
     const flush = () => void flushQueue();
     flush();
     window.addEventListener("online", flush);
     return () => window.removeEventListener("online", flush);
   }, []);
+
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
