@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
+import { Route as AuthenticatedModelsRouteImport } from './routes/_authenticated/models'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
@@ -32,6 +33,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedModelsRoute = AuthenticatedModelsRouteImport.update({
+  id: '/models',
+  path: '/models',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRoutesByTo {
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRoutesById {
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_authenticated/factory': typeof AuthenticatedFactoryRoute
   '/_authenticated/files': typeof AuthenticatedFilesRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/_authenticated/models': typeof AuthenticatedModelsRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRouteTypes {
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/factory'
     | '/files'
     | '/knowledge'
+    | '/models'
     | '/overview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/factory'
     | '/files'
     | '/knowledge'
+    | '/models'
     | '/overview'
   id:
     | '__root__'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/_authenticated/factory'
     | '/_authenticated/files'
     | '/_authenticated/knowledge'
+    | '/_authenticated/models'
     | '/_authenticated/overview'
   fileRoutesById: FileRoutesById
 }
@@ -168,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/overview'
       fullPath: '/overview'
       preLoaderRoute: typeof AuthenticatedOverviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/models': {
+      id: '/_authenticated/models'
+      path: '/models'
+      fullPath: '/models'
+      preLoaderRoute: typeof AuthenticatedModelsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/knowledge': {
@@ -230,6 +249,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
   AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
+  AuthenticatedModelsRoute: typeof AuthenticatedModelsRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
 }
 
@@ -241,6 +261,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
   AuthenticatedFilesRoute: AuthenticatedFilesRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
+  AuthenticatedModelsRoute: AuthenticatedModelsRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
 }
 
@@ -254,3 +275,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
