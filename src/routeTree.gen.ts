@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedPromptsRouteImport } from './routes/_authenticated/prompts'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedModelsRouteImport } from './routes/_authenticated/models'
+import { Route as AuthenticatedMemoryRouteImport } from './routes/_authenticated/memory'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
@@ -44,6 +45,11 @@ const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
 const AuthenticatedModelsRoute = AuthenticatedModelsRouteImport.update({
   id: '/models',
   path: '/models',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMemoryRoute = AuthenticatedMemoryRouteImport.update({
+  id: '/memory',
+  path: '/memory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/memory': typeof AuthenticatedMemoryRoute
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/memory': typeof AuthenticatedMemoryRoute
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/_authenticated/factory': typeof AuthenticatedFactoryRoute
   '/_authenticated/files': typeof AuthenticatedFilesRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/_authenticated/memory': typeof AuthenticatedMemoryRoute
   '/_authenticated/models': typeof AuthenticatedModelsRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/prompts': typeof AuthenticatedPromptsRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/factory'
     | '/files'
     | '/knowledge'
+    | '/memory'
     | '/models'
     | '/overview'
     | '/prompts'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/factory'
     | '/files'
     | '/knowledge'
+    | '/memory'
     | '/models'
     | '/overview'
     | '/prompts'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/_authenticated/factory'
     | '/_authenticated/files'
     | '/_authenticated/knowledge'
+    | '/_authenticated/memory'
     | '/_authenticated/models'
     | '/_authenticated/overview'
     | '/_authenticated/prompts'
@@ -206,6 +218,13 @@ declare module '@tanstack/react-router' {
       path: '/models'
       fullPath: '/models'
       preLoaderRoute: typeof AuthenticatedModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/memory': {
+      id: '/_authenticated/memory'
+      path: '/memory'
+      fullPath: '/memory'
+      preLoaderRoute: typeof AuthenticatedMemoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/knowledge': {
@@ -268,6 +287,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
   AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
+  AuthenticatedMemoryRoute: typeof AuthenticatedMemoryRoute
   AuthenticatedModelsRoute: typeof AuthenticatedModelsRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedPromptsRoute: typeof AuthenticatedPromptsRoute
@@ -281,6 +301,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
   AuthenticatedFilesRoute: AuthenticatedFilesRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
+  AuthenticatedMemoryRoute: AuthenticatedMemoryRoute,
   AuthenticatedModelsRoute: AuthenticatedModelsRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedPromptsRoute: AuthenticatedPromptsRoute,
