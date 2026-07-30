@@ -24,6 +24,8 @@ import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
 import { Route as AuthenticatedAskRouteImport } from './routes/_authenticated/ask'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -99,6 +101,16 @@ const AuthenticatedAskRoute = AuthenticatedAskRouteImport.update({
   path: '/ask',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,6 +127,8 @@ export interface FileRoutesByFullPath {
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -131,6 +145,8 @@ export interface FileRoutesByTo {
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -149,6 +165,8 @@ export interface FileRoutesById {
   '/_authenticated/models': typeof AuthenticatedModelsRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/prompts': typeof AuthenticatedPromptsRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -167,6 +185,8 @@ export interface FileRouteTypes {
     | '/models'
     | '/overview'
     | '/prompts'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -183,6 +203,8 @@ export interface FileRouteTypes {
     | '/models'
     | '/overview'
     | '/prompts'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   id:
     | '__root__'
     | '/'
@@ -200,11 +222,15 @@ export interface FileRouteTypes {
     | '/_authenticated/models'
     | '/_authenticated/overview'
     | '/_authenticated/prompts'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -314,6 +340,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAskRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -355,7 +395,19 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
