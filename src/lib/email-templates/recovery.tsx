@@ -44,26 +44,39 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Helvetica, Arial, sans-serif" }
+const container = {
+  padding: '32px 28px',
+  maxWidth: '520px',
+  border: '1px solid #E4E2DE',
+  borderRadius: '2px',
+}
 const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
+  fontSize: '24px',
+  fontWeight: 'normal' as const,
+  fontFamily: "'Instrument Serif', Georgia, serif",
+  color: '#0B0B0D',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+  color: '#5E5E66',
+  lineHeight: '1.6',
+  margin: '0 0 24px',
 }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: '#C8744A',
   color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  fontSize: '13px',
+  letterSpacing: '0.04em',
+  borderRadius: '2px',
+  padding: '12px 22px',
   textDecoration: 'none',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footer = {
+  fontSize: '12px',
+  color: '#8E8E96',
+  margin: '28px 0 0',
+  paddingTop: '18px',
+  borderTop: '1px solid #E4E2DE',
+}
