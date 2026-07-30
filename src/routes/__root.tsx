@@ -14,7 +14,6 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { registerServiceWorker } from "@/lib/pwa";
 import { flushQueue } from "@/lib/capture-queue";
-import { LocalBridgeProvider } from "@/lib/local-bridge";
 
 
 
@@ -167,10 +166,8 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LocalBridgeProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </LocalBridgeProvider>
+      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+      <Outlet />
     </QueryClientProvider>
   );
 }
