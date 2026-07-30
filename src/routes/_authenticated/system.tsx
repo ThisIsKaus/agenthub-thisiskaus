@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useHubState } from "@/hooks/use-realtime-state";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
 import { formatStamp } from "@/components/data";

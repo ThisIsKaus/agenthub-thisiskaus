@@ -4,8 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
 import { Empty, FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
 import { MachineStatePanel } from "@/components/MachineStatePanel";
-import { stateQueryOptions } from "@/lib/state";
-import { useRealtimeState } from "@/hooks/use-realtime-state";
+import { useHubState, useRealtimeState } from "@/hooks/use-realtime-state";
 import { changesSince, snapshotOf, useLastSeen } from "@/lib/since";
 import { useLocal, isRefusal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
@@ -74,13 +73,13 @@ function FigureCell({ label, value, detail, tone = "paper" }: Cell) {
 
 function OverviewPage() {
   useRealtimeState();
-  const { data: state, isPending } = useQuery({ ...stateQueryOptions, refetchInterval: 60_000 });
+  const { data: state, isPending, source, provenance } = useHubState();
   const { previous, firstVisit } = useLastSeen(state);
   const local = useLocal();
 
   const plane = derivePlane(local.available, state?.updated_at);
   const live = plane === "LIVE";
-  const age = asOf(plane, state?.updated_at);
+  const age = source === "local" ? "live" : provenance;
 
   const services = state?.services ?? {};
   const corpus = state?.corpus ?? {};
@@ -112,7 +111,7 @@ function OverviewPage() {
   });
 
   const bench = localModels?.bench?.find((row) => (row.role ?? "").includes("quality"));
-  const machine = live ? local.machine : ((state as unknown as { machine?: typeof local.machine })?.machine ?? null);
+  const machine = live ? (local.machine ?? state?.machine ?? null) : (state?.machine ?? null);
 
   const modelNames = models
     .map((model) => (typeof model === "string" ? model : (model.id ?? model.name ?? "")))
@@ -204,7 +203,7 @@ function OverviewPage() {
       <section aria-label="Standing">
         <div className="mb-2 flex items-baseline justify-between gap-3">
           <h2 className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Standing</h2>
-          {age && <span className="font-mono text-[10px] text-faint">{age}</span>}
+          <span className="font-mono text-[10px] text-faint">{age}</span>
         </div>
         {isPending ? (
           <div className="grid grid-cols-2 gap-px sm:grid-cols-4">
@@ -265,7 +264,7 @@ function OverviewPage() {
       />
 
       <p className="font-mono text-[10px] text-faint">
-        {Number(services.aliases ?? 0)} router aliases · last report {formatStamp(state?.updated_at)}
+        {Number(services.aliases ?? 0)} router aliases · {provenance} · {formatStamp(state?.updated_at)}
       </p>
     </div>
   );
