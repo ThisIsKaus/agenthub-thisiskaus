@@ -149,12 +149,14 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
+    installStaleShellRecovery();
     registerServiceWorker();
     const flush = () => void flushQueue();
     flush();
     window.addEventListener("online", flush);
     return () => window.removeEventListener("online", flush);
   }, []);
+
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
