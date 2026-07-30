@@ -55,18 +55,15 @@ export function JobDrawerProvider({ children }: { children: ReactNode }) {
     window.clearInterval(timers.current[id]);
     delete timers.current[id];
     setJobs((previous) =>
-      previous.map((job) =>
-        job.id === id
-          ? { ...job, running: false, finishedAt: new Date(), ...patch }
-          : job,
-      ),
+      previous.map((job) => {
+        if (job.id !== id) return job;
+        const done: JobRun = { ...job, running: false, finishedAt: new Date(), ...patch };
+        const callback = dones.current[id];
+        delete dones.current[id];
+        if (callback) window.setTimeout(() => callback(done), 0);
+        return done;
+      }),
     );
-    setJobs((previous) => {
-      const done = previous.find((job) => job.id === id);
-      if (done) dones.current[id]?.(done);
-      delete dones.current[id];
-      return previous;
-    });
   }, []);
 
   const runJob = useCallback<JobDrawerValue["runJob"]>(
