@@ -5,6 +5,7 @@ import { stateQueryOptions } from "@/lib/state";
 import { useOnline } from "@/hooks/use-online";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocal } from "@/lib/local-bridge";
+import { JobDrawer } from "@/components/JobDrawer";
 
 const TABS = [
   { to: "/overview", label: "Overview" },
@@ -19,6 +20,7 @@ const TABS = [
   { to: "/models", label: "Models" },
   { to: "/prompts", label: "Prompts" },
   { to: "/memory", label: "Memory" },
+  { to: "/health", label: "Health" },
   { to: "/cost", label: "Cost" },
 
 
@@ -145,11 +147,13 @@ export function AppShell() {
         <Outlet />
       </main>
 
-      <footer className="mt-8 border-t border-rule">
+      <footer className="mt-8 border-t border-rule pb-16">
         <p className="mx-auto w-full max-w-[1100px] px-4 py-6 font-mono text-[10px] leading-relaxed text-faint">
           AgentHub Remote · reads published status only · the machine is never reachable from here
         </p>
       </footer>
+
+      <JobDrawer />
     </div>
   );
 }

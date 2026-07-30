@@ -8,6 +8,7 @@ import { stateQueryOptions } from "@/lib/state";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
 import { changesSince, snapshotOf, useLastSeen } from "@/lib/since";
 import { useLocal, isRefusal } from "@/lib/local-bridge";
+import { useJobDrawer } from "@/lib/job-drawer";
 import { asOf, clockOf, derivePlane } from "@/lib/machine-state";
 
 export const Route = createFileRoute("/_authenticated/overview")({

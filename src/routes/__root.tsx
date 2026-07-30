@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { registerServiceWorker } from "@/lib/pwa";
 import { flushQueue } from "@/lib/capture-queue";
 import { LocalBridgeProvider } from "@/lib/local-bridge";
+import { JobDrawerProvider } from "@/lib/job-drawer";
 
 
 
@@ -168,8 +169,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LocalBridgeProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <JobDrawerProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </JobDrawerProvider>
       </LocalBridgeProvider>
     </QueryClientProvider>
   );
