@@ -31,10 +31,10 @@ export const Route = createFileRoute("/_authenticated/ask")({
 });
 
 const LANES = [
-  { id: "quality", label: "Local brain 35B", cost: "$0" },
-  { id: "coder", label: "Local coder 27B", cost: "$0" },
-  { id: "work", label: "Cloud work Sonnet", cost: "metered" },
-  { id: "deep", label: "Cloud deep Opus", cost: "metered" },
+  { id: "local-brain", label: "Local brain 35B", cost: "$0" },
+  { id: "local-coder", label: "Local coder 27B", cost: "$0" },
+  { id: "cloud-work", label: "Cloud work Sonnet", cost: "metered" },
+  { id: "cloud-deep", label: "Cloud deep Opus", cost: "metered" },
 ] as const;
 
 const SOURCE_COUNTS = [5, 8, 12] as const;
