@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { requestMagicLink, isSessionAllowed } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/")({
@@ -23,7 +22,6 @@ function SignIn() {
   const checkAllowed = useServerFn(isSessionAllowed);
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
-  const [applePending, setApplePending] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
