@@ -4,23 +4,23 @@ import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
 import { Empty, FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
 import { MachineStatePanel } from "@/components/MachineStatePanel";
-import { stateQueryOptions } from "@/lib/state";
-import { useRealtimeState } from "@/hooks/use-realtime-state";
+import { AboutSystemBody } from "@/components/AboutSystemBody";
+import { useHubState, useRealtimeState } from "@/hooks/use-realtime-state";
 import { changesSince, snapshotOf, useLastSeen } from "@/lib/since";
 import { useLocal, isRefusal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
-import { asOf, clockOf, derivePlane } from "@/lib/machine-state";
+import { clockOf, derivePlane } from "@/lib/machine-state";
 
 export const Route = createFileRoute("/_authenticated/overview")({
   head: () => ({
     meta: [
-      { title: "Overview — AgentHub Remote" },
+      { title: "Overview — AgentHub" },
       {
         name: "description",
         content:
           "Machine state, what moved since your last visit, and the standing figures for corpus, spend, factory and self-test.",
       },
-      { property: "og:title", content: "Overview — AgentHub Remote" },
+      { property: "og:title", content: "Overview — AgentHub" },
       {
         property: "og:description",
         content:
@@ -40,7 +40,6 @@ type Cell = {
   tone?: "paper" | "ok" | "watch" | "risk" | "copper";
 };
 
-type BenchRow = { role?: string; id?: string; tps?: number; gib?: number };
 type DigestItem = { flag?: string; src?: string; cls?: string; ent?: string; sen?: string; one?: string };
 
 function FigureCell({ label, value, detail, tone = "paper" }: Cell) {
@@ -74,13 +73,13 @@ function FigureCell({ label, value, detail, tone = "paper" }: Cell) {
 
 function OverviewPage() {
   useRealtimeState();
-  const { data: state, isPending } = useQuery({ ...stateQueryOptions, refetchInterval: 60_000 });
+  const { data: state, isPending, source, provenance } = useHubState();
   const { previous, firstVisit } = useLastSeen(state);
   const local = useLocal();
 
   const plane = derivePlane(local.available, state?.updated_at);
   const live = plane === "LIVE";
-  const age = asOf(plane, state?.updated_at);
+  const age = source === "local" ? "live" : provenance;
 
   const services = state?.services ?? {};
   const corpus = state?.corpus ?? {};
@@ -98,12 +97,6 @@ function OverviewPage() {
   const mtd = Number(spend.mtd ?? 0);
 
   // Local plane only: bench figures and digest detail never come from Supabase.
-  const { data: localModels } = useQuery({
-    queryKey: ["local", "models"],
-    enabled: live,
-    refetchInterval: 60_000,
-    queryFn: () => local.get<{ bench?: BenchRow[] }>("/api/models"),
-  });
   const { data: localDigest } = useQuery({
     queryKey: ["local", "digest"],
     enabled: live,
@@ -111,8 +104,7 @@ function OverviewPage() {
     queryFn: () => local.get<{ date?: string; items?: DigestItem[] }>("/api/digest"),
   });
 
-  const bench = localModels?.bench?.find((row) => (row.role ?? "").includes("quality"));
-  const machine = live ? local.machine : ((state as unknown as { machine?: typeof local.machine })?.machine ?? null);
+  const machine = live ? (local.machine ?? state?.machine ?? null) : (state?.machine ?? null);
 
   const modelNames = models
     .map((model) => (typeof model === "string" ? model : (model.id ?? model.name ?? "")))
@@ -125,20 +117,9 @@ function OverviewPage() {
       detail: `${Number(corpus.documents ?? 0).toLocaleString()} documents indexed`,
     },
     {
-      label: "Local brain",
-      value: live && bench?.tps != null ? `${bench.tps} t/s` : null,
-      detail: bench?.id ?? "",
-    },
-    {
       label: "Resident",
       value: modelNames.length ? String(modelNames.length) : null,
       detail: modelNames.join(", "),
-    },
-    {
-      label: "Spend MTD",
-      value: spend.mtd != null ? `$${mtd.toFixed(2)}` : null,
-      detail: `${Number(spend.requests ?? 0).toLocaleString()} metered calls · alert at $100`,
-      tone: mtd > 0 ? "copper" : "paper",
     },
     {
       label: "Active products",
@@ -146,12 +127,7 @@ function OverviewPage() {
       detail: projects.map((project) => project.name ?? project.ref ?? "").filter(Boolean).join(", "),
       tone: Number(factory.wip ?? 0) > Number(factory.limit ?? 2) ? "risk" : "paper",
     },
-    {
-      label: "Self-test",
-      value: health.passed != null ? String(passed) : null,
-      detail: `${warnings} warnings · ${failed} failed`,
-      tone: healthTone,
-    },
+
     {
       label: "Triaged today",
       value: digest.items != null ? String(digest.items) : null,
@@ -204,11 +180,11 @@ function OverviewPage() {
       <section aria-label="Standing">
         <div className="mb-2 flex items-baseline justify-between gap-3">
           <h2 className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Standing</h2>
-          {age && <span className="font-mono text-[10px] text-faint">{age}</span>}
+          <span className="font-mono text-[10px] text-faint">{age}</span>
         </div>
         {isPending ? (
           <div className="grid grid-cols-2 gap-px sm:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
+            {Array.from({ length: 5 }).map((_, index) => (
               <FigureSkeleton key={index} />
             ))}
           </div>
@@ -264,8 +240,17 @@ function OverviewPage() {
         live={live}
       />
 
+      <details className="border border-rule bg-panel">
+        <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.14em] text-faint hover:text-copper">
+          About this system
+        </summary>
+        <div className="border-t border-rule px-5 pt-6">
+          <AboutSystemBody />
+        </div>
+      </details>
+
       <p className="font-mono text-[10px] text-faint">
-        {Number(services.aliases ?? 0)} router aliases · last report {formatStamp(state?.updated_at)}
+        {Number(services.aliases ?? 0)} router aliases · {provenance} · {formatStamp(state?.updated_at)}
       </p>
     </div>
   );

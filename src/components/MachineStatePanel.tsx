@@ -29,6 +29,9 @@ export function MachineStatePanel({
   const onAc = machine?.power?.on_ac ?? true;
   const pct = machine?.power?.percent ?? machine?.power?.pct;
   const holders = holdersOf(machine);
+  const rawUptime = machine?.uptime as number | string | { uptime_hours?: number } | undefined;
+  const uptimeHours =
+    rawUptime != null && typeof rawUptime === "object" ? rawUptime.uptime_hours : rawUptime;
 
   let headline: string;
   let detail: string;
@@ -38,7 +41,7 @@ export function MachineStatePanel({
     headline = `Live · ${machine?.posture ?? "active"}`;
     const parts = [
       batteryLine(machine) ?? "power unknown",
-      machine?.uptime != null ? `up ${machine.uptime}h` : null,
+      uptimeHours != null ? `up ${uptimeHours}h` : null,
       nextWake ? `wake ${nextWake}` : null,
     ].filter(Boolean) as string[];
     detail = parts.join(" · ");

@@ -9,9 +9,9 @@ import { useJobDrawer } from "@/lib/job-drawer";
 export const Route = createFileRoute("/_authenticated/prompts")({
   head: () => ({
     meta: [
-      { title: "Prompts — AgentHub Remote" },
+      { title: "Prompts — AgentHub" },
       { name: "description", content: "Read and edit the machine's system prompts." },
-      { property: "og:title", content: "Prompts — AgentHub Remote" },
+      { property: "og:title", content: "Prompts — AgentHub" },
       { property: "og:description", content: "Read and edit the machine's system prompts." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -8,9 +8,9 @@ import { useLocal } from "@/lib/local-bridge";
 export const Route = createFileRoute("/_authenticated/memory")({
   head: () => ({
     meta: [
-      { title: "Memory — AgentHub Remote" },
+      { title: "Memory — AgentHub" },
       { name: "description", content: "Search the machine's recorded interactions and recent history." },
-      { property: "og:title", content: "Memory — AgentHub Remote" },
+      { property: "og:title", content: "Memory — AgentHub" },
       {
         property: "og:description",
         content: "Search the machine's recorded interactions and recent history.",

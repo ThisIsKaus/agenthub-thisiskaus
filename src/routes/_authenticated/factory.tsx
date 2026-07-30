@@ -11,12 +11,12 @@ import { useRealtimeState } from "@/hooks/use-realtime-state";
 export const Route = createFileRoute("/_authenticated/factory")({
   head: () => ({
     meta: [
-      { title: "Factory — AgentHub Remote" },
+      { title: "Factory — AgentHub" },
       {
         name: "description",
         content: "Work in progress against the WIP limit, stage advances, intake and ingest jobs.",
       },
-      { property: "og:title", content: "Factory — AgentHub Remote" },
+      { property: "og:title", content: "Factory — AgentHub" },
       {
         property: "og:description",
         content: "Work in progress against the WIP limit, stage advances, intake and ingest jobs.",

@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * AgentHub Remote design system.
+ * AgentHub design system.
  * Dark editorial. Hairline borders, never shadows. Radius 2px max.
  * Copper is an accent only, never a fill for large areas.
  */

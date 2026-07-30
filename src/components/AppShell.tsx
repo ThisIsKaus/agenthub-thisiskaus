@@ -1,32 +1,53 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { stateQueryOptions } from "@/lib/state";
+import { useHubState } from "@/hooks/use-realtime-state";
 import { useOnline } from "@/hooks/use-online";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocal } from "@/lib/local-bridge";
 import { JobDrawer } from "@/components/JobDrawer";
 
-const TABS = [
-  { to: "/overview", label: "Overview" },
-  { to: "/ask", label: "Ask" },
-  { to: "/capture", label: "Capture" },
-  { to: "/digest", label: "Digest" },
-  { to: "/evals", label: "Evals" },
+type Sub = { to: string; label: string };
+type Group = { label: string; to: string; subs: Sub[] };
 
-  { to: "/factory", label: "Factory" },
-  { to: "/files", label: "Files" },
-  { to: "/knowledge", label: "Knowledge" },
-  { to: "/models", label: "Models" },
-  { to: "/prompts", label: "Prompts" },
-  { to: "/memory", label: "Memory" },
-  { to: "/health", label: "Health" },
-  { to: "/cost", label: "Cost" },
-  { to: "/system", label: "System" },
-
-
-
-] as const;
+const GROUPS: Group[] = [
+  { label: "Overview", to: "/overview", subs: [] },
+  { label: "Ask", to: "/ask", subs: [] },
+  {
+    label: "Work",
+    to: "/digest",
+    subs: [
+      { to: "/digest", label: "Digest" },
+      { to: "/capture", label: "Capture" },
+      { to: "/factory", label: "Factory" },
+    ],
+  },
+  {
+    label: "Corpus",
+    to: "/files",
+    subs: [
+      { to: "/files", label: "Files" },
+      { to: "/knowledge", label: "Knowledge" },
+      { to: "/memory", label: "Memory" },
+    ],
+  },
+  {
+    label: "Engine",
+    to: "/models",
+    subs: [
+      { to: "/models", label: "Models" },
+      { to: "/prompts", label: "Prompts" },
+    ],
+  },
+  { label: "Improve", to: "/evals", subs: [] },
+  {
+    label: "Health",
+    to: "/health",
+    subs: [
+      { to: "/health", label: "Health" },
+      { to: "/cost", label: "Cost" },
+    ],
+  },
+];
 
 function tone(value: string | undefined) {
   if (value === "up" || value === "ok" || value === "passed") return "text-ok";
@@ -70,14 +91,18 @@ function PlanePill() {
 
 
 export function AppShell() {
-  const { data } = useQuery(stateQueryOptions);
+  const { data } = useHubState();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const online = useOnline();
 
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const current =
+    GROUPS.find((group) => group.to === pathname || group.subs.some((sub) => sub.to === pathname)) ?? null;
+
   const services = data?.services ?? {};
-  const health = data?.health ?? {};
   const spend = data?.spend ?? {};
+  const factory = data?.factory ?? {};
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -92,7 +117,7 @@ export function AppShell() {
         <div className="mx-auto w-full max-w-[1100px] px-4">
           <div className="flex items-baseline justify-between gap-4 py-3">
             <h1 className="font-serif text-2xl leading-none text-paper">
-              AgentHub <span className="text-copper">Remote</span>
+              AgentHub
             </h1>
             <div className="flex items-center gap-3">
               <PlanePill />
@@ -111,39 +136,45 @@ export function AppShell() {
           </div>
 
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Pill label="lms" value={String(services.lms ?? "—")} className={tone(services.lms)} />
-            <Pill
-              label="router"
-              value={String(services.router ?? "—")}
-              className={tone(services.router)}
-            />
-            <Pill label="aliases" value={String(services.aliases ?? 0)} />
-            <Pill
-              label="health"
-              value={`${health.passed ?? 0}/${health.warnings ?? 0}/${health.failed ?? 0}`}
-              className={
-                (health.failed ?? 0) > 0
-                  ? "text-risk"
-                  : (health.warnings ?? 0) > 0
-                    ? "text-watch"
-                    : "text-ok"
-              }
-            />
+            <Pill label="serving" value={String(services.lms ?? "—")} className={tone(services.lms)} />
+            <PlanePill />
             <Pill label="mtd" value={`$${Number(spend.mtd ?? 0).toFixed(2)}`} />
+            <Pill label="wip" value={`${factory.wip ?? 0}/${factory.limit ?? 2}`} />
           </div>
 
           <nav className="-mx-4 flex gap-5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {TABS.map((tab) => (
-              <Link
-                key={tab.to}
-                to={tab.to}
-                className="shrink-0 border-b-2 border-transparent pb-2 text-sm text-muted-foreground transition-colors hover:text-paper"
-                activeProps={{ className: "!border-copper !text-paper" }}
-              >
-                {tab.label}
-              </Link>
-            ))}
+            {GROUPS.map((group) => {
+              const active =
+                group.to === pathname || group.subs.some((sub) => sub.to === pathname);
+              return (
+                <Link
+                  key={group.label}
+                  to={group.to}
+                  className={`shrink-0 border-b-2 pb-2 text-sm transition-colors hover:text-paper ${
+                    active ? "border-copper text-paper" : "border-transparent text-muted-foreground"
+                  }`}
+                >
+                  {group.label}
+                </Link>
+              );
+            })}
           </nav>
+
+          {current && current.subs.length > 1 && (
+            <div className="-mx-4 flex gap-4 overflow-x-auto border-t border-rule px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {current.subs.map((sub) => (
+                <Link
+                  key={sub.to}
+                  to={sub.to}
+                  className={`shrink-0 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors hover:text-paper ${
+                    sub.to === pathname ? "text-copper" : "text-faint"
+                  }`}
+                >
+                  {sub.label}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
@@ -153,7 +184,7 @@ export function AppShell() {
 
       <footer className="mt-8 border-t border-rule pb-16">
         <p className="mx-auto w-full max-w-[1100px] px-4 py-6 font-mono text-[10px] leading-relaxed text-faint">
-          AgentHub Remote · reads published status only · the machine is never reachable from here
+          AgentHub · local plane over loopback on the machine · published status everywhere else
         </p>
       </footer>
 

@@ -7,13 +7,13 @@ import { isRefusal, useLocal } from "@/lib/local-bridge";
 export const Route = createFileRoute("/_authenticated/ask")({
   head: () => ({
     meta: [
-      { title: "Ask — AgentHub Remote" },
+      { title: "Ask — AgentHub" },
       {
         name: "description",
         content:
           "Put a question to the local brain against the indexed corpus, with sources and their distances.",
       },
-      { property: "og:title", content: "Ask — AgentHub Remote" },
+      { property: "og:title", content: "Ask — AgentHub" },
       {
         property: "og:description",
         content:
@@ -44,13 +44,33 @@ type AskResult = { answer?: string; model?: string; sources?: Source[] };
 
 const REFUSAL = /not in corpus|no relevant|not covered|cannot answer from the corpus/i;
 
+type GroupedSource = { name: string; best: number | undefined; passages: number };
+
+/** One row per file: its best (lowest) distance, and how many chunks matched. */
+function groupSources(sources: Source[]): GroupedSource[] {
+  const byName = new Map<string, GroupedSource>();
+  for (const source of sources) {
+    const name = source.file ?? source.path ?? "—";
+    const existing = byName.get(name);
+    if (!existing) {
+      byName.set(name, { name, best: source.distance, passages: 1 });
+      continue;
+    }
+    existing.passages += 1;
+    if (source.distance != null && (existing.best == null || source.distance < existing.best)) {
+      existing.best = source.distance;
+    }
+  }
+  return [...byName.values()].sort((a, b) => (a.best ?? Infinity) - (b.best ?? Infinity));
+}
+
 function distanceTone(distance: number | undefined) {
   if (distance == null) return { className: "text-faint", title: undefined as string | undefined };
   if (distance < 0.5) return { className: "text-ok", title: undefined };
   if (distance <= 0.7) return { className: "text-muted-foreground", title: undefined };
   return {
     className: "text-watch",
-    title: "weak match — the corpus may not contain this",
+    title: "weak match — the corpus may not cover this",
   };
 }
 
@@ -63,11 +83,22 @@ function AskPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [askedK, setAskedK] = useState<number>(8);
   const box = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     box.current?.focus();
   }, []);
+
+  // A number is honest; a spinner alone is decoration.
+  useEffect(() => {
+    if (!asking) return;
+    const started = Date.now();
+    setElapsed(0);
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [asking]);
 
   async function ask() {
     const q = question.trim();
@@ -76,8 +107,10 @@ function AskPage() {
     setSaved(null);
     setStatus("thinking on the machine…");
     setResult(null);
+    setAskedK(k);
     try {
-      const data = await local.post<AskResult>("/api/ask", { q, model, k });
+      // k is sent explicitly on every request — the machine does not assume a default.
+      const data = await local.post<AskResult>("/api/ask", { q, model, k: String(k) });
       setResult(data);
       setStatus(null);
     } catch (error) {
@@ -183,14 +216,26 @@ function AskPage() {
           </button>
         </div>
 
-        {status && <p className="mt-2 font-mono text-[10px] text-faint">{status}</p>}
+        {status && (
+          <div className="mt-2 space-y-1">
+            <p className="font-mono text-[10px] tabular-nums text-faint">
+              {status}
+              {asking && <span className="ml-2 text-muted-foreground">{elapsed}s</span>}
+            </p>
+            {asking && elapsed >= 20 && (
+              <p className="font-mono text-[10px] text-faint">
+                the 35B reasons before answering — this is normal
+              </p>
+            )}
+          </div>
+        )}
       </Panel>
 
       {result && (
         <Panel title="Answer">
           {refused ? (
             <>
-              <p className="whitespace-pre-wrap text-[14px] leading-[1.85] text-muted-foreground">
+              <p className="max-w-[72ch] whitespace-pre-wrap break-words text-[14px] leading-[1.85] text-muted-foreground">
                 {result.answer}
               </p>
               <p className="mt-3 font-mono text-[10px] leading-relaxed text-faint">
@@ -198,7 +243,7 @@ function AskPage() {
               </p>
             </>
           ) : (
-            <p className="whitespace-pre-wrap text-[15px] leading-[1.85] text-paper">
+            <p className="max-w-[72ch] whitespace-pre-wrap break-words text-[15px] leading-[1.85] text-paper">
               {result.answer}
             </p>
           )}
@@ -220,28 +265,37 @@ function AskPage() {
       {result?.sources && result.sources.length > 0 && (
         <Panel title="Sources">
           <ul>
-            {result.sources.map((source, index) => {
-              const tone = distanceTone(source.distance);
+            {groupSources(result.sources).map((source) => {
+              const tone = distanceTone(source.best);
               return (
                 <li
-                  key={`${source.path ?? source.file ?? "source"}-${index}`}
+                  key={source.name}
                   className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-rule py-2 first:border-t-0"
                 >
                   <span className="break-all font-mono text-[12px] text-paper">
-                    {source.file ?? source.path ?? "—"}
+                    {source.name}
+                    {source.passages > 1 && (
+                      <span className="ml-2 text-faint">{source.passages} passages</span>
+                    )}
                   </span>
                   <span
                     className={`font-mono text-[10px] tabular-nums ${tone.className}`}
                     title={tone.title}
                   >
-                    {source.distance != null ? source.distance.toFixed(3) : "—"}
+                    {source.best != null ? source.best.toFixed(3) : "—"}
                   </span>
                 </li>
               );
             })}
           </ul>
+          {result.sources.length < askedK && (
+            <p className="mt-3 font-mono text-[10px] text-faint">
+              {result.sources.length} of {askedK} requested
+            </p>
+          )}
         </Panel>
       )}
+
     </div>
   );
 }
