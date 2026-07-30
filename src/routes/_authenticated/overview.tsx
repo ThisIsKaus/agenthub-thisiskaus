@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
 import { Empty, FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
 import { MachineStatePanel } from "@/components/MachineStatePanel";
+import { AboutSystemBody } from "@/components/AboutSystemBody";
 import { useHubState, useRealtimeState } from "@/hooks/use-realtime-state";
 import { changesSince, snapshotOf, useLastSeen } from "@/lib/since";
 import { useLocal, isRefusal } from "@/lib/local-bridge";
@@ -39,7 +40,6 @@ type Cell = {
   tone?: "paper" | "ok" | "watch" | "risk" | "copper";
 };
 
-type BenchRow = { role?: string; id?: string; tps?: number; gib?: number };
 type DigestItem = { flag?: string; src?: string; cls?: string; ent?: string; sen?: string; one?: string };
 
 function FigureCell({ label, value, detail, tone = "paper" }: Cell) {
@@ -97,12 +97,6 @@ function OverviewPage() {
   const mtd = Number(spend.mtd ?? 0);
 
   // Local plane only: bench figures and digest detail never come from Supabase.
-  const { data: localModels } = useQuery({
-    queryKey: ["local", "models"],
-    enabled: live,
-    refetchInterval: 60_000,
-    queryFn: () => local.get<{ bench?: BenchRow[] }>("/api/models"),
-  });
   const { data: localDigest } = useQuery({
     queryKey: ["local", "digest"],
     enabled: live,
@@ -110,7 +104,6 @@ function OverviewPage() {
     queryFn: () => local.get<{ date?: string; items?: DigestItem[] }>("/api/digest"),
   });
 
-  const bench = localModels?.bench?.find((row) => (row.role ?? "").includes("quality"));
   const machine = live ? (local.machine ?? state?.machine ?? null) : (state?.machine ?? null);
 
   const modelNames = models
@@ -191,7 +184,7 @@ function OverviewPage() {
         </div>
         {isPending ? (
           <div className="grid grid-cols-2 gap-px sm:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
+            {Array.from({ length: 5 }).map((_, index) => (
               <FigureSkeleton key={index} />
             ))}
           </div>
@@ -246,6 +239,15 @@ function OverviewPage() {
         tone={healthTone}
         live={live}
       />
+
+      <details className="border border-rule bg-panel">
+        <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.14em] text-faint hover:text-copper">
+          About this system
+        </summary>
+        <div className="border-t border-rule px-5 pt-6">
+          <AboutSystemBody />
+        </div>
+      </details>
 
       <p className="font-mono text-[10px] text-faint">
         {Number(services.aliases ?? 0)} router aliases · {provenance} · {formatStamp(state?.updated_at)}
