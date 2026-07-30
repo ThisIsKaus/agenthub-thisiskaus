@@ -1,0 +1,14 @@
+{"id": "q01", "q": "what are the AgentHub autonomy tiers and what requires approval", "sources": ["policies.md", "01-architecture.md"], "must_any": ["T2", "approval"], "answerable": true}
+{"id": "q02", "q": "what did the AgentHub council reject in round four", "sources": ["02-decision-log.md"], "must_any": ["framework", "runner", "credential"], "answerable": true}
+{"id": "q03", "q": "how fast is the AgentHub local quality brain and how much memory does it use", "sources": ["01-architecture.md", "00-build-state.md"], "must_any": ["114", "19", "t/s"], "answerable": true}
+{"id": "q04", "q": "what is the AgentHub WIP limit for active products", "sources": ["policies.md", "02-decision-log.md", "01-architecture.md", "00-build-state.md"], "must_any": ["2", "two"], "answerable": true}
+{"id": "q05", "q": "what does AgentHub sensitivity class S3 cover and where can it run", "sources": ["policies.md", "01-architecture.md", "07-operators-manual.md"], "must_any": ["local"], "answerable": true}
+{"id": "q06", "q": "what is AgentHub's only sanctioned path to ship a product to production", "sources": ["01-architecture.md", "02-decision-log.md", "07-operators-manual.md", "policies.md"], "must_any": ["CI", "Actions"], "answerable": true}
+{"id": "q07", "q": "which Microsoft Graph authority does AgentHub use for the personal account", "sources": ["policies.md"], "must_any": ["consumers"], "answerable": true}
+{"id": "q08", "q": "what are the AgentHub build phases and what gate closes each one", "sources": ["06-execution-map.md", "00-build-state.md"], "must_any": ["gate"], "answerable": true}
+{"id": "q09", "q": "what does the AgentHub runbook say to do at the monthly review", "sources": ["04-runbook.md", "07-operators-manual.md"], "must_any": ["registry", "eval", "WIP"], "answerable": true}
+{"id": "q10", "q": "what does the AgentHub nightly job do when the machine is on battery power", "sources": ["01-architecture.md", "04-runbook.md", "07-operators-manual.md"], "must_any": ["AC", "skip"], "answerable": true}
+{"id": "q11", "q": "what is the pricing for AgentCraft", "sources": ["SENIOR-COUNCIL-REPORT.md", "PRODUCT-ARCHITECTURE.md"], "must_any": ["149", "99", "9999"], "answerable": true}
+{"id": "q12", "q": "what is MetaScan D365 and what problem does it solve", "sources": ["CUSTOMER.md", "PRODUCT-ARCHITECTURE.md", "README.md", "01-architecture.md"], "must_any": ["licen", "D365", "Dynamics"], "answerable": true}
+{"id": "q13", "q": "what were the closing arguments in the Nuremberg trials", "sources": [], "must_any": [], "answerable": false}
+{"id": "q14", "q": "what is the airspeed velocity of an unladen swallow", "sources": [], "must_any": [], "answerable": false}

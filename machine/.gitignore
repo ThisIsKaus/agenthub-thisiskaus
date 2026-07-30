@@ -16,3 +16,7 @@ report/index.html
 report/state-prev.json
 report/state-history.jsonl
 *.bak
+
+# Golden eval sets are the learning artefact, not logs — always tracked
+!evals/triage_set.jsonl
+!evals/retrieval_set.jsonl
