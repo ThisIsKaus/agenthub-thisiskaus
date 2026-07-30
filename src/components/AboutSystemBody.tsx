@@ -41,14 +41,6 @@ function Dot({ tone }: { tone: "ok" | "watch" | "risk" | "faint" }) {
   return <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${bg}`} />;
 }
 
-function StatePill({ tone, label, value }: { tone: "ok" | "watch" | "risk" | "faint"; label: string; value: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 border border-rule px-3 py-1.5 font-mono text-[11px] text-muted-foreground">
-      <Dot tone={tone} />
-      {label} <b className="font-medium text-paper">{value}</b>
-    </span>
-  );
-}
 
 function Fig({ n, unit, label, detail }: { n: string; unit?: string; label: string; detail: string }) {
   const missing = n === "—";
@@ -134,17 +126,11 @@ const PHASES: [string, string, string, string][] = [
 ];
 
 export function AboutSystemBody() {
-  const { data, provenance } = useHubState();
+  const { data } = useHubState();
 
   const services = data?.services ?? {};
-  const corpus = data?.corpus ?? {};
-  const spend = data?.spend ?? {};
-  const factory = data?.factory ?? {};
-  const health = data?.health ?? {};
-  const models = (data?.models ?? []) as { role?: string; id?: string; tps?: number; gib?: number }[];
 
   const stamp = formatStamp(data?.updated_at);
-  const num = (v: unknown) => (typeof v === "number" ? v.toLocaleString() : "—");
 
   return (
     <div className="pb-4">
@@ -166,24 +152,6 @@ export function AboutSystemBody() {
               ["Nothing connects inward.", "No inbound port; the firewall blocks all incoming traffic."],
               ["Status and counts only.", "Never document text, file paths, email subjects or personal data."],
             ]}
-          />
-        </div>
-      </Section>
-
-      <Section title="Standing" note={`published ${stamp}`} lede="Measured on the machine, not estimated.">
-        <div className="grid grid-cols-2 gap-px border border-rule bg-rule sm:grid-cols-4">
-          <Fig n={num(corpus.chunks)} label="Corpus chunks" detail={`${num(corpus.documents)} documents indexed`} />
-          <Fig
-            n={typeof spend.mtd === "number" ? `$${spend.mtd.toFixed(2)}` : "—"}
-            label="Metered, month to date"
-            detail={`${num(spend.requests)} logged requests`}
-          />
-          <Fig n={String(services.aliases ?? "—")} label="Router aliases" detail="local and cloud lanes" />
-          <Fig
-            n={String(factory.wip ?? "—")}
-            unit={`/ ${factory.limit ?? 2}`}
-            label="Work in progress"
-            detail="capped in software, not in intent"
           />
         </div>
       </Section>
@@ -260,51 +228,6 @@ export function AboutSystemBody() {
             requires a human decision
           </span>
         </div>
-      </Section>
-
-      <Section
-        title="Measured performance"
-        note="pinned in models.lock.yaml"
-        lede="Benchmarked through the same endpoint the system actually calls, so these are operating figures rather than laboratory ones."
-      >
-        {models.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr>
-                  {["Model", "Role", "Gen t/s", "Resident"].map((h, i) => (
-                    <th
-                      key={h}
-                      className={`border-b border-rule pb-3 pr-3 font-mono text-[10px] uppercase tracking-[0.1em] text-faint ${
-                        i > 1 ? "text-right" : "text-left"
-                      }`}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {models.map((m, i) => (
-                  <tr key={`${m.id ?? i}`}>
-                    <td className="border-b border-rule py-3 pr-3 text-paper">{m.id ?? "—"}</td>
-                    <td className="border-b border-rule py-3 pr-3 text-[13px] text-muted-foreground">{m.role ?? "—"}</td>
-                    <td className="border-b border-rule py-3 text-right font-mono tabular-nums text-paper">
-                      {typeof m.tps === "number" ? m.tps.toFixed(1) : "—"}
-                    </td>
-                    <td className="border-b border-rule py-3 text-right font-mono tabular-nums text-muted-foreground">
-                      {typeof m.gib === "number" ? `${m.gib.toFixed(2)} GiB` : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-[13px] text-muted-foreground">
-            No published bench yet. The full roster and unload controls live on the Models tab, on the machine.
-          </p>
-        )}
       </Section>
 
       <Section title="Posture" note="the rules that don't bend">
