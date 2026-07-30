@@ -1,0 +1,55 @@
+{
+  "wip_limit": 2,
+  "projects": [
+    {
+      "name": "metascan-d365",
+      "entity": "agenticality",
+      "stage": "build",
+      "status": "parked",
+      "repo": "",
+      "deploy_target": "azure-marketplace",
+      "sensitivity": "S1p",
+      "park_when": "no paying design partner by 2026-10-01"
+    },
+    {
+      "name": "my-financial-compass",
+      "entity": "agenticality",
+      "stage": "build",
+      "status": "parked",
+      "repo": "",
+      "deploy_target": "supabase",
+      "sensitivity": "S1p",
+      "park_when": "set criteria"
+    },
+    {
+      "name": "veritrail",
+      "entity": "agenticality",
+      "stage": "intake",
+      "status": "parked",
+      "repo": "",
+      "deploy_target": "tbd",
+      "sensitivity": "S1p",
+      "park_when": "set criteria"
+    },
+    {
+      "name": "nxi-placeholder",
+      "entity": "nxi",
+      "stage": "intake",
+      "status": "parked",
+      "repo": "",
+      "deploy_target": "tbd",
+      "sensitivity": "S1p",
+      "park_when": "set criteria"
+    },
+    {
+      "name": "metascan-optimizer",
+      "entity": "agenticality",
+      "stage": "operate",
+      "status": "active",
+      "repo": "~/Factory/metascan-optimizer",
+      "deploy_target": "tbd",
+      "sensitivity": "S1p",
+      "park_when": "set criteria"
+    }
+  ]
+}

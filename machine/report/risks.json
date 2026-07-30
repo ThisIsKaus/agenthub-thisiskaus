@@ -1,0 +1,50 @@
+[
+  {
+    "level": "high",
+    "title": "Local serving may not survive a restart unattended",
+    "detail": "If LM Studio does not start at login, every overnight digest fills with error strings and the failure stays silent until someone looks. This is the only remaining single point of silent failure.",
+    "action": "Enable auto-start in LM Studio, reboot, then run: hub"
+  },
+  {
+    "level": "high",
+    "title": "Knowledge base holds almost nothing",
+    "detail": "Five chunks across three policy files. The retrieval engine, embeddings and ingest pipeline all work, but the corpus is a thimble. Until it holds the build docs, proposals, client engagements and past decisions, the system can classify but cannot inform.",
+    "action": "Ingest the document corpus — the defining task of the next phase"
+  },
+  {
+    "level": "med",
+    "title": "Classification patch is unverified",
+    "detail": "The enum reorder and worked examples were applied but the eval has not been re-scored against the stated gate of class 60 / entity 80 / sensitivity 80 at injection 15/15.",
+    "action": "Run: eval — then keep or revert on the number, not the feeling"
+  },
+  {
+    "level": "med",
+    "title": "Two cloud aliases renamed but not re-called",
+    "detail": "All four aliases passed before the rename. Only the model list has been checked since, which proves the config parses, not that the models resolve.",
+    "action": "Call all four aliases and confirm each returns OK"
+  },
+  {
+    "level": "med",
+    "title": "Rebuild path lives outside the repository",
+    "detail": "The four-hour rebuild claim rests on documents held in a chat window rather than in version control, so it has never been genuinely testable.",
+    "action": "Move all nine documents into ~/AgentHub/docs/ and commit"
+  },
+  {
+    "level": "med",
+    "title": "Only two directories have a second copy",
+    "detail": "Offsite backup covers the hub and the factory. Everything else on a single machine has no redundancy at all.",
+    "action": "Attach an external drive and enable Time Machine"
+  },
+  {
+    "level": "low",
+    "title": "Subscription limits are tighter than the workload assumes",
+    "detail": "The plan is Pro rather than Max, and factory-cadence agentic coding is the pattern that finds its ceiling.",
+    "action": "Overflow to the local 27B lane, or a logged deliberate metered session"
+  },
+  {
+    "level": "low",
+    "title": "Housekeeping",
+    "detail": "A stray .DS_Store is tracked at the repository root; CI warns about a deprecated Node runtime; one library call in the ingest script is deprecated.",
+    "action": "Fold into the next monthly window"
+  }
+]

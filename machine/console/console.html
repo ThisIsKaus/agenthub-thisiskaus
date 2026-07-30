@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentHub Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0B0B0D;--panel:#141416;--panel2:#191919;--rule:#26262A;--copper:#C8744A;
+        --paper:#ECEBE8;--muted:#8E8E96;--faint:#5E5E66;--ok:#7FA88C;--watch:#C9A227;--risk:#B5544A;
+        --serif:"Instrument Serif",Georgia,serif;--sans:"Inter",-apple-system,sans-serif;
+        --mono:"Geist Mono",ui-monospace,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--sans);font-weight:300;
+       font-size:14.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+  a{color:var(--copper)}
+  header{border-bottom:1px solid var(--rule);padding:18px 28px;display:flex;align-items:center;
+         gap:20px;flex-wrap:wrap;position:sticky;top:0;background:var(--ink);z-index:20}
+  header h1{font-family:var(--serif);font-weight:400;font-size:25px;margin:0;white-space:nowrap}
+  header h1 em{font-style:italic;color:var(--copper)}
+  #strip{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);border-radius:2px;
+        padding:4px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .pill b{color:var(--paper);font-weight:500}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--faint)}
+  .dot.ok{background:var(--ok)}.dot.watch{background:var(--watch)}.dot.risk{background:var(--risk)}
+  nav{display:flex;gap:1px;padding:0 28px;border-bottom:1px solid var(--rule);flex-wrap:wrap;
+      position:sticky;top:59px;background:var(--ink);z-index:19}
+  nav button{background:none;border:none;border-bottom:2px solid transparent;padding:11px 13px;
+             color:var(--muted);cursor:pointer;font-size:13.5px}
+  nav button:hover{color:var(--paper)}
+  nav button.on{color:var(--paper);border-bottom-color:var(--copper)}
+  main{padding:30px 28px 90px;max-width:1240px}
+  .tab{display:none}.tab.on{display:block}
+  h2{font-family:var(--serif);font-weight:400;font-size:25px;margin:0 0 5px}
+  h3{font-family:var(--sans);font-weight:500;font-size:13.5px;margin:26px 0 12px;color:var(--paper)}
+  .lede{color:var(--muted);margin:0 0 22px;max-width:72ch}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:1px;
+        background:var(--rule);border:1px solid var(--rule);margin-bottom:28px}
+  .cell{background:var(--panel);padding:18px}
+  .cell .n{font-family:var(--serif);font-size:32px;line-height:1}
+  .cell .n span{font-size:14px;color:var(--muted)}
+  .cell .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+           color:var(--muted);margin-top:8px}
+  .cell .e{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:4px;word-break:break-word}
+  .btn{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:8px 13px;
+       cursor:pointer;color:var(--paper);white-space:nowrap}
+  .btn:hover{border-color:var(--copper);color:var(--copper)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.primary{border-color:var(--copper);color:var(--copper)}
+  .btn.danger:hover{border-color:var(--risk);color:var(--risk)}
+  .btn small{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-left:6px}
+  .btnrow{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-family:var(--mono);font-weight:500;font-size:10px;letter-spacing:.1em;
+     text-transform:uppercase;color:var(--faint);padding:0 12px 10px 0;border-bottom:1px solid var(--rule)}
+  td{padding:11px 12px 11px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  td.num,th.num{font-family:var(--mono);text-align:right;padding-right:0}
+  .needs{border-left:2px solid var(--copper);padding-left:20px;margin:0 0 26px;list-style:none}
+  .needs li{display:grid;grid-template-columns:70px 1fr;gap:12px;padding:11px 0;
+            border-bottom:1px solid var(--rule);align-items:baseline}
+  .needs li:last-child{border-bottom:none}
+  .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+       color:var(--muted);border:1px solid var(--rule);border-radius:2px;padding:3px 5px;text-align:center}
+  .tag.flag{color:var(--watch);border-color:rgba(201,162,39,.4)}
+  .tag.ok{color:var(--ok);border-color:rgba(127,168,140,.35)}
+  .tag.risk{color:var(--risk);border-color:rgba(181,84,74,.4)}
+  .meta{grid-column:2;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+  .split{display:grid;grid-template-columns:290px 1fr;gap:22px;align-items:start}
+  .list{border:1px solid var(--rule);background:var(--panel);max-height:62vh;overflow:auto}
+  .list button{display:block;width:100%;text-align:left;background:none;border:none;
+               border-bottom:1px solid var(--rule);padding:9px 13px;cursor:pointer;color:var(--muted)}
+  .list button:hover{color:var(--paper);background:var(--panel2)}
+  .list button.on{color:var(--copper)}
+  .fname{font-size:13px}.fmeta{font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .pane{border:1px solid var(--rule);background:var(--panel);padding:22px;min-height:320px;
+        max-height:62vh;overflow:auto}
+  .pane h1,.pane h2,.pane h3{font-family:var(--sans);font-weight:500;letter-spacing:0}
+  .pane h1{font-size:19px}.pane h2{font-size:16px;margin-top:18px}.pane h3{font-size:14px}
+  .pane table{margin:12px 0}.pane th,.pane td{border-bottom:1px solid var(--rule);padding:7px 9px 7px 0}
+  .pane code,.pane pre{font-family:var(--mono);font-size:12px;background:var(--panel2);
+                       border:1px solid var(--rule);border-radius:2px}
+  .pane code{padding:1px 5px}
+  .pane pre{padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+  textarea,input[type=text]{width:100%;background:var(--panel);border:1px solid var(--rule);
+                            border-radius:2px;padding:11px;resize:vertical}
+  textarea{font-family:var(--mono);font-size:12.5px;line-height:1.55}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--copper)}
+  select{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:7px 9px;
+         font-size:12.5px}
+  pre.out{font-family:var(--mono);font-size:11.5px;background:var(--panel);border:1px solid var(--rule);
+          padding:14px;max-height:38vh;overflow:auto;white-space:pre-wrap;word-break:break-word;
+          color:var(--muted);margin-top:16px}
+  .answer{border:1px solid var(--rule);background:var(--panel);padding:22px;margin-top:18px;white-space:pre-wrap}
+  .sources{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:14px;line-height:1.9}
+  .drop{border:1px dashed var(--rule);border-radius:2px;padding:22px;text-align:center;
+        color:var(--muted);cursor:pointer;margin-top:14px}
+  .drop.hot{border-color:var(--copper);color:var(--copper)}
+  .note{font-family:var(--mono);font-size:11px;color:var(--copper);margin-top:9px;min-height:15px}
+  .muted{color:var(--muted)}.mono{font-family:var(--mono);font-size:12px}
+  .crumb{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-bottom:10px;word-break:break-all}
+  .bar{height:7px;background:var(--copper);border-radius:1px;min-width:1px}
+  .correct{background:var(--panel2);border:1px solid var(--rule);padding:14px;margin-top:9px;
+           display:none;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;align-items:end}
+  .correct.on{display:grid}
+  .correct label{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+                 color:var(--faint);display:block;margin-bottom:4px}
+  .since{list-style:none;padding:0;margin:0 0 26px;columns:2;column-gap:34px}
+  .since li{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding:5px 0;
+            border-bottom:1px solid var(--rule);break-inside:avoid}
+  @media (max-width:960px){.split{grid-template-columns:1fr}.since{columns:1}
+    main{padding:24px 16px 70px}header{padding:14px 16px}nav{padding:0 16px;top:55px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>AgentHub <em>Console</em></h1>
+  <div id="strip"><span class="pill"><span class="dot"></span>loading…</span></div>
+</header>
+<nav id="nav"></nav>
+<main>
+
+<section class="tab on" id="t-overview">
+  <h2>Needs you</h2>
+  <p class="lede">From the latest intake. Items classified S1c, S2 or S3 show their class only.</p>
+  <ul class="needs" id="needs"></ul>
+  <h2>Since last report</h2>
+  <ul class="since" id="deltas"></ul>
+  <h2>Standing</h2>
+  <div class="grid" id="figs"></div>
+  <h3>Actions</h3>
+  <div class="btnrow" id="cmds"></div>
+  <pre class="out" id="out">No job run yet.</pre>
+</section>
+
+<section class="tab" id="t-ask">
+  <h2>Ask</h2>
+  <p class="lede">Searches your knowledge base, then answers on the lane you choose. Local lanes cost nothing.</p>
+  <textarea id="q" rows="3" placeholder="Ask anything"></textarea>
+  <div class="btnrow" style="margin-top:11px">
+    <select id="lane">
+      <option value="local-brain">Local brain · 35B · $0</option>
+      <option value="local-coder">Local coder · 27B · $0</option>
+      <option value="cloud-work">Cloud work · Sonnet · metered</option>
+      <option value="cloud-deep">Cloud deep · Opus · metered</option>
+    </select>
+    <select id="topk"><option value="5">5 sources</option><option value="8">8 sources</option><option value="12">12 sources</option></select>
+    <button class="btn primary" id="askBtn">Ask</button>
+    <button class="btn" id="saveBtn" disabled>Save to drafts</button>
+  </div>
+  <div class="answer" id="answer">Answers appear here.</div>
+  <div class="sources" id="sources"></div>
+</section>
+
+<section class="tab" id="t-files">
+  <h2>Files</h2>
+  <p class="lede">Browse, edit and organise. Executable code is read-only from here by design; deletion raises the native approval dialog.</p>
+  <div class="btnrow" id="rootbar"></div>
+  <div class="crumb" id="crumb"></div>
+  <div class="split">
+    <div class="list" id="tree"></div>
+    <div>
+      <div class="btnrow">
+        <button class="btn" id="editBtn" disabled>Edit</button>
+        <button class="btn" id="saveFileBtn" disabled>Save</button>
+        <button class="btn" id="newFileBtn">New file</button>
+        <button class="btn" id="newDirBtn">New folder</button>
+        <button class="btn danger" id="delBtn" disabled>Delete</button>
+      </div>
+      <div class="pane" id="filePane"><span class="muted">Select a file.</span></div>
+      <div class="drop" id="drop">Drop files here to upload into this folder
+        <input type="file" id="fileInput" hidden multiple></div>
+      <div class="note" id="fileNote"></div>
+    </div>
+  </div>
+</section>
+
+<section class="tab" id="t-knowledge">
+  <h2>Knowledge base</h2>
+  <p class="lede">What the system has actually read. Forgetting a source raises the approval dialog.</p>
+  <div class="grid" id="kbfigs"></div>
+  <div class="btnrow">
+    <button class="btn primary" data-cmd="ingest">Ingest documents</button>
+    <button class="btn" id="kbRefresh">Refresh</button>
+  </div>
+  <table><thead><tr><th>Source</th><th class="num">Chunks</th><th class="num">Action</th></tr></thead>
+    <tbody id="kbrows"></tbody></table>
+</section>
+
+<section class="tab" id="t-models">
+  <h2>Models</h2>
+  <p class="lede">Resident set, measured performance, and the router aliases that point at them. Every mode keeps the embedder loaded — the knowledge base depends on it.</p>
+  <div class="btnrow">
+    <button class="btn primary" data-mode="standard">Standard</button>
+    <button class="btn" data-mode="coding">Coding</button>
+    <button class="btn" data-mode="tools">Tools</button>
+    <button class="btn" data-mode="light">Light</button>
+    <button class="btn" id="modelsRefresh">Refresh</button>
+  </div>
+  <h3>Resident</h3>
+  <table><thead><tr><th>Model</th><th class="num">Size</th><th class="num">Action</th></tr></thead>
+    <tbody id="residentRows"></tbody></table>
+  <h3>Available on disk</h3>
+  <div class="btnrow" id="availRow"></div>
+  <h3>Measured performance</h3>
+  <table><thead><tr><th>Role</th><th>Model</th><th class="num">Gen t/s</th><th class="num">Resident</th></tr></thead>
+    <tbody id="benchRows"></tbody></table>
+  <h3>Router aliases</h3>
+  <div class="btnrow" id="aliasRow"></div>
+</section>
+
+<section class="tab" id="t-prompts">
+  <h2>Prompts</h2>
+  <p class="lede">The canon and the triage system prompt. Canon edits are committed to git automatically; a prompt change is unverified until you re-score.</p>
+  <div class="split">
+    <div class="list" id="promptList"></div>
+    <div>
+      <div class="btnrow">
+        <button class="btn primary" id="promptSave" disabled>Save</button>
+        <button class="btn" data-cmd="eval">Score triage</button>
+      </div>
+      <textarea id="promptBody" rows="22" placeholder="Select a prompt"></textarea>
+      <div class="note" id="promptNote"></div>
+    </div>
+  </div>
+</section>
+
+<section class="tab" id="t-digest">
+  <h2>Digest</h2>
+  <p class="lede">Every triaged item. When a classification is wrong, correct it — the correction becomes a real golden item in the eval set, which is how this system learns.</p>
+  <div class="btnrow">
+    <select id="digestDate"></select>
+    <button class="btn" data-cmd="intake">Run intake</button>
+    <button class="btn" data-cmd="eval">Score triage</button>
+  </div>
+  <div id="digestItems"></div>
+</section>
+
+<section class="tab" id="t-evals">
+  <h2>Evaluation</h2>
+  <p class="lede">Injection detection must read 100% — it is the safety axis, and no model is eligible as the default below it.</p>
+  <div class="grid" id="evalFigs"></div>
+  <table><thead><tr><th>Date</th><th>Model</th><th class="num">Class</th><th class="num">Entity</th>
+    <th class="num">Sensitivity</th><th class="num">Injection</th></tr></thead>
+    <tbody id="evalRows"></tbody></table>
+</section>
+
+<section class="tab" id="t-factory">
+  <h2>Factory</h2>
+  <p class="lede">Work in progress is capped in software. Parking is honest and reversible.</p>
+  <div class="btnrow" id="factoryBar"></div>
+  <table><thead><tr><th>Product</th><th>Entity</th><th>Stage</th><th>Status</th><th class="num">Action</th></tr></thead>
+    <tbody id="factoryRows"></tbody></table>
+</section>
+
+<section class="tab" id="t-cost">
+  <h2>Cost</h2>
+  <p class="lede">Only the metered lane appears here. Local inference and prepaid subscriptions carry the daily load at zero marginal cost.</p>
+  <div class="grid" id="costFigs"></div>
+  <h3>By model</h3>
+  <table><thead><tr><th>Model</th><th class="num">Calls</th><th class="num">Spend</th></tr></thead>
+    <tbody id="costModels"></tbody></table>
+  <h3>By day</h3>
+  <table><tbody id="costDays"></tbody></table>
+</section>
+
+<section class="tab" id="t-memory">
+  <h2>Memory</h2>
+  <p class="lede">Every question, answer and correction, searchable across sessions. Nightly, the day is distilled into a note that enters the knowledge base — so the system remembers not just your documents but your reasoning.</p>
+  <div class="grid" id="memFigs"></div>
+  <div class="btnrow">
+    <input type="text" id="memQ" placeholder="search past sessions" style="max-width:420px">
+    <button class="btn primary" id="memSearch">Search</button>
+    <button class="btn" id="memRecent">Recent</button>
+    <button class="btn" data-cmd="summarise">Write memory note</button>
+  </div>
+  <div id="memRows"></div>
+</section>
+
+<section class="tab" id="t-health">
+  <h2>Health</h2>
+  <p class="lede">The self-test exercises every component end to end. It runs nightly and on demand.</p>
+  <div class="btnrow">
+    <button class="btn primary" data-cmd="verify">Run self-test</button>
+    <button class="btn" data-cmd="repair">Repair to known-good</button>
+    <button class="btn" id="healthRefresh">Refresh</button>
+  </div>
+  <div class="note" id="healthSummary"></div>
+  <table><thead><tr><th>Group</th><th>Check</th><th>Result</th><th>Detail</th></tr></thead>
+    <tbody id="healthRows"></tbody></table>
+</section>
+
+</main>
+<script>
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const money=n=>n>=0.01?"$"+n.toFixed(2):"$"+n.toFixed(4);
+const post=(u,o)=>{const f=new FormData();for(const k in o)f.append(k,o[k]);return fetch(u,{method:"POST",body:f})};
+const get=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(await r.text());return r.json()};
+let lastAnswer=null, curFile=null, curDir=null, editing=false, curPrompt=null;
+
+const TABS=[["overview","Overview"],["ask","Ask"],["digest","Digest"],["files","Files"],
+            ["knowledge","Knowledge"],["models","Models"],["prompts","Prompts"],["evals","Evals"],
+            ["factory","Factory"],["cost","Cost"],["memory","Memory"],["health","Health"]];
+$("#nav").innerHTML=TABS.map(([k,l],i)=>'<button class="'+(i===0?"on":"")+'" data-tab="'+k+'">'+l+'</button>').join("");
+$$("#nav button").forEach(b=>b.onclick=()=>{
+  $$("#nav button").forEach(x=>x.classList.remove("on"));
+  $$(".tab").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); $("#t-"+b.dataset.tab).classList.add("on");
+  const load={knowledge:loadKB,models:loadModels,prompts:loadPrompts,digest:loadDigest,
+              evals:loadEvals,factory:loadFactory,cost:loadCost,health:loadHealth,memory:()=>loadMemory(""),files:()=>loadTree(curDir)};
+  if(load[b.dataset.tab])load[b.dataset.tab]();
+});
+
+// ---------- jobs ----------
+async function runKey(key){
+  $$("[data-cmd]").forEach(b=>b.disabled=true);
+  $("#out").textContent="starting "+key+"…\n";
+  $("#t-overview").classList.contains("on")||$("#out").scrollIntoView({block:"nearest"});
+  try{
+    const r=await post("/api/run",{key});
+    if(!r.ok){$("#out").textContent="refused: "+(await r.text());return}
+    await pollJob((await r.json()).job);
+  }finally{$$("[data-cmd]").forEach(b=>b.disabled=false);loadState()}
+}
+async function pollJob(id){
+  while(true){
+    await new Promise(z=>setTimeout(z,900));
+    const j=await get("/api/job?id="+id);
+    $("#out").textContent=j.out||"(no output yet)";
+    $("#out").scrollTop=$("#out").scrollHeight;
+    if(!j.running){$("#out").textContent+="\n— finished, exit "+j.code;return j}
+  }
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-cmd]");if(b)runKey(b.dataset.cmd)});
+
+// ---------- state ----------
+async function loadState(){
+  let s;try{s=await get("/api/state")}catch{
+    $("#strip").innerHTML='<span class="pill"><span class="dot risk"></span>console offline</span>';return}
+  const pill=(c,l,v)=>'<span class="pill"><span class="dot '+c+'"></span>'+esc(l)+' <b>'+esc(v)+'</b></span>';
+  $("#strip").innerHTML=[
+    pill(s.lms?"ok":"risk","Serving",s.lms?(s.resident||[]).length+" resident":"down"),
+    pill(s.router?"ok":"risk","Router",s.router?s.aliases+" aliases":"down"),
+    pill(s.doctor_ok?"ok":"watch","Doctor",s.doctor_ok?"OK":"check"),
+    pill(s.spend.mtd>=100?"watch":"ok","MTD",money(s.spend.mtd)),
+    pill(s.factory.wip<=s.factory.limit?"ok":"risk","WIP",s.factory.wip+"/"+s.factory.limit)].join("");
+  const dg=s.digest||{};
+  $("#needs").innerHTML=(dg.needs||[]).map(r=>
+    '<li><span class="tag '+(r.flag?"flag":"")+'">'+esc(r.flag?"FLAG":r.cls)+'</span><span>'+
+    (esc(r.one)||"(no summary)")+'</span><span class="meta">'+esc(r.src)+' · '+esc(r.ent)+' · '+esc(r.sen)+
+    '</span></li>').join("")||'<li><span class="tag ok">CLEAR</span><span>Nothing needs a decision today.</span></li>';
+  $("#deltas").innerHTML=(s.deltas||[]).map(d=>"<li>"+esc(d)+"</li>").join("");
+  const cell=(n,l,e)=>'<div class="cell"><div class="n">'+n+'</div><div class="l">'+esc(l)+
+                      '</div><div class="e">'+esc(e)+'</div></div>';
+  $("#figs").innerHTML=[
+    cell(money(s.spend.mtd),"Spend this month",s.spend.requests+" metered calls"),
+    cell((s.resident||[]).length,"Resident models",(s.resident||[]).join(", ")||"none"),
+    cell(s.factory.wip+'<span>/'+s.factory.limit+'</span>',"Active products",
+         (s.factory.active||[]).map(p=>p.name).join(", ")||"none"),
+    cell(s.approvals.today,"Approvals today","all logged"),
+    cell(dg.items==null?"—":dg.items,"Items triaged",(dg.flags||0)+" flagged · "+(dg.date||"no digest")),
+    cell(s.disk_free_gb+'<span>GB</span>',"Disk free",(s.jobs||[]).length+" background jobs")].join("");
+  $("#cmds").innerHTML=(s.commands||[]).map(c=>
+    '<button class="btn" data-cmd="'+esc(c.key)+'">'+esc(c.label)+'<small>'+esc(c.tier)+'</small></button>').join("");
+}
+
+// ---------- ask ----------
+$("#askBtn").onclick=async()=>{
+  const q=$("#q").value.trim();if(!q)return;
+  $("#askBtn").disabled=true;$("#answer").textContent="thinking…";$("#sources").textContent="";
+  try{
+    const d=await(await post("/api/ask",{q,model:$("#lane").value,k:$("#topk").value})).json();
+    $("#answer").textContent=d.answer;
+    $("#sources").innerHTML=(d.sources||[]).map(x=>"· "+esc(x.file)+" <span class='muted'>("+x.distance+")</span>").join("<br>");
+    lastAnswer={title:q.slice(0,70),body:d.answer};$("#saveBtn").disabled=false;
+  }catch(e){$("#answer").textContent="error: "+e}
+  finally{$("#askBtn").disabled=false}
+};
+$("#saveBtn").onclick=async()=>{
+  if(!lastAnswer)return;
+  const d=await(await post("/api/draft",lastAnswer)).json();
+  $("#sources").innerHTML+="<br><span style='color:var(--copper)'>saved to drafts as "+esc(d.name)+"</span>";
+};
+
+// ---------- files ----------
+async function loadRoots(){
+  const d=await get("/api/roots");
+  $("#rootbar").innerHTML=d.roots.map(r=>'<button class="btn" data-root="'+esc(r.path)+'">'+esc(r.name)+'</button>').join("");
+  $$("[data-root]").forEach(b=>b.onclick=()=>loadTree(b.dataset.root));
+  if(!curDir&&d.roots.length)loadTree(d.roots[0].path);
+}
+async function loadTree(path){
+  curDir=path||curDir;
+  let d;try{d=await get("/api/tree?path="+encodeURIComponent(curDir||""))}catch(e){$("#tree").innerHTML='<button class="muted">'+esc(e.message)+'</button>';return}
+  curDir=d.root;$("#crumb").textContent=d.root;
+  let html="";
+  if(d.parent)html+='<button data-dir="'+esc(d.parent)+'"><div class="fname">‹ up</div></button>';
+  html+=d.dirs.map(x=>'<button data-dir="'+esc(x.path)+'"><div class="fname">'+esc(x.name)+'/</div></button>').join("");
+  html+=d.files.map(x=>'<button data-file="'+esc(x.path)+'"><div class="fname">'+esc(x.name)+
+        '</div><div class="fmeta">'+esc(x.modified)+' · '+x.size+' B'+(x.editable?"":" · read-only")+'</div></button>').join("");
+  $("#tree").innerHTML=html||'<button class="muted">empty</button>';
+  $$("[data-dir]").forEach(b=>b.onclick=()=>loadTree(b.dataset.dir));
+  $$("[data-file]").forEach(b=>b.onclick=()=>openFile(b.dataset.file,b));
+}
+async function openFile(path,btn){
+  $$("[data-file]").forEach(x=>x.classList.remove("on"));if(btn)btn.classList.add("on");
+  editing=false;
+  const d=await get("/api/file?path="+encodeURIComponent(path));
+  curFile=d;$("#filePane").innerHTML=d.html;
+  $("#editBtn").disabled=!d.editable;$("#saveFileBtn").disabled=true;$("#delBtn").disabled=false;
+  $("#fileNote").textContent=d.editable?"":"read-only from the console";
+}
+$("#editBtn").onclick=()=>{
+  if(!curFile)return;editing=true;
+  $("#filePane").innerHTML='<textarea id="fileEdit" rows="24"></textarea>';
+  $("#fileEdit").value=curFile.raw;$("#saveFileBtn").disabled=false;
+};
+$("#saveFileBtn").onclick=async()=>{
+  if(!curFile||!editing)return;
+  const r=await post("/api/file/save",{path:curFile.path,content:$("#fileEdit").value});
+  $("#fileNote").textContent=r.ok?"saved":"refused: "+(await r.text());
+  if(r.ok){await openFile(curFile.path);loadTree(curDir)}
+};
+$("#newFileBtn").onclick=()=>createThing("file");
+$("#newDirBtn").onclick=()=>createThing("folder");
+async function createThing(kind){
+  const name=prompt("Name of the new "+kind+":");if(!name)return;
+  const r=await post("/api/file/new",{path:curDir,name,kind});
+  $("#fileNote").textContent=r.ok?"created "+name:"refused: "+(await r.text());
+  loadTree(curDir);
+}
+$("#delBtn").onclick=async()=>{
+  if(!curFile)return;
+  $("#fileNote").textContent="awaiting approval dialog…";
+  const r=await post("/api/file/delete",{path:curFile.path});
+  $("#fileNote").textContent=r.ok?"deleted":"denied or refused";
+  curFile=null;$("#filePane").innerHTML='<span class="muted">Select a file.</span>';loadTree(curDir);
+};
+const drop=$("#drop"),fi=$("#fileInput");
+drop.onclick=()=>fi.click();
+fi.onchange=()=>[...fi.files].forEach(sendFile);
+["dragenter","dragover"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add("hot")}));
+["dragleave","drop"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove("hot")}));
+drop.addEventListener("drop",ev=>[...ev.dataTransfer.files].forEach(sendFile));
+async function sendFile(f){
+  $("#fileNote").textContent="uploading "+f.name+"…";
+  const fd=new FormData();fd.append("file",f);fd.append("dest",curDir||"");
+  const r=await fetch("/api/upload",{method:"POST",body:fd});
+  $("#fileNote").textContent=r.ok?f.name+" uploaded — run Ingest documents to add it":"refused: "+(await r.text());
+  loadTree(curDir);
+}
+
+// ---------- knowledge ----------
+async function loadKB(){
+  const d=await get("/api/kb");
+  const cell=(n,l,e)=>'<div class="cell"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div><div class="e">'+esc(e)+'</div></div>';
+  $("#kbfigs").innerHTML=cell(d.chunks,"Chunks",d.error||"indexed and searchable")+
+                         cell(d.files,"Sources","documents read");
+  $("#kbrows").innerHTML=(d.sources||[]).map(s=>
+    '<tr><td>'+esc(s.file)+'</td><td class="num">'+s.chunks+
+    '</td><td class="num"><button class="btn danger" data-forget="'+esc(s.path)+'">Forget</button></td></tr>').join("")
+    ||'<tr><td colspan="3" class="muted">nothing ingested yet</td></tr>';
+  $$("[data-forget]").forEach(b=>b.onclick=async()=>{
+    const r=await post("/api/kb/forget",{path:b.dataset.forget});
+    if(r.ok)loadKB();
+  });
+}
+$("#kbRefresh").onclick=loadKB;
+
+// ---------- models ----------
+async function loadModels(){
+  const d=await get("/api/models");
+  $("#residentRows").innerHTML=(d.resident||[]).map(m=>
+    '<tr><td>'+esc(m.id)+'</td><td class="num">'+esc(m.size)+
+    '</td><td class="num"><button class="btn" data-unload="'+esc(m.id)+'">Unload</button></td></tr>').join("")
+    ||'<tr><td colspan="3" class="muted">none loaded</td></tr>';
+  $("#availRow").innerHTML=(d.available||[]).map(m=>
+    '<button class="btn" data-load="'+esc(m)+'">'+esc(m)+'</button>').join("");
+  $("#benchRows").innerHTML=(d.bench||[]).map(b=>
+    '<tr><td>'+esc(b.role)+'</td><td>'+esc(b.id)+'</td><td class="num">'+esc(b.tps)+
+    '</td><td class="num">'+esc(b.gib)+' GiB</td></tr>').join("");
+  $("#aliasRow").innerHTML=(d.aliases||[]).map(a=>'<span class="pill">'+esc(a)+'</span>').join("");
+  $$("[data-load]").forEach(b=>b.onclick=()=>modelAction("load",b.dataset.load));
+  $$("[data-unload]").forEach(b=>b.onclick=()=>modelAction("unload",b.dataset.unload));
+}
+$$("[data-mode]").forEach(b=>b.onclick=()=>modelAction("mode",b.dataset.mode));
+$("#modelsRefresh").onclick=loadModels;
+async function modelAction(action,model){
+  const r=await post("/api/models/action",{action,model});
+  if(!r.ok){$("#out").textContent="refused: "+(await r.text());return}
+  await pollJob((await r.json()).job);loadModels();loadState();
+}
+
+// ---------- prompts ----------
+async function loadPrompts(){
+  const d=await get("/api/prompts");
+  $("#promptList").innerHTML=d.prompts.map(p=>
+    '<button data-prompt="'+esc(p.path)+'"><div class="fname">'+esc(p.name)+
+    '</div><div class="fmeta">'+esc(p.kind)+'</div></button>').join("");
+  $$("[data-prompt]").forEach(b=>b.onclick=async()=>{
+    $$("[data-prompt]").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+    const path=b.dataset.prompt;
+    if(path==="special:triage"){
+      const p=(await get("/api/prompts")).prompts.find(x=>x.path===path);
+      $("#promptBody").value=p.body||"";
+    }else{
+      $("#promptBody").value=(await get("/api/file?path="+encodeURIComponent(path))).raw;
+    }
+    curPrompt=path;$("#promptSave").disabled=false;$("#promptNote").textContent="";
+  });
+}
+$("#promptSave").onclick=async()=>{
+  if(!curPrompt)return;
+  const r=await post("/api/prompts/save",{path:curPrompt,content:$("#promptBody").value});
+  if(r.ok){const d=await r.json();$("#promptNote").textContent=(d.note||"saved")}
+  else $("#promptNote").textContent="refused: "+(await r.text());
+};
+
+// ---------- digest and corrections ----------
+const CLS=["noise","task","client","product"],ENT=["personal","agenticality","nxi","envelope-collective","unknown"],
+      SEN=["S0","S1p","S1c","S2","S3"];
+async function loadDigest(date){
+  const d=await get("/api/digest"+(date?"?date="+date:""));
+  $("#digestDate").innerHTML=(d.dates||[]).map(x=>'<option'+(x===d.date?" selected":"")+'>'+x+'</option>').join("");
+  $("#digestItems").innerHTML=(d.items||[]).map((it,i)=>
+    '<div style="border-bottom:1px solid var(--rule);padding:13px 0">'+
+    '<div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap">'+
+    '<span class="tag '+(it.flag?"flag":"")+'">'+esc(it.flag?"FLAG":it.cls)+'</span>'+
+    '<span style="flex:1">'+esc(it.one||"(no summary)")+'</span>'+
+    '<span class="mono muted">'+esc(it.src)+' · '+esc(it.ent)+' · '+esc(it.sen)+'</span>'+
+    '<button class="btn" data-fix="'+i+'">Correct</button></div>'+
+    '<div class="correct" id="fix'+i+'">'+
+    '<div><label>Class</label><select id="c'+i+'">'+CLS.map(c=>'<option'+(c===it.cls?" selected":"")+'>'+c+'</option>').join("")+'</select></div>'+
+    '<div><label>Entity</label><select id="e'+i+'">'+ENT.map(c=>'<option'+(c===it.ent?" selected":"")+'>'+c+'</option>').join("")+'</select></div>'+
+    '<div><label>Sensitivity</label><select id="s'+i+'">'+SEN.map(c=>'<option'+(c===it.sen?" selected":"")+'>'+c+'</option>').join("")+'</select></div>'+
+    '<div><label>Injection</label><select id="j'+i+'"><option value="false"'+(it.flag?"":" selected")+'>no</option>'+
+    '<option value="true"'+(it.flag?" selected":"")+'>yes</option></select></div>'+
+    '<div><button class="btn primary" data-save="'+i+'">Add to eval set</button></div></div></div>').join("")
+    ||'<p class="muted">No digest yet — run intake.</p>';
+  window._digest=d;
+  $$("[data-fix]").forEach(b=>b.onclick=()=>$("#fix"+b.dataset.fix).classList.toggle("on"));
+  $$("[data-save]").forEach(b=>b.onclick=async()=>{
+    const i=b.dataset.save,it=window._digest.items[i];
+    const r=await post("/api/eval/correct",{text:it.src+" — "+it.one,cls:$("#c"+i).value,
+      entity:$("#e"+i).value,sensitivity:$("#s"+i).value,injection:$("#j"+i).value});
+    b.textContent=r.ok?"added as "+(await r.json()).added:"failed";b.disabled=true;
+  });
+}
+$("#digestDate").onchange=e=>loadDigest(e.target.value);
+
+// ---------- evals ----------
+async function loadEvals(){
+  const d=await get("/api/evals");
+  const cell=(n,l,e)=>'<div class="cell"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div><div class="e">'+esc(e)+'</div></div>';
+  $("#evalFigs").innerHTML=cell(d.set_size,"Golden items","the set the system is scored against")+
+    cell(d.real_items,"From real corrections","uncurated — these are the ones that count");
+  $("#evalRows").innerHTML=(d.results||[]).map(r=>{
+    const s=r.scores||{};const c=k=>'<td class="num">'+(s[k]==null?"—":s[k]+"%")+'</td>';
+    return '<tr><td>'+esc(r.date)+'</td><td>'+esc(r.model)+'</td>'+c("class")+c("entity")+c("sensitivity")+c("injection")+'</tr>';
+  }).join("")||'<tr><td colspan="6" class="muted">no results yet</td></tr>';
+}
+
+// ---------- factory ----------
+async function loadFactory(){
+  const d=await get("/api/factory");
+  const act=(d.projects||[]).filter(p=>p.status==="active").length;
+  $("#factoryBar").innerHTML='<span class="pill">WIP <b>'+act+'/'+d.wip_limit+'</b></span>';
+  $("#factoryRows").innerHTML=(d.projects||[]).map(p=>
+    '<tr><td>'+esc(p.name)+'</td><td class="muted">'+esc(p.entity)+'</td><td class="muted">'+esc(p.stage)+
+    '</td><td><span class="tag '+(p.status==="active"?"ok":"")+'">'+esc(p.status)+'</span></td>'+
+    '<td class="num"><button class="btn" data-fact="'+(p.status==="active"?"park":"activate")+'" data-name="'+
+    esc(p.name)+'">'+(p.status==="active"?"Park":"Activate")+'</button></td></tr>').join("");
+  $$("[data-fact]").forEach(b=>b.onclick=async()=>{
+    const r=await post("/api/factory/action",{action:b.dataset.fact,name:b.dataset.name});
+    if(r.ok){await pollJob((await r.json()).job);loadFactory();loadState()}
+  });
+}
+
+// ---------- cost ----------
+async function loadCost(){
+  const d=await get("/api/cost?days=30");
+  const cell=(n,l,e)=>'<div class="cell"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div><div class="e">'+esc(e)+'</div></div>';
+  $("#costFigs").innerHTML=cell(money(d.total),"Last 30 days",d.requests+" metered calls")+
+    cell(money(d.total/30),"Daily average","alert threshold $100/month");
+  $("#costModels").innerHTML=(d.by_model||[]).map(m=>
+    '<tr><td>'+esc(m.model)+'</td><td class="num">'+m.n+'</td><td class="num">'+money(m.usd)+'</td></tr>').join("")
+    ||'<tr><td colspan="3" class="muted">nothing metered — everything ran local or on subscription</td></tr>';
+  const max=Math.max(...(d.by_day||[{usd:1}]).map(x=>x.usd),0.0001);
+  $("#costDays").innerHTML=(d.by_day||[]).map(x=>
+    '<tr><td class="mono" style="width:110px">'+esc(x.day)+'</td><td><div class="bar" style="width:'+
+    Math.max(1,Math.round(x.usd/max*100))+'%"></div></td><td class="num" style="width:90px">'+money(x.usd)+'</td></tr>').join("");
+}
+
+// ---------- health ----------
+async function loadHealth(){
+  const d=await get("/api/selftest");
+  $("#healthSummary").textContent=d.summary?d.summary+"  ·  "+d.file:"never run";
+  $("#healthRows").innerHTML=(d.rows||[]).map(r=>{
+    const cls=r.state==="pass"?"ok":(r.state==="warn"?"flag":"risk");
+    return '<tr><td class="muted">'+esc(r.group)+'</td><td>'+esc(r.name)+
+      '</td><td><span class="tag '+cls+'">'+esc(r.state)+'</span></td><td class="muted">'+esc(r.detail)+'</td></tr>';
+  }).join("")||'<tr><td colspan="4" class="muted">run the self-test</td></tr>';
+}
+$("#healthRefresh").onclick=loadHealth;
+
+async function loadMemory(q){
+  let d;try{d=await get("/api/memory"+(q?"?q="+encodeURIComponent(q):""))}catch(e){
+    $("#memRows").innerHTML='<p class="muted">'+esc(e.message)+'</p>';return}
+  const cell=(n,l,e)=>'<div class="cell"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div><div class="e">'+esc(e)+'</div></div>';
+  const s=d.stats||{};
+  $("#memFigs").innerHTML=cell(s.events||0,"Interactions recorded","since "+(s.since||"—"))+
+    cell(s.days||0,"Days of history",(s.by_kind||[]).map(k=>k.kind+" "+k.n).join(" · "));
+  $("#memRows").innerHTML=(d.events||[]).map(r=>
+    '<div style="border-bottom:1px solid var(--rule);padding:13px 0">'+
+    '<div class="mono muted">'+esc(r.ts)+' · '+esc(r.kind)+(r.model?' · '+esc(r.model):'')+'</div>'+
+    (r.question?'<div style="margin-top:5px">'+esc(r.question)+'</div>':'')+
+    (r.answer?'<div class="muted" style="margin-top:5px;white-space:pre-wrap">'+esc(r.answer)+'</div>':'')+
+    ((r.sources&&r.sources.length)?'<div class="mono" style="color:var(--faint);margin-top:6px">'+
+      r.sources.map(x=>esc(x.file||x)).join(" · ")+'</div>':'')+'</div>').join("")
+    ||'<p class="muted">nothing recorded yet — ask something</p>';
+}
+$("#memSearch").onclick=()=>loadMemory($("#memQ").value.trim());
+$("#memRecent").onclick=()=>loadMemory("");
+$("#memQ").addEventListener("keydown",e=>{if(e.key==="Enter")loadMemory($("#memQ").value.trim())});
+loadState();loadRoots();setInterval(loadState,60000);
+</script>
+</body>
+</html>

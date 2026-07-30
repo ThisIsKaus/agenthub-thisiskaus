@@ -1,0 +1,7 @@
+#!/bin/zsh
+if ~/AgentHub/scripts/approve.sh "PROD: $*" "manual CLI in $(pwd)"; then
+  "$@"; R=$?
+  ~/AgentHub/scripts/hub log "guard APPROVED: $* (exit $R)"; exit $R
+else
+  ~/AgentHub/scripts/hub log "guard DENIED: $*"; echo "denied"; exit 1
+fi

@@ -1,0 +1,11 @@
+[project]
+name = "graphtool"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "keyring>=25.7.0",
+    "msal>=1.37.0",
+    "requests>=2.34.2",
+]

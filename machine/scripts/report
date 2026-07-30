@@ -1,0 +1,2 @@
+#!/bin/zsh
+/opt/homebrew/bin/uv run --python 3.12 ~/AgentHub/report/build_report.py && open ~/AgentHub/report/index.html
