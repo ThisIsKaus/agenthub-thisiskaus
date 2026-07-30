@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { requestMagicLink } from "@/lib/auth.functions";
+import { lovable } from "@/integrations/lovable/index";
+import { requestMagicLink, isSessionAllowed } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
