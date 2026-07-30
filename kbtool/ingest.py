@@ -28,8 +28,7 @@ TABLE = "kb_main"
 EMBED_URL = "http://127.0.0.1:4000/v1/embeddings"
 EMBED_MODEL = "local-embed"
 CHUNK, OVERLAP, BATCH = 1600, 200, 32
-EXTS = {".md", ".txt", ".pdf", ".docx", ".xlsx", ".pptx", ".csv", ".html", ".htm",
-        ".doc", ".xls", ".ppt", ".rtf"}
+EXTS = {".md", ".txt", ".pdf", ".docx", ".xlsx", ".pptx", ".csv", ".html", ".htm"}
 
 SOURCES = [H / "canon", H / "inbox", H / "docs", H / "drafts"]
 EXTRA = H / "kbtool" / "sources.json"
@@ -52,6 +51,12 @@ SECRETS = re.compile(
 
 # Delivery artefacts from prior engagements: third-party confidential, no forward
 # value, and hundreds of near-identical machine-generated files that poison retrieval.
+# Superseded versions sit alongside current ones and win retrieval on lexical similarity
+# while carrying stale facts. The current version is already indexed; these are noise.
+SUPERSEDED = re.compile(
+    r"(superseded|deprecated|obsolete|\(old\)|[\s_-]old[\s_-]version|"
+    r"[\s_-]v\d+[\s_-]?\(old|do[\s_-]not[\s_-]use|backup[\s_-]copy|copy[\s_-]of[\s_-])", re.I)
+
 CLIENT_ARTEFACT = re.compile(
     r"(snapshot!|csu[\s_-]uat|adha[\s_-]dev|customizations/viewdetail|"
     r"-privileges-|-viewdetail-|msdyn_|-securityrole-)", re.I)
@@ -102,6 +107,8 @@ def block_reason(path: Path):
         return "credentials"
     if CLIENT_ARTEFACT.search(s):
         return "prior-client artefact"
+    if SUPERSEDED.search(s):
+        return "superseded version"
     return None
 
 

@@ -1,5 +1,5 @@
 # AgentHub — context for Lovable
-_Generated from the live machine 2026-07-29T17:56. Do not edit by hand._
+_Generated from the live machine 2026-07-30T07:07. Do not edit by hand._
 
 ## What already exists
 
@@ -10,7 +10,7 @@ and queues work for it. The machine is never reachable from the internet.
 Already built and running locally, all of which stays where it is:
 - Local inference: 4 models under LM Studio on 127.0.0.1:1234, quality brain measured at 114.9 tokens/sec
 - A LiteLLM router on 127.0.0.1:4000 with 9 aliases across local and metered lanes
-- A knowledge base of 89756 chunks across 2684 documents, indexed from OneDrive
+- A knowledge base of 93082 chunks across 2881 documents, indexed from OneDrive
 - A full operational console on 127.0.0.1:4100 with eleven sections
 - Scheduled work under launchd: nightly digest, four-hourly offsite backup, self-test
 - A native macOS approval dialog for anything that changes external state
@@ -30,7 +30,7 @@ the machine, and there is no endpoint on the machine to talk to.
 - S2 Envelope Collective (Neelam): reads flagged; writes require her recorded confirmation. Never on her behalf.
 - S3 finance/tax/wealth: LOCAL ONLY, router-enforced. Cloud only via anonymisation recipe + per-task approval.
 
-Corpus by class right now: {"S3": 2191, "S1p": 444, "S2": 43, "S1c": 6}
+Corpus by class right now: {"S3": 2243, "S1p": 589, "S2": 43, "S1c": 6}
 
 The agent publishes ONLY status and counts. It never publishes document text, file paths,
 email subjects or personal data. Your app therefore CANNOT display digest item content,

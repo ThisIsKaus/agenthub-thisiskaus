@@ -26,6 +26,11 @@ import requests
 
 H = Path.home() / "AgentHub"
 FAC = Path.home() / "Factory"
+sys.path.insert(0, str(H / "scripts"))
+try:
+    import machine_state
+except Exception:
+    machine_state = None
 sys.path.insert(0, str(H / "report"))
 try:
     import build_report as br
@@ -46,6 +51,7 @@ PUBLISH_ALLOWLIST = {
     "factory": {"wip", "limit", "projects"},
     "digest": {"date", "items", "flags", "tasks"},   # COUNTS ONLY
     "health": {"passed", "warnings", "failed", "at"},
+    "machine": {"posture", "power", "sleep", "schedule", "uptime", "thermal", "collected_at"},
 }
 
 # Strings that must never appear in a published payload.
@@ -121,6 +127,7 @@ def build_payload():
                    "flags": int(dg.get("flags") or 0),
                    "tasks": len(dg.get("needs") or [])},
         "health": health_summary(),
+        "machine": (machine_state.collect() if machine_state else {}),
     }
     return {k: prune(v, PUBLISH_ALLOWLIST[k]) for k, v in raw.items()}
 

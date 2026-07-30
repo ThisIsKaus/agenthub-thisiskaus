@@ -114,3 +114,12 @@ contract, not by code: the agent's PUBLISH_ALLOWLIST defines what exists, and
 `lovable-context.py` generates the context document from live state so it cannot drift.
 Regenerate and re-paste it into Project Knowledge whenever the allowlist, job kinds or
 design tokens change. The remote may never display anything classed S1c, S2 or S3.
+
+## Retrieval eval questions (v2.0, 30 Jul 2026)
+Questions were written for an eleven-document corpus about AgentHub itself. Against 2,700
+documents spanning finance, career, products, client work and appliance manuals they no
+longer represent anything a person would ask: "what should I do monthly" correctly retrieved
+career planning material, and "nightly job on battery" correctly retrieved a battery manual.
+The retrieval was right; the instrument was stale. Questions now name their subject, as a
+user with this corpus would, and the set includes business questions because that is what the
+corpus is for. The refusal axis remains and must stay perfect.
