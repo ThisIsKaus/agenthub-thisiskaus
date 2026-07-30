@@ -51,19 +51,21 @@ export function Pill({
 }
 
 function PlanePill() {
-  const { available } = useLocal();
+  const { available, machine } = useLocal();
+  const posture = String(machine?.posture ?? "").trim();
   return (
     <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px]">
       <span
         aria-hidden
-        className={`h-1.5 w-1.5 rounded-full ${available ? "bg-ok" : "bg-faint"}`}
+        className={`h-1.5 w-1.5 rounded-full ${available ? "bg-copper" : "bg-faint"}`}
       />
       <span className={available ? "text-paper" : "text-faint"}>
-        {available ? "local" : "remote"}
+        {available ? (posture ? `local · ${posture}` : "local") : "remote"}
       </span>
     </span>
   );
 }
+
 
 export function AppShell() {
   const { data } = useQuery(stateQueryOptions);
