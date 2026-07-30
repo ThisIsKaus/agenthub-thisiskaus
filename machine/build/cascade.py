@@ -40,6 +40,10 @@ ARCHITECTURAL = re.compile(
     r"\b(refactor|migrat|redesign|rearchitect|rewrite|restructure|overhaul|"
     r"introduce\s+\w+\s+framework|replace\s+the)\b", re.I)
 
+# Local tiers need their model resident. The 36GB envelope cannot hold the 27B and the 35B
+# at once — LM Studio refuses the second load — so the cascade switches sets per tier.
+MODE_FOR_TIER = {2: "coding", 3: "standard"}
+
 TIERS = {
     1: ("local-triage", "4B classifier"),
     2: ("local-coder", "27B code model"),
@@ -134,7 +138,7 @@ def classify(intent):
         tier = 0
         reasons = ["deterministic — no model required"]
 
-    skills = ["context", "repo-rules"]
+    skills = ["context", "cascade-rules"]
     if any("console" in h for h in hints):
         skills += ["local-api", "planes"]
     if any(k in intent.lower() for k in ("sensitiv", "s3", "client", "vault", "cloud")):
@@ -223,6 +227,9 @@ Output only a unified diff, or the single word IMPOSSIBLE with one line of reaso
 
 def run_tier(tier, intent, ctx, trace, branch):
     alias, label = TIERS[tier]
+    if tier in MODE_FOR_TIER:
+        print(f"  loading the {MODE_FOR_TIER[tier]} resident set...")
+        sh(f"mode {MODE_FOR_TIER[tier]}", 300)
     skills = load_skills(ctx["skills"])
     files = "\n".join(ctx["files"]) or "(determine from the intent)"
     prior = ("\n\nA previous attempt failed verification. Do not repeat it.\n"
@@ -233,9 +240,13 @@ def run_tier(tier, intent, ctx, trace, branch):
                   f"\n## Likely files\n{files}{prior}\n\n"
                   "Apply the change directly in this repository, then stop. "
                   "Do not commit, do not push.")
-        code, out = sh("claude -p " + json.dumps(prompt), 1800)
-        if code != 0 or "IMPOSSIBLE" in out[:200]:
-            code, out2 = sh("codex exec --skip-git-repo-check " + json.dumps(prompt), 1800)
+        RUNS.mkdir(parents=True, exist_ok=True)
+        pf = RUNS / "prompt.txt"
+        pf.write_text(prompt)
+        code, out = sh(f"claude -p --permission-mode acceptEdits --max-budget-usd 2.00 "
+                       f"--add-dir {REPO} < {pf}", 1800)
+        if code != 0 or "IMPOSSIBLE" in out[:200] or "permission" in out[:400].lower():
+            code, out2 = sh(f"codex exec --skip-git-repo-check --full-auto \"$(cat {pf})\"", 1800)
             out = out + "\n--- codex fallback ---\n" + out2
         return out
     else:
@@ -336,6 +347,7 @@ def main():
         else:
             sh(f"git checkout -q {base} && git branch -qD {branch}", 60)
             print(f"\nno tier produced a verified change · branch discarded")
+        sh("mode standard", 300)
         (RUNS / f"{rid}.json").write_text(json.dumps(record, indent=2))
         print(f"run -> {RUNS / (rid + '.json')}")
 
