@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { stateQueryOptions } from "@/lib/state";
+import { useHubState } from "@/hooks/use-realtime-state";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
 import { formatStamp } from "@/components/data";
 
@@ -158,7 +158,7 @@ const PHASES: [string, string, string, string][] = [
 
 function SystemPage() {
   useRealtimeState();
-  const { data } = useQuery(stateQueryOptions);
+  const { data, provenance } = useHubState();
 
   const services = data?.services ?? {};
   const corpus = data?.corpus ?? {};
@@ -174,12 +174,11 @@ function SystemPage() {
     <div className="pb-4">
       <header className="pb-8">
         <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.16em] text-copper">
-          System of record · read from the machine · {stamp}
+          System of record · {provenance} · {stamp}
         </p>
         <h1 className="mb-4 font-serif text-[clamp(40px,9vw,72px)] font-normal leading-[0.95] tracking-tight text-paper">
-          AgentHub
-          <br />
-          <em className="italic text-copper">the front door</em>
+          <span className="block">AgentHub</span>
+          <em className="block italic text-copper">the front door</em>
         </h1>
         <p className="mb-7 max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground">
           One MacBook Pro operating as intake, factory floor and control surface.{" "}

@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { stateQueryOptions } from "@/lib/state";
+import { useHubState } from "@/hooks/use-realtime-state";
 import { useOnline } from "@/hooks/use-online";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocal } from "@/lib/local-bridge";
@@ -70,7 +69,7 @@ function PlanePill() {
 
 
 export function AppShell() {
-  const { data } = useQuery(stateQueryOptions);
+  const { data, provenance } = useHubState();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const online = useOnline();
@@ -92,7 +91,7 @@ export function AppShell() {
         <div className="mx-auto w-full max-w-[1100px] px-4">
           <div className="flex items-baseline justify-between gap-4 py-3">
             <h1 className="font-serif text-2xl leading-none text-paper">
-              AgentHub <span className="text-copper">Remote</span>
+              AgentHub
             </h1>
             <div className="flex items-center gap-3">
               <PlanePill />
@@ -130,6 +129,9 @@ export function AppShell() {
               }
             />
             <Pill label="mtd" value={`$${Number(spend.mtd ?? 0).toFixed(2)}`} />
+            <span className="inline-flex shrink-0 items-center px-1 font-mono text-[10px] text-faint">
+              {provenance}
+            </span>
           </div>
 
           <nav className="-mx-4 flex gap-5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -153,7 +155,7 @@ export function AppShell() {
 
       <footer className="mt-8 border-t border-rule pb-16">
         <p className="mx-auto w-full max-w-[1100px] px-4 py-6 font-mono text-[10px] leading-relaxed text-faint">
-          AgentHub Remote · reads published status only · the machine is never reachable from here
+          AgentHub · local plane over loopback on the machine · published status everywhere else
         </p>
       </footer>
 
