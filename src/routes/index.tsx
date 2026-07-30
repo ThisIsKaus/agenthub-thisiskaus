@@ -20,19 +20,31 @@ export const Route = createFileRoute("/")({
 function SignIn() {
   const navigate = useNavigate();
   const send = useServerFn(requestMagicLink);
+  const checkAllowed = useServerFn(isSessionAllowed);
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
+  const [applePending, setApplePending] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate({ to: "/overview", replace: true });
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!active || !data.session) return;
+      // Social sign-in bypasses the magic-link allowlist, so every session is
+      // re-checked server-side before the workspace is shown.
+      const allowed = await checkAllowed({}).catch(() => ({ ok: false }));
+      if (!active) return;
+      if (allowed.ok) {
+        navigate({ to: "/overview", replace: true });
+      } else {
+        await supabase.auth.signOut();
+        setMessage({ ok: false, text: "This instance is private." });
+      }
     });
     return () => {
       active = false;
     };
-  }, [navigate]);
+  }, [navigate, checkAllowed]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -46,6 +58,30 @@ function SignIn() {
     } finally {
       setPending(false);
     }
+  }
+
+  async function onApple() {
+    setApplePending(true);
+    setMessage(null);
+    const result = await lovable.auth.signInWithOAuth("apple", {
+      redirect_uri: window.location.origin,
+    });
+
+    if (result.error) {
+      setMessage({ ok: false, text: "Apple sign-in failed." });
+      setApplePending(false);
+      return;
+    }
+    if (result.redirected) return;
+
+    const allowed = await checkAllowed({}).catch(() => ({ ok: false }));
+    if (allowed.ok) {
+      navigate({ to: "/overview", replace: true });
+    } else {
+      await supabase.auth.signOut();
+      setMessage({ ok: false, text: "This instance is private." });
+    }
+    setApplePending(false);
   }
 
   return (
