@@ -124,20 +124,9 @@ function OverviewPage() {
       detail: `${Number(corpus.documents ?? 0).toLocaleString()} documents indexed`,
     },
     {
-      label: "Local brain",
-      value: live && bench?.tps != null ? `${bench.tps} t/s` : null,
-      detail: bench?.id ?? "",
-    },
-    {
       label: "Resident",
       value: modelNames.length ? String(modelNames.length) : null,
       detail: modelNames.join(", "),
-    },
-    {
-      label: "Spend MTD",
-      value: spend.mtd != null ? `$${mtd.toFixed(2)}` : null,
-      detail: `${Number(spend.requests ?? 0).toLocaleString()} metered calls · alert at $100`,
-      tone: mtd > 0 ? "copper" : "paper",
     },
     {
       label: "Active products",
@@ -145,12 +134,7 @@ function OverviewPage() {
       detail: projects.map((project) => project.name ?? project.ref ?? "").filter(Boolean).join(", "),
       tone: Number(factory.wip ?? 0) > Number(factory.limit ?? 2) ? "risk" : "paper",
     },
-    {
-      label: "Self-test",
-      value: health.passed != null ? String(passed) : null,
-      detail: `${warnings} warnings · ${failed} failed`,
-      tone: healthTone,
-    },
+
     {
       label: "Triaged today",
       value: digest.items != null ? String(digest.items) : null,
