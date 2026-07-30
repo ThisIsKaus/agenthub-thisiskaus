@@ -169,11 +169,9 @@ function EvalsPage() {
         >
           {running ? "Scoring…" : "Score triage"}
         </button>
-        {output !== null && (
-          <pre className="mt-3 max-h-[40vh] overflow-y-auto whitespace-pre-wrap break-words border border-rule bg-panel2 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
-            {output || "waiting for output…"}
-          </pre>
-        )}
+        <p className="mt-2 font-mono text-[10px] text-faint">
+          Output streams in the Jobs drawer at the foot of the screen.
+        </p>
         {note && <p className="mt-2 font-mono text-[10px] text-faint">{note}</p>}
       </Panel>
     </div>
