@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { stateQueryOptions } from "@/lib/state";
 import { useOnline } from "@/hooks/use-online";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocal } from "@/lib/local-bridge";
 
 const TABS = [
   { to: "/overview", label: "Overview" },
@@ -37,6 +38,21 @@ export function Pill({
   );
 }
 
+function PlanePill() {
+  const { available, machine } = useLocal();
+  return (
+    <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px]">
+      <span
+        aria-hidden
+        className={`h-1.5 w-1.5 rounded-full ${available ? "bg-copper" : "bg-faint"}`}
+      />
+      <span className={available ? "text-paper" : "text-faint"}>
+        {available ? `local · ${machine?.posture ?? "—"}` : "remote"}
+      </span>
+    </span>
+  );
+}
+
 export function AppShell() {
   const { data } = useQuery(stateQueryOptions);
   const navigate = useNavigate();
@@ -63,6 +79,7 @@ export function AppShell() {
               AgentHub <span className="text-copper">Remote</span>
             </h1>
             <div className="flex items-center gap-3">
+              <PlanePill />
               {!online && (
                 <span className="border border-watch/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-watch">
                   Offline
