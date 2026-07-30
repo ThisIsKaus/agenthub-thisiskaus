@@ -12,7 +12,10 @@ const TABS = [
   { to: "/capture", label: "Capture" },
   { to: "/digest", label: "Digest" },
   { to: "/factory", label: "Factory" },
+  { to: "/files", label: "Files" },
+  { to: "/knowledge", label: "Knowledge" },
   { to: "/cost", label: "Cost" },
+
 ] as const;
 
 function tone(value: string | undefined) {
