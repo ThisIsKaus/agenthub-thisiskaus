@@ -8,6 +8,7 @@ import { stateQueryOptions } from "@/lib/state";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
 import { changesSince, snapshotOf, useLastSeen } from "@/lib/since";
 import { useLocal, isRefusal } from "@/lib/local-bridge";
+import { useJobDrawer } from "@/lib/job-drawer";
 import { asOf, clockOf, derivePlane } from "@/lib/machine-state";
 
 export const Route = createFileRoute("/_authenticated/overview")({
@@ -396,48 +397,13 @@ function HealthStrip({
   tone: "ok" | "watch" | "risk";
   live: boolean;
 }) {
-  const local = useLocal();
-  const [status, setStatus] = useState<string | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const { runJob } = useJobDrawer();
+  const [running, setRunning] = useState(false);
 
-  useEffect(() => {
-    if (!jobId) return;
-    let cancelled = false;
-    const timer = setInterval(async () => {
-      try {
-        const job = await local.get<{ running?: boolean; code?: number }>("/api/job", { id: jobId });
-        if (cancelled) return;
-        if (!job.running) {
-          setJobId(null);
-          setStatus(job.code === 0 ? "self-test complete" : "self-test reported problems");
-        }
-      } catch {
-        if (!cancelled) {
-          setJobId(null);
-          setStatus("lost contact with the machine");
-        }
-      }
-    }, 900);
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, [jobId, local]);
-
-  const run = useCallback(async () => {
-    setStatus("awaiting approval on the machine…");
-    try {
-      const result = await local.post<{ job?: string }>("/api/run", { key: "verify" });
-      setJobId(result.job ?? null);
-      setStatus("self-test running…");
-    } catch (error) {
-      setStatus(
-        isRefusal(error)
-          ? (error.message || "denied at the approval dialog")
-          : "the machine did not start the self-test",
-      );
-    }
-  }, [local]);
+  const run = useCallback(() => {
+    setRunning(true);
+    void runJob("verify", "self-test", () => setRunning(false));
+  }, [runJob]);
 
   const toneClass = tone === "risk" ? "text-risk" : tone === "watch" ? "text-watch" : "text-ok";
 
@@ -450,14 +416,16 @@ function HealthStrip({
       {live && (
         <button
           type="button"
-          onClick={() => void run()}
-          disabled={Boolean(jobId)}
+          onClick={run}
+          disabled={running}
           className="border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
         >
-          Run self-test
+          {running ? "Running…" : "Run self-test"}
         </button>
       )}
-      {status && <span className="font-mono text-[10px] text-faint">{status}</span>}
+      {running && (
+        <span className="font-mono text-[10px] text-faint">streaming in the Jobs drawer…</span>
+      )}
     </footer>
   );
 }
