@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { stateQueryOptions } from "@/lib/state";
 import { useOnline } from "@/hooks/use-online";
+import { LocalPlanePill } from "@/components/LocalOnly";
 import { useQueryClient } from "@tanstack/react-query";
 
 const TABS = [
@@ -63,6 +64,7 @@ export function AppShell() {
               AgentHub <span className="text-copper">Remote</span>
             </h1>
             <div className="flex items-center gap-3">
+              <LocalPlanePill />
               {!online && (
                 <span className="border border-watch/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-watch">
                   Offline

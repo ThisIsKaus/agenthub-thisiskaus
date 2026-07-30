@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { registerServiceWorker } from "@/lib/pwa";
 import { flushQueue } from "@/lib/capture-queue";
+import { LocalBridgeProvider } from "@/lib/local-bridge";
 
 
 
