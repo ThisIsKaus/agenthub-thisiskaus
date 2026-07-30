@@ -8,12 +8,12 @@ import { isRefusal, useLocal } from "@/lib/local-bridge";
 export const Route = createFileRoute("/_authenticated/models")({
   head: () => ({
     meta: [
-      { title: "Models — AgentHub Remote" },
+      { title: "Models — AgentHub" },
       {
         name: "description",
         content: "Resident models, measured throughput and router aliases on the machine.",
       },
-      { property: "og:title", content: "Models — AgentHub Remote" },
+      { property: "og:title", content: "Models — AgentHub" },
       {
         property: "og:description",
         content: "Resident models, measured throughput and router aliases on the machine.",

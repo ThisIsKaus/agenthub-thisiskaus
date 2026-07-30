@@ -9,12 +9,12 @@ import { useJobDrawer } from "@/lib/job-drawer";
 export const Route = createFileRoute("/_authenticated/knowledge")({
   head: () => ({
     meta: [
-      { title: "Knowledge base — AgentHub Remote" },
+      { title: "Knowledge base — AgentHub" },
       {
         name: "description",
         content: "Chunk and document counts per source for the machine's knowledge base.",
       },
-      { property: "og:title", content: "Knowledge base — AgentHub Remote" },
+      { property: "og:title", content: "Knowledge base — AgentHub" },
       {
         property: "og:description",
         content: "Chunk and document counts per source for the machine's knowledge base.",

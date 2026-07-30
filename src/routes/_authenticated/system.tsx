@@ -6,13 +6,13 @@ import { formatStamp } from "@/components/data";
 export const Route = createFileRoute("/_authenticated/system")({
   head: () => ({
     meta: [
-      { title: "System — AgentHub Remote" },
+      { title: "System — AgentHub" },
       {
         name: "description",
         content:
           "How AgentHub is put together: the two planes, the three routing lanes, the posture rules, the open risk register and the operating rhythm.",
       },
-      { property: "og:title", content: "System — AgentHub Remote" },
+      { property: "og:title", content: "System — AgentHub" },
       {
         property: "og:description",
         content:

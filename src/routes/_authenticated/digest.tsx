@@ -8,12 +8,12 @@ import { isRefusal, useLocal } from "@/lib/local-bridge";
 export const Route = createFileRoute("/_authenticated/digest")({
   head: () => ({
     meta: [
-      { title: "Digest — AgentHub Remote" },
+      { title: "Digest — AgentHub" },
       {
         name: "description",
         content: "Triaged items with inline corrections that become golden eval items.",
       },
-      { property: "og:title", content: "Digest — AgentHub Remote" },
+      { property: "og:title", content: "Digest — AgentHub" },
       {
         property: "og:description",
         content: "Triaged items with inline corrections that become golden eval items.",

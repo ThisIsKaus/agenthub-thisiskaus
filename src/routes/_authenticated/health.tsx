@@ -9,12 +9,12 @@ import { useJobDrawer } from "@/lib/job-drawer";
 export const Route = createFileRoute("/_authenticated/health")({
   head: () => ({
     meta: [
-      { title: "Health — AgentHub Remote" },
+      { title: "Health — AgentHub" },
       {
         name: "description",
         content: "Self-test results for the machine: checks passed, warnings and failures.",
       },
-      { property: "og:title", content: "Health — AgentHub Remote" },
+      { property: "og:title", content: "Health — AgentHub" },
       {
         property: "og:description",
         content: "Self-test results for the machine: checks passed, warnings and failures.",

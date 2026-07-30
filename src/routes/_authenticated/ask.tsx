@@ -7,13 +7,13 @@ import { isRefusal, useLocal } from "@/lib/local-bridge";
 export const Route = createFileRoute("/_authenticated/ask")({
   head: () => ({
     meta: [
-      { title: "Ask — AgentHub Remote" },
+      { title: "Ask — AgentHub" },
       {
         name: "description",
         content:
           "Put a question to the local brain against the indexed corpus, with sources and their distances.",
       },
-      { property: "og:title", content: "Ask — AgentHub Remote" },
+      { property: "og:title", content: "Ask — AgentHub" },
       {
         property: "og:description",
         content:

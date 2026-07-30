@@ -8,18 +8,18 @@ import { useHubState, useRealtimeState } from "@/hooks/use-realtime-state";
 import { changesSince, snapshotOf, useLastSeen } from "@/lib/since";
 import { useLocal, isRefusal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
-import { asOf, clockOf, derivePlane } from "@/lib/machine-state";
+import { clockOf, derivePlane } from "@/lib/machine-state";
 
 export const Route = createFileRoute("/_authenticated/overview")({
   head: () => ({
     meta: [
-      { title: "Overview — AgentHub Remote" },
+      { title: "Overview — AgentHub" },
       {
         name: "description",
         content:
           "Machine state, what moved since your last visit, and the standing figures for corpus, spend, factory and self-test.",
       },
-      { property: "og:title", content: "Overview — AgentHub Remote" },
+      { property: "og:title", content: "Overview — AgentHub" },
       {
         property: "og:description",
         content:

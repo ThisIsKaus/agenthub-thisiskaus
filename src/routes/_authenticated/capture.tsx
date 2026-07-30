@@ -16,12 +16,12 @@ import { capturesQueryOptions, clockTime, relativeTime, type CaptureRow } from "
 export const Route = createFileRoute("/_authenticated/capture")({
   head: () => ({
     meta: [
-      { title: "Capture — AgentHub Remote" },
+      { title: "Capture — AgentHub" },
       {
         name: "description",
         content: "Record a thought from anywhere. It reaches the machine on its next poll.",
       },
-      { property: "og:title", content: "Capture — AgentHub Remote" },
+      { property: "og:title", content: "Capture — AgentHub" },
       {
         property: "og:description",
         content: "Record a thought from anywhere. It reaches the machine on its next poll.",

@@ -9,12 +9,12 @@ import { useJobDrawer } from "@/lib/job-drawer";
 export const Route = createFileRoute("/_authenticated/evals")({
   head: () => ({
     meta: [
-      { title: "Evals — AgentHub Remote" },
+      { title: "Evals — AgentHub" },
       {
         name: "description",
         content: "Golden eval items, scoring history and triage scoring runs.",
       },
-      { property: "og:title", content: "Evals — AgentHub Remote" },
+      { property: "og:title", content: "Evals — AgentHub" },
       {
         property: "og:description",
         content: "Golden eval items, scoring history and triage scoring runs.",

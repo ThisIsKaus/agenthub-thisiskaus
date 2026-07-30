@@ -8,12 +8,12 @@ import { useRealtimeState } from "@/hooks/use-realtime-state";
 export const Route = createFileRoute("/_authenticated/cost")({
   head: () => ({
     meta: [
-      { title: "Cost — AgentHub Remote" },
+      { title: "Cost — AgentHub" },
       {
         name: "description",
         content: "Month-to-date metered spend, the last thirty days, and the local model roster.",
       },
-      { property: "og:title", content: "Cost — AgentHub Remote" },
+      { property: "og:title", content: "Cost — AgentHub" },
       {
         property: "og:description",
         content: "Month-to-date metered spend, the last thirty days, and the local model roster.",

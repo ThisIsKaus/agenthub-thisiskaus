@@ -8,12 +8,12 @@ import { isRefusal, useLocal } from "@/lib/local-bridge";
 export const Route = createFileRoute("/_authenticated/files")({
   head: () => ({
     meta: [
-      { title: "Files — AgentHub Remote" },
+      { title: "Files — AgentHub" },
       {
         name: "description",
         content: "Browse, read and edit the machine's working folders. Local plane only.",
       },
-      { property: "og:title", content: "Files — AgentHub Remote" },
+      { property: "og:title", content: "Files — AgentHub" },
       {
         property: "og:description",
         content: "Browse, read and edit the machine's working folders. Local plane only.",
