@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Figure, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
-import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { useLocal } from "@/lib/local-bridge";
+import { useJobDrawer } from "@/lib/job-drawer";
 
 export const Route = createFileRoute("/_authenticated/evals")({
   head: () => ({
@@ -38,8 +39,6 @@ type Scores = {
 };
 type EvalResult = { date?: string; model?: string; scores?: Scores };
 type EvalsData = { results?: EvalResult[]; set_size?: number; real_items?: number };
-type Job = { out?: string; running?: boolean };
-
 function pct(value: number | undefined) {
   if (value == null) return "—";
   const percent = value <= 1 ? value * 100 : value;
@@ -54,12 +53,11 @@ function isBelowFull(value: number | undefined) {
 
 function EvalsPage() {
   const local = useLocal();
+  const { runJob } = useJobDrawer();
   const [data, setData] = useState<EvalsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
-  const [output, setOutput] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
-  const poll = useRef<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,39 +72,15 @@ function EvalsPage() {
 
   useEffect(() => {
     void load();
-    return () => {
-      if (poll.current) window.clearInterval(poll.current);
-    };
   }, [load]);
 
-  async function score() {
-    setRunning(true);
-    setOutput("");
+  function score() {
     setNote(null);
-    try {
-      const started = await local.post<{ job: string }>("/api/run", { key: "eval" });
-      poll.current = window.setInterval(async () => {
-        try {
-          const job = await local.get<Job>("/api/job", { id: started.job });
-          setOutput(job.out ?? "");
-          if (!job.running) {
-            if (poll.current) window.clearInterval(poll.current);
-            poll.current = null;
-            setRunning(false);
-            await load();
-          }
-        } catch {
-          if (poll.current) window.clearInterval(poll.current);
-          poll.current = null;
-          setRunning(false);
-        }
-      }, 900);
-    } catch (error) {
+    setRunning(true);
+    void runJob("eval", "score triage", () => {
       setRunning(false);
-      setNote(
-        isRefusal(error) ? error.message || "denied at the approval dialog" : "the machine did not start the score",
-      );
-    }
+      void load();
+    });
   }
 
   const results = data?.results ?? [];

@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Figure, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { useJobDrawer } from "@/lib/job-drawer";
 
 export const Route = createFileRoute("/_authenticated/knowledge")({
   head: () => ({
@@ -31,16 +32,13 @@ export const Route = createFileRoute("/_authenticated/knowledge")({
 
 type KbSource = { file: string; path: string; chunks: number };
 type KbStats = { chunks: number; documents: number; sources?: KbSource[] };
-type Job = { key?: string; out?: string; running?: boolean; code?: number };
-
 function KnowledgePage() {
   const local = useLocal();
+  const { runJob } = useJobDrawer();
   const [stats, setStats] = useState<KbStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null);
-  const [output, setOutput] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
-  const poll = useRef<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,9 +53,6 @@ function KnowledgePage() {
 
   useEffect(() => {
     void load();
-    return () => {
-      if (poll.current) window.clearInterval(poll.current);
-    };
   }, [load]);
 
   async function forget(source: KbSource) {
@@ -75,34 +70,13 @@ function KnowledgePage() {
     }
   }
 
-  async function ingest() {
+  function ingest() {
     setNote(null);
     setRunning(true);
-    setOutput("");
-    try {
-      const started = await local.post<{ job: string; label?: string }>("/api/run", { key: "ingest" });
-      poll.current = window.setInterval(async () => {
-        try {
-          const job = await local.get<Job>("/api/job", { id: started.job });
-          setOutput(job.out ?? "");
-          if (!job.running) {
-            if (poll.current) window.clearInterval(poll.current);
-            poll.current = null;
-            setRunning(false);
-            await load();
-          }
-        } catch {
-          if (poll.current) window.clearInterval(poll.current);
-          poll.current = null;
-          setRunning(false);
-        }
-      }, 900);
-    } catch (error) {
+    void runJob("ingest", "ingest", () => {
       setRunning(false);
-      setNote(
-        isRefusal(error) ? error.message || "denied at the approval dialog" : "the machine did not start the job",
-      );
-    }
+      void load();
+    });
   }
 
   const sources = [...(stats?.sources ?? [])].sort((a, b) => b.chunks - a.chunks);
@@ -156,11 +130,9 @@ function KnowledgePage() {
         >
           {running ? "Ingesting…" : "Ingest documents"}
         </button>
-        {output !== null && (
-          <pre className="mt-3 max-h-[40vh] overflow-y-auto whitespace-pre-wrap break-words border border-rule bg-panel2 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
-            {output || "waiting for output…"}
-          </pre>
-        )}
+        <p className="mt-2 font-mono text-[10px] text-faint">
+          Output streams in the Jobs drawer at the foot of the screen.
+        </p>
       </Panel>
 
       {note && <p className="font-mono text-[10px] text-faint">{note}</p>}
