@@ -4,13 +4,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { stateQueryOptions } from "@/lib/state";
 import { useOnline } from "@/hooks/use-online";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocal } from "@/lib/local-bridge";
+import { JobDrawer } from "@/components/JobDrawer";
 
 const TABS = [
   { to: "/overview", label: "Overview" },
+  { to: "/ask", label: "Ask" },
   { to: "/capture", label: "Capture" },
   { to: "/digest", label: "Digest" },
+  { to: "/evals", label: "Evals" },
+
   { to: "/factory", label: "Factory" },
+  { to: "/files", label: "Files" },
+  { to: "/knowledge", label: "Knowledge" },
+  { to: "/models", label: "Models" },
+  { to: "/prompts", label: "Prompts" },
+  { to: "/memory", label: "Memory" },
+  { to: "/health", label: "Health" },
   { to: "/cost", label: "Cost" },
+  { to: "/system", label: "System" },
+
+
+
 ] as const;
 
 function tone(value: string | undefined) {
@@ -36,6 +51,23 @@ export function Pill({
     </span>
   );
 }
+
+function PlanePill() {
+  const { available, machine } = useLocal();
+  const posture = String(machine?.posture ?? "").trim();
+  return (
+    <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px]">
+      <span
+        aria-hidden
+        className={`h-1.5 w-1.5 rounded-full ${available ? "bg-copper" : "bg-faint"}`}
+      />
+      <span className={available ? "text-paper" : "text-faint"}>
+        {available ? (posture ? `local · ${posture}` : "local") : "remote"}
+      </span>
+    </span>
+  );
+}
+
 
 export function AppShell() {
   const { data } = useQuery(stateQueryOptions);
@@ -63,6 +95,7 @@ export function AppShell() {
               AgentHub <span className="text-copper">Remote</span>
             </h1>
             <div className="flex items-center gap-3">
+              <PlanePill />
               {!online && (
                 <span className="border border-watch/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-watch">
                   Offline
@@ -118,11 +151,13 @@ export function AppShell() {
         <Outlet />
       </main>
 
-      <footer className="mt-8 border-t border-rule">
+      <footer className="mt-8 border-t border-rule pb-16">
         <p className="mx-auto w-full max-w-[1100px] px-4 py-6 font-mono text-[10px] leading-relaxed text-faint">
           AgentHub Remote · reads published status only · the machine is never reachable from here
         </p>
       </footer>
+
+      <JobDrawer />
     </div>
   );
 }

@@ -11,11 +11,22 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSystemRouteImport } from './routes/_authenticated/system'
+import { Route as AuthenticatedPromptsRouteImport } from './routes/_authenticated/prompts'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
+import { Route as AuthenticatedModelsRouteImport } from './routes/_authenticated/models'
+import { Route as AuthenticatedMemoryRouteImport } from './routes/_authenticated/memory'
+import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
+import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
+import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
+import { Route as AuthenticatedEvalsRouteImport } from './routes/_authenticated/evals'
 import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
 import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
+import { Route as AuthenticatedAskRouteImport } from './routes/_authenticated/ask'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -26,14 +37,54 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSystemRoute = AuthenticatedSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPromptsRoute = AuthenticatedPromptsRouteImport.update({
+  id: '/prompts',
+  path: '/prompts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedModelsRoute = AuthenticatedModelsRouteImport.update({
+  id: '/models',
+  path: '/models',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMemoryRoute = AuthenticatedMemoryRouteImport.update({
+  id: '/memory',
+  path: '/memory',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHealthRoute = AuthenticatedHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFilesRoute = AuthenticatedFilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFactoryRoute = AuthenticatedFactoryRouteImport.update({
   id: '/factory',
   path: '/factory',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEvalsRoute = AuthenticatedEvalsRouteImport.update({
+  id: '/evals',
+  path: '/evals',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDigestRoute = AuthenticatedDigestRouteImport.update({
@@ -51,52 +102,147 @@ const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
   path: '/capture',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAskRoute = AuthenticatedAskRouteImport.update({
+  id: '/ask',
+  path: '/ask',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ask': typeof AuthenticatedAskRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
+  '/evals': typeof AuthenticatedEvalsRoute
   '/factory': typeof AuthenticatedFactoryRoute
+  '/files': typeof AuthenticatedFilesRoute
+  '/health': typeof AuthenticatedHealthRoute
+  '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/memory': typeof AuthenticatedMemoryRoute
+  '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
+  '/prompts': typeof AuthenticatedPromptsRoute
+  '/system': typeof AuthenticatedSystemRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ask': typeof AuthenticatedAskRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
+  '/evals': typeof AuthenticatedEvalsRoute
   '/factory': typeof AuthenticatedFactoryRoute
+  '/files': typeof AuthenticatedFilesRoute
+  '/health': typeof AuthenticatedHealthRoute
+  '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/memory': typeof AuthenticatedMemoryRoute
+  '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
+  '/prompts': typeof AuthenticatedPromptsRoute
+  '/system': typeof AuthenticatedSystemRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/ask': typeof AuthenticatedAskRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
   '/_authenticated/cost': typeof AuthenticatedCostRoute
   '/_authenticated/digest': typeof AuthenticatedDigestRoute
+  '/_authenticated/evals': typeof AuthenticatedEvalsRoute
   '/_authenticated/factory': typeof AuthenticatedFactoryRoute
+  '/_authenticated/files': typeof AuthenticatedFilesRoute
+  '/_authenticated/health': typeof AuthenticatedHealthRoute
+  '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/_authenticated/memory': typeof AuthenticatedMemoryRoute
+  '/_authenticated/models': typeof AuthenticatedModelsRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
+  '/_authenticated/prompts': typeof AuthenticatedPromptsRoute
+  '/_authenticated/system': typeof AuthenticatedSystemRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/capture' | '/cost' | '/digest' | '/factory' | '/overview'
+  fullPaths:
+    | '/'
+    | '/ask'
+    | '/capture'
+    | '/cost'
+    | '/digest'
+    | '/evals'
+    | '/factory'
+    | '/files'
+    | '/health'
+    | '/knowledge'
+    | '/memory'
+    | '/models'
+    | '/overview'
+    | '/prompts'
+    | '/system'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/capture' | '/cost' | '/digest' | '/factory' | '/overview'
+  to:
+    | '/'
+    | '/ask'
+    | '/capture'
+    | '/cost'
+    | '/digest'
+    | '/evals'
+    | '/factory'
+    | '/files'
+    | '/health'
+    | '/knowledge'
+    | '/memory'
+    | '/models'
+    | '/overview'
+    | '/prompts'
+    | '/system'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_authenticated/ask'
     | '/_authenticated/capture'
     | '/_authenticated/cost'
     | '/_authenticated/digest'
+    | '/_authenticated/evals'
     | '/_authenticated/factory'
+    | '/_authenticated/files'
+    | '/_authenticated/health'
+    | '/_authenticated/knowledge'
+    | '/_authenticated/memory'
+    | '/_authenticated/models'
     | '/_authenticated/overview'
+    | '/_authenticated/prompts'
+    | '/_authenticated/system'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -115,6 +261,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/system': {
+      id: '/_authenticated/system'
+      path: '/system'
+      fullPath: '/system'
+      preLoaderRoute: typeof AuthenticatedSystemRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/prompts': {
+      id: '/_authenticated/prompts'
+      path: '/prompts'
+      fullPath: '/prompts'
+      preLoaderRoute: typeof AuthenticatedPromptsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/overview': {
       id: '/_authenticated/overview'
       path: '/overview'
@@ -122,11 +282,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOverviewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/models': {
+      id: '/_authenticated/models'
+      path: '/models'
+      fullPath: '/models'
+      preLoaderRoute: typeof AuthenticatedModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/memory': {
+      id: '/_authenticated/memory'
+      path: '/memory'
+      fullPath: '/memory'
+      preLoaderRoute: typeof AuthenticatedMemoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/knowledge': {
+      id: '/_authenticated/knowledge'
+      path: '/knowledge'
+      fullPath: '/knowledge'
+      preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/health': {
+      id: '/_authenticated/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof AuthenticatedHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/files': {
+      id: '/_authenticated/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof AuthenticatedFilesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/factory': {
       id: '/_authenticated/factory'
       path: '/factory'
       fullPath: '/factory'
       preLoaderRoute: typeof AuthenticatedFactoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/evals': {
+      id: '/_authenticated/evals'
+      path: '/evals'
+      fullPath: '/evals'
+      preLoaderRoute: typeof AuthenticatedEvalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/digest': {
@@ -150,23 +352,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCaptureRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ask': {
+      id: '/_authenticated/ask'
+      path: '/ask'
+      fullPath: '/ask'
+      preLoaderRoute: typeof AuthenticatedAskRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAskRoute: typeof AuthenticatedAskRoute
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
   AuthenticatedCostRoute: typeof AuthenticatedCostRoute
   AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
+  AuthenticatedEvalsRoute: typeof AuthenticatedEvalsRoute
   AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
+  AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
+  AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
+  AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
+  AuthenticatedMemoryRoute: typeof AuthenticatedMemoryRoute
+  AuthenticatedModelsRoute: typeof AuthenticatedModelsRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
+  AuthenticatedPromptsRoute: typeof AuthenticatedPromptsRoute
+  AuthenticatedSystemRoute: typeof AuthenticatedSystemRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAskRoute: AuthenticatedAskRoute,
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
   AuthenticatedCostRoute: AuthenticatedCostRoute,
   AuthenticatedDigestRoute: AuthenticatedDigestRoute,
+  AuthenticatedEvalsRoute: AuthenticatedEvalsRoute,
   AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
+  AuthenticatedFilesRoute: AuthenticatedFilesRoute,
+  AuthenticatedHealthRoute: AuthenticatedHealthRoute,
+  AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
+  AuthenticatedMemoryRoute: AuthenticatedMemoryRoute,
+  AuthenticatedModelsRoute: AuthenticatedModelsRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
+  AuthenticatedPromptsRoute: AuthenticatedPromptsRoute,
+  AuthenticatedSystemRoute: AuthenticatedSystemRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -175,6 +416,8 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -60,6 +60,7 @@ export type Database = {
           factory: Json
           health: Json
           id: string
+          machine: Json
           models: Json
           services: Json
           spend: Json
@@ -71,6 +72,7 @@ export type Database = {
           factory?: Json
           health?: Json
           id?: string
+          machine?: Json
           models?: Json
           services?: Json
           spend?: Json
@@ -82,6 +84,7 @@ export type Database = {
           factory?: Json
           health?: Json
           id?: string
+          machine?: Json
           models?: Json
           services?: Json
           spend?: Json

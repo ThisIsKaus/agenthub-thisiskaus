@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -59,4 +60,18 @@ export const requestMagicLink = createServerFn({ method: "POST" })
     }
 
     return { ok: true as const, message: "Link sent. Check your inbox." };
+  });
+
+/**
+ * Social sign-in bypasses the magic-link allowlist, so the resulting session
+ * is re-checked server-side against ALLOWED_EMAIL before the app is shown.
+ */
+export const isSessionAllowed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const allowed = (process.env.ALLOWED_EMAIL ?? "").trim().toLowerCase();
+    const email = String((context.claims as { email?: string })?.email ?? "")
+      .trim()
+      .toLowerCase();
+    return { ok: Boolean(allowed) && email === allowed };
   });

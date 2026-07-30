@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { requestMagicLink } from "@/lib/auth.functions";
+import { requestMagicLink, isSessionAllowed } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,19 +19,30 @@ export const Route = createFileRoute("/")({
 function SignIn() {
   const navigate = useNavigate();
   const send = useServerFn(requestMagicLink);
+  const checkAllowed = useServerFn(isSessionAllowed);
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) navigate({ to: "/overview", replace: true });
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!active || !data.session) return;
+      // Social sign-in bypasses the magic-link allowlist, so every session is
+      // re-checked server-side before the workspace is shown.
+      const allowed = await checkAllowed({}).catch(() => ({ ok: false }));
+      if (!active) return;
+      if (allowed.ok) {
+        navigate({ to: "/overview", replace: true });
+      } else {
+        await supabase.auth.signOut();
+        setMessage({ ok: false, text: "This instance is private." });
+      }
     });
     return () => {
       active = false;
     };
-  }, [navigate]);
+  }, [navigate, checkAllowed]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -46,6 +57,9 @@ function SignIn() {
       setPending(false);
     }
   }
+
+
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -73,6 +87,11 @@ function SignIn() {
             {pending ? "Sending" : "Send link"}
           </button>
         </form>
+
+
+
+
+
 
         {message && (
           <p
