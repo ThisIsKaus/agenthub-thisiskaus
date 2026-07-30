@@ -65,7 +65,7 @@ function SignIn() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm border border-rule bg-panel p-6">
         <h1 className="font-serif text-3xl leading-none text-paper">
-          AgentHub <span className="text-copper">Remote</span>
+          AgentHub
         </h1>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-3">
