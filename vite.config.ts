@@ -45,6 +45,7 @@ export default defineConfig({
           // home-screen launch resolves without ever touching the network.
           // Revisioned per build, so autoUpdate replaces it on deploy.
           additionalManifestEntries: [{ url: "/", revision: `${Date.now()}` }],
+          navigateFallback: undefined,
           // NOTE: no navigateFallback — it would serve the precached "/" document
           // (with the homepage's dehydrated router payload) for every deep link,
           // which makes the client router throw "Invariant failed" on /ask, /overview…
