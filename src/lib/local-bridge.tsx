@@ -15,11 +15,17 @@ const PROBE_INTERVAL = 60_000;
 
 export type MachineBlock = {
   posture?: string;
-  power?: string;
-  sleep?: string;
-  schedule?: string;
-  uptime?: string;
+  power?: { on_ac?: boolean; percent?: number; pct?: number; source?: string };
+  sleep?: {
+    sleep_prevented?: boolean;
+    holders?: string | string[];
+    since?: string;
+    asleep_since?: string;
+  };
+  schedule?: { repeat?: { at?: string }; upcoming?: { at?: string; label?: string }[] };
+  uptime?: number | string;
   thermal?: string;
+  approvals_today?: number;
   collected_at?: string;
   [key: string]: unknown;
 };
