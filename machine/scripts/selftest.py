@@ -308,9 +308,35 @@ def safety():
     rec(g, "console cannot read vault", s == 403, f"HTTP {s} via {ep} (403 expected)",
         "BLOCKED_ROOTS in console.py must include the vault")
 
+    # Test the path a user actually takes, not just the mechanism underneath it.
+    code, body = http("http://127.0.0.1:4100/api/ask", None, timeout=8)
+    src = (H / "console" / "console.py").read_text() if (H / "console" / "console.py").exists() else ""
+    m = re.search(r"def ask\(.*?\n(?=@app)", src, re.S)
+    ask_body = m.group(0) if m else ""
+    rec(g, "ask path filters cloud lanes",
+        "sensitivity NOT IN" in ask_body and 'model.startswith("cloud-")' in ask_body,
+        "present" if "sensitivity NOT IN" in ask_body else "MISSING — S3 could reach a metered lane",
+        "restore the lane filter inside the ask endpoint, not only in lane_test.py")
+
     s, ep = probe(f"{HOME}/.ssh/id_ed25519")
     rec(g, "console path allowlist", s == 403, f"HTTP {s} via {ep} (403 expected)",
         "ALLOWED_ROOTS in console.py is too permissive")
+
+    import urllib.request as _u
+    def origin_probe(origin):
+        try:
+            rq = _u.Request("http://127.0.0.1:4100/api/capabilities",
+                            headers={"Origin": origin})
+            with _u.urlopen(rq, timeout=6) as r:
+                return r.headers.get("access-control-allow-origin")
+        except Exception:
+            return "error"
+    good = origin_probe("https://agenthub.thisiskaus.com")
+    rec(g, "CORS allows the console origin", good == "https://agenthub.thisiskaus.com",
+        str(good), "ALLOWED_ORIGINS in console.py must name the Lovable domain")
+    bad = origin_probe("https://evil.example.com")
+    rec(g, "CORS refuses unknown origins", bad in (None, "error"), str(bad),
+        "an unknown origin must receive no allow-origin header — this is a leak if it does")
 
     code, body = http("http://127.0.0.1:4100/api/health", timeout=6)
     ver = 0

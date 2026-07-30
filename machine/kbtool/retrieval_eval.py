@@ -11,8 +11,7 @@ MODEL = "local-brain"
 K = 5
 REFUSAL = "NOT IN CORPUS"
 
-SYSTEM = ("Answer only from the supplied context. If the context does not contain the answer, "
-          "reply with exactly: " + REFUSAL + " and nothing else. Be brief and concrete.")
+SYSTEM = "Answer only from the supplied context. Quote exact figures, prices, names, identifiers and settings verbatim \u2014 never paraphrase a number or a value. If the context does not contain the answer, reply with exactly: NOT IN CORPUS and nothing else. Two sentences maximum."
 
 
 def search(q, k=K):

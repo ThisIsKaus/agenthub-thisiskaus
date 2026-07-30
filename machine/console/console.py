@@ -63,6 +63,25 @@ COMMANDS = {
 JOBS = {}
 app = FastAPI(title="AgentHub Console v2")
 
+# The unified console is served from Lovable over HTTPS and calls this API over loopback.
+# A browser permits that (MDN: loopback is a potentially trustworthy origin), but the API
+# must name the origins it trusts. Strict allowlist — no wildcard, no regex, no credentials.
+ALLOWED_ORIGINS = [
+    "https://agenthub.thisiskaus.com",
+    "http://localhost:8080",     # Lovable preview
+    "http://localhost:5173",     # Vite dev
+    "http://127.0.0.1:4100",     # self
+]
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+    max_age=600,
+)
+
 
 # ---------------------------------------------------------------- helpers
 
@@ -164,6 +183,26 @@ def memory(q: str = "", n: int = 25):
         raise HTTPException(500, "session memory unavailable")
     return {"stats": sessions.stats(),
             "events": sessions.search(q, n) if q.strip() else sessions.recent(n)}
+
+
+def _machine():
+    try:
+        sys.path.insert(0, str(H / "scripts"))
+        import machine_state
+        return machine_state.collect()
+    except Exception:
+        return {}
+
+
+@app.get("/api/capabilities")
+def capabilities():
+    """Probed by the unified console to decide whether the local plane is available."""
+    return {"ok": True, "version": 2,
+            "time": dt.datetime.now().isoformat(timespec="seconds"),
+            "features": ["ask", "files", "models", "prompts", "digest", "corrections",
+                         "knowledge", "memory", "evals", "factory", "cost", "health", "jobs"],
+            "commands": sorted(COMMANDS.keys()),
+            "machine": _machine()}
 
 
 @app.get("/api/health")
@@ -343,9 +382,7 @@ def ask(q: str = Form(...), model: str = Form("local-brain"), k: int = Form(5)):
     except Exception as ex:
         sources.append({"file": f"retrieval unavailable: {type(ex).__name__}", "distance": 0})
 
-    system = ("You answer from Kos Bajpai's own knowledge base. Use the supplied context where it is "
-              "relevant and say plainly when it does not cover the question. Be concise and concrete. "
-              "Never invent a source.")
+    system = ("You answer from Kos Bajpai's own knowledge base. Quote exact figures, prices, names, identifiers and settings verbatim from the context - never paraphrase a number or a value. Say plainly when the context does not cover the question. Never invent a source. Be concise.")
     body = {"model": model, "max_tokens": 3000, "temperature": 0, "messages": [
         {"role": "system", "content": system},
         {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {q}"}]}
