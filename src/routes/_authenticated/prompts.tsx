@@ -56,9 +56,6 @@ function PromptsPage() {
 
   useEffect(() => {
     void load();
-    return () => {
-      if (poll.current) window.clearInterval(poll.current);
-    };
   }, [load]);
 
   async function open(entry: PromptEntry) {
