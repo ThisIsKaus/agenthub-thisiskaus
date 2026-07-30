@@ -42,19 +42,6 @@ function Dot({ tone }: { tone: "ok" | "watch" | "risk" | "faint" }) {
 }
 
 
-function Fig({ n, unit, label, detail }: { n: string; unit?: string; label: string; detail: string }) {
-  const missing = n === "—";
-  return (
-    <div className="bg-panel px-4 py-5">
-      <div className={`font-serif text-[34px] leading-none tabular-nums ${missing ? "text-faint" : "text-paper"}`}>
-        {n}
-        {unit ? <span className="text-base text-muted-foreground"> {unit}</span> : null}
-      </div>
-      <div className="mt-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">{label}</div>
-      <div className="mt-1 font-mono text-[11px] leading-snug text-faint">{detail}</div>
-    </div>
-  );
-}
 
 function Card({ title, items }: { title: string; items: [string, string][] }) {
   return (
@@ -128,7 +115,6 @@ const PHASES: [string, string, string, string][] = [
 export function AboutSystemBody() {
   const { data } = useHubState();
 
-  const services = data?.services ?? {};
 
   const stamp = formatStamp(data?.updated_at);
 
