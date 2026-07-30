@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
+import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
+import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
 import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
 import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
@@ -30,6 +32,16 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedOverviewRoute = AuthenticatedOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFilesRoute = AuthenticatedFilesRouteImport.update({
+  id: '/files',
+  path: '/files',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFactoryRoute = AuthenticatedFactoryRouteImport.update({
@@ -65,6 +77,8 @@ export interface FileRoutesByFullPath {
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
   '/factory': typeof AuthenticatedFactoryRoute
+  '/files': typeof AuthenticatedFilesRoute
+  '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRoutesByTo {
@@ -74,6 +88,8 @@ export interface FileRoutesByTo {
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
   '/factory': typeof AuthenticatedFactoryRoute
+  '/files': typeof AuthenticatedFilesRoute
+  '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRoutesById {
@@ -85,6 +101,8 @@ export interface FileRoutesById {
   '/_authenticated/cost': typeof AuthenticatedCostRoute
   '/_authenticated/digest': typeof AuthenticatedDigestRoute
   '/_authenticated/factory': typeof AuthenticatedFactoryRoute
+  '/_authenticated/files': typeof AuthenticatedFilesRoute
+  '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
 }
 export interface FileRouteTypes {
@@ -96,9 +114,20 @@ export interface FileRouteTypes {
     | '/cost'
     | '/digest'
     | '/factory'
+    | '/files'
+    | '/knowledge'
     | '/overview'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ask' | '/capture' | '/cost' | '/digest' | '/factory' | '/overview'
+  to:
+    | '/'
+    | '/ask'
+    | '/capture'
+    | '/cost'
+    | '/digest'
+    | '/factory'
+    | '/files'
+    | '/knowledge'
+    | '/overview'
   id:
     | '__root__'
     | '/'
@@ -108,6 +137,8 @@ export interface FileRouteTypes {
     | '/_authenticated/cost'
     | '/_authenticated/digest'
     | '/_authenticated/factory'
+    | '/_authenticated/files'
+    | '/_authenticated/knowledge'
     | '/_authenticated/overview'
   fileRoutesById: FileRoutesById
 }
@@ -137,6 +168,20 @@ declare module '@tanstack/react-router' {
       path: '/overview'
       fullPath: '/overview'
       preLoaderRoute: typeof AuthenticatedOverviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/knowledge': {
+      id: '/_authenticated/knowledge'
+      path: '/knowledge'
+      fullPath: '/knowledge'
+      preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/files': {
+      id: '/_authenticated/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof AuthenticatedFilesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/factory': {
@@ -183,6 +228,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCostRoute: typeof AuthenticatedCostRoute
   AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
   AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
+  AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
+  AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
 }
 
@@ -192,6 +239,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCostRoute: AuthenticatedCostRoute,
   AuthenticatedDigestRoute: AuthenticatedDigestRoute,
   AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
+  AuthenticatedFilesRoute: AuthenticatedFilesRoute,
+  AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
 }
 
