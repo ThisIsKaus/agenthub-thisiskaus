@@ -32,10 +32,18 @@ def rec(group, name, ok, detail="", fix="", warn=False):
               "detail": str(detail)[:160], "fix": fix})
 
 
+PATH_PREFIX = "/opt/homebrew/bin:" + str(Path.home()/".local/bin") + ":" + \
+              str(Path.home()/".lmstudio/bin") + ":" + str(Path.home()/"AgentHub/scripts")
+
+
 def sh(cmd, timeout=10):
+    """PATH-independent: a non-interactive shell does not read ~/.zshrc, and launchd gives
+    a bare PATH, so the tools this suite exercises must be findable regardless of caller."""
+    env = dict(os.environ)
+    env["PATH"] = PATH_PREFIX + ":" + env.get("PATH", "/usr/bin:/bin")
     try:
         return subprocess.run(cmd, shell=True, capture_output=True, text=True,
-                              timeout=timeout).stdout.strip()
+                              timeout=timeout, env=env).stdout.strip()
     except Exception:
         return ""
 
