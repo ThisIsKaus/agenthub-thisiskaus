@@ -123,3 +123,12 @@ career planning material, and "nightly job on battery" correctly retrieved a bat
 The retrieval was right; the instrument was stale. Questions now name their subject, as a
 user with this corpus would, and the set includes business questions because that is what the
 corpus is for. The refusal axis remains and must stay perfect.
+
+## Repository rules after the Lovable merge (v2.1, 30 Jul 2026)
+The workspace repository is connected to Lovable, whose AGENTS.md states that rewriting
+published history — force pushing, rebasing, amending or squashing pushed commits — rewrites
+history on Lovable's side and risks losing project history. Therefore: never force push to
+this repository, and keep any branch Lovable syncs in a working state, because pushed commits
+appear in its editor. Divergence is resolved by merging, never by rewriting.
+Lovable owns src/, supabase/ and the root build config. machine/ is maintained locally and is
+documented as off-limits in AGENTS.md.
