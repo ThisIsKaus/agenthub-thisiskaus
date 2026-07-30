@@ -6,6 +6,12 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { VitePWA } from "vite-plugin-pwa";
+import { loadEnv } from "vite";
+import path from "node:path";
+
+// Server routes (email webhook/preview) need non-VITE_ env vars at runtime.
+const serverEnv = loadEnv(process.env.NODE_ENV || "development", process.cwd(), "");
+Object.assign(process.env, serverEnv);
 
 export default defineConfig({
   tanstackStart: {
