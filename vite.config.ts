@@ -45,8 +45,11 @@ export default defineConfig({
           // home-screen launch resolves without ever touching the network.
           // Revisioned per build, so autoUpdate replaces it on deploy.
           additionalManifestEntries: [{ url: "/", revision: `${Date.now()}` }],
-          navigateFallback: "/",
-          navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/_serverFn\//],
+          navigateFallback: undefined,
+          // NOTE: no navigateFallback — it would serve the precached "/" document
+          // (with the homepage's dehydrated router payload) for every deep link,
+          // which makes the client router throw "Invariant failed" on /ask, /overview…
+          // Navigations go to the network first and only fall back to "/" offline.
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
@@ -55,7 +58,17 @@ export default defineConfig({
           navigationPreload: false,
 
           runtimeCaching: [
-
+            {
+              urlPattern: ({ request, sameOrigin }) =>
+                sameOrigin && request.mode === "navigate",
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "agenthub-pages",
+                networkTimeoutSeconds: 10,
+                expiration: { maxEntries: 20 },
+                precacheFallback: { fallbackURL: "/" },
+              },
+            },
             {
               urlPattern: ({ url, sameOrigin }) =>
                 sameOrigin && /\.(?:js|css|woff2?|png|svg|ico)$/.test(url.pathname),
@@ -65,6 +78,7 @@ export default defineConfig({
                 expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 90 },
               },
             },
+
             {
               urlPattern: ({ url }) => url.origin === "https://fonts.gstatic.com",
               handler: "CacheFirst",
