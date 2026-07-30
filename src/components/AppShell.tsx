@@ -22,6 +22,8 @@ const TABS = [
   { to: "/memory", label: "Memory" },
   { to: "/health", label: "Health" },
   { to: "/cost", label: "Cost" },
+  { to: "/system", label: "System" },
+
 
 
 ] as const;

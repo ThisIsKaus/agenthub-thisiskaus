@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSystemRouteImport } from './routes/_authenticated/system'
 import { Route as AuthenticatedPromptsRouteImport } from './routes/_authenticated/prompts'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedModelsRouteImport } from './routes/_authenticated/models'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSystemRoute = AuthenticatedSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPromptsRoute = AuthenticatedPromptsRouteImport.update({
   id: '/prompts',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
+  '/system': typeof AuthenticatedSystemRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
+  '/system': typeof AuthenticatedSystemRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/_authenticated/models': typeof AuthenticatedModelsRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/prompts': typeof AuthenticatedPromptsRoute
+  '/_authenticated/system': typeof AuthenticatedSystemRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/models'
     | '/overview'
     | '/prompts'
+    | '/system'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/models'
     | '/overview'
     | '/prompts'
+    | '/system'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   id:
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/_authenticated/models'
     | '/_authenticated/overview'
     | '/_authenticated/prompts'
+    | '/_authenticated/system'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
@@ -248,6 +260,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/system': {
+      id: '/_authenticated/system'
+      path: '/system'
+      fullPath: '/system'
+      preLoaderRoute: typeof AuthenticatedSystemRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/prompts': {
       id: '/_authenticated/prompts'
@@ -371,6 +390,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModelsRoute: typeof AuthenticatedModelsRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedPromptsRoute: typeof AuthenticatedPromptsRoute
+  AuthenticatedSystemRoute: typeof AuthenticatedSystemRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -387,6 +407,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModelsRoute: AuthenticatedModelsRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedPromptsRoute: AuthenticatedPromptsRoute,
+  AuthenticatedSystemRoute: AuthenticatedSystemRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -401,3 +422,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
