@@ -60,29 +60,8 @@ function SignIn() {
     }
   }
 
-  async function onApple() {
-    setApplePending(true);
-    setMessage(null);
-    const result = await lovable.auth.signInWithOAuth("apple", {
-      redirect_uri: window.location.origin,
-    });
 
-    if (result.error) {
-      setMessage({ ok: false, text: "Apple sign-in failed." });
-      setApplePending(false);
-      return;
-    }
-    if (result.redirected) return;
 
-    const allowed = await checkAllowed({}).catch(() => ({ ok: false }));
-    if (allowed.ok) {
-      navigate({ to: "/overview", replace: true });
-    } else {
-      await supabase.auth.signOut();
-      setMessage({ ok: false, text: "This instance is private." });
-    }
-    setApplePending(false);
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
