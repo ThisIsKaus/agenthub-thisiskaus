@@ -11,6 +11,8 @@ const TABS = [
   { to: "/ask", label: "Ask" },
   { to: "/capture", label: "Capture" },
   { to: "/digest", label: "Digest" },
+  { to: "/evals", label: "Evals" },
+
   { to: "/factory", label: "Factory" },
   { to: "/files", label: "Files" },
   { to: "/knowledge", label: "Knowledge" },

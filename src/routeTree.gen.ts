@@ -18,6 +18,7 @@ import { Route as AuthenticatedMemoryRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
+import { Route as AuthenticatedEvalsRouteImport } from './routes/_authenticated/evals'
 import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
 import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
@@ -67,6 +68,11 @@ const AuthenticatedFactoryRoute = AuthenticatedFactoryRouteImport.update({
   path: '/factory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEvalsRoute = AuthenticatedEvalsRouteImport.update({
+  id: '/evals',
+  path: '/evals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDigestRoute = AuthenticatedDigestRouteImport.update({
   id: '/digest',
   path: '/digest',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/capture': typeof AuthenticatedCaptureRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
+  '/evals': typeof AuthenticatedEvalsRoute
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/capture': typeof AuthenticatedCaptureRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
+  '/evals': typeof AuthenticatedEvalsRoute
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
   '/_authenticated/cost': typeof AuthenticatedCostRoute
   '/_authenticated/digest': typeof AuthenticatedDigestRoute
+  '/_authenticated/evals': typeof AuthenticatedEvalsRoute
   '/_authenticated/factory': typeof AuthenticatedFactoryRoute
   '/_authenticated/files': typeof AuthenticatedFilesRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/capture'
     | '/cost'
     | '/digest'
+    | '/evals'
     | '/factory'
     | '/files'
     | '/knowledge'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/capture'
     | '/cost'
     | '/digest'
+    | '/evals'
     | '/factory'
     | '/files'
     | '/knowledge'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/_authenticated/capture'
     | '/_authenticated/cost'
     | '/_authenticated/digest'
+    | '/_authenticated/evals'
     | '/_authenticated/factory'
     | '/_authenticated/files'
     | '/_authenticated/knowledge'
@@ -248,6 +260,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFactoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/evals': {
+      id: '/_authenticated/evals'
+      path: '/evals'
+      fullPath: '/evals'
+      preLoaderRoute: typeof AuthenticatedEvalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/digest': {
       id: '/_authenticated/digest'
       path: '/digest'
@@ -284,6 +303,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
   AuthenticatedCostRoute: typeof AuthenticatedCostRoute
   AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
+  AuthenticatedEvalsRoute: typeof AuthenticatedEvalsRoute
   AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
   AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
@@ -298,6 +318,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
   AuthenticatedCostRoute: AuthenticatedCostRoute,
   AuthenticatedDigestRoute: AuthenticatedDigestRoute,
+  AuthenticatedEvalsRoute: AuthenticatedEvalsRoute,
   AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
   AuthenticatedFilesRoute: AuthenticatedFilesRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
