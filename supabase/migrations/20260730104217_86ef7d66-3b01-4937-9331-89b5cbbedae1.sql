@@ -1,0 +1,1 @@
+ALTER TABLE public.state ADD COLUMN IF NOT EXISTS machine jsonb NOT NULL DEFAULT '{}'::jsonb;
