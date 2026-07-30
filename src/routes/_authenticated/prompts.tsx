@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { useJobDrawer } from "@/lib/job-drawer";
 
 export const Route = createFileRoute("/_authenticated/prompts")({
   head: () => ({
@@ -25,14 +26,13 @@ export const Route = createFileRoute("/_authenticated/prompts")({
 
 type PromptEntry = { name?: string; path: string; content?: string };
 type PromptsData = { prompts?: (PromptEntry | string)[] } | (PromptEntry | string)[];
-type Job = { out?: string; running?: boolean };
-
 function entryOf(item: PromptEntry | string): PromptEntry {
   return typeof item === "string" ? { name: item.split("/").pop() ?? item, path: item } : item;
 }
 
 function PromptsPage() {
   const local = useLocal();
+  const { runJob } = useJobDrawer();
   const [list, setList] = useState<PromptEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<PromptEntry | null>(null);
@@ -40,8 +40,6 @@ function PromptsPage() {
   const [note, setNote] = useState<string | null>(null);
   const [triageUnverified, setTriageUnverified] = useState(false);
   const [scoring, setScoring] = useState(false);
-  const [scoreOut, setScoreOut] = useState<string | null>(null);
-  const poll = useRef<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,33 +94,12 @@ function PromptsPage() {
     }
   }
 
-  async function scoreTriage() {
+  function scoreTriage() {
     setScoring(true);
-    setScoreOut("");
-    try {
-      const started = await local.post<{ job: string }>("/api/run", { key: "eval" });
-      poll.current = window.setInterval(async () => {
-        try {
-          const job = await local.get<Job>("/api/job", { id: started.job });
-          setScoreOut(job.out ?? "");
-          if (!job.running) {
-            if (poll.current) window.clearInterval(poll.current);
-            poll.current = null;
-            setScoring(false);
-            setTriageUnverified(false);
-          }
-        } catch {
-          if (poll.current) window.clearInterval(poll.current);
-          poll.current = null;
-          setScoring(false);
-        }
-      }, 900);
-    } catch (error) {
+    void runJob("eval", "score triage", (job) => {
       setScoring(false);
-      setNote(
-        isRefusal(error) ? error.message || "denied at the approval dialog" : "the machine did not start the score",
-      );
-    }
+      if (job.code === 0) setTriageUnverified(false);
+    });
   }
 
   return (
@@ -200,11 +177,6 @@ function PromptsPage() {
         </Panel>
       </div>
 
-      {scoreOut !== null && (
-        <pre className="max-h-[40vh] overflow-y-auto whitespace-pre-wrap break-words border border-rule bg-panel2 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
-          {scoreOut || "waiting for output…"}
-        </pre>
-      )}
-    </div>
+          </div>
   );
 }
