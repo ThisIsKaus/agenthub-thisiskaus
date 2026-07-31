@@ -669,6 +669,95 @@ def job(id: str):
     return j
 
 
+# ---------------------------------------------------------------- proposals and build cascade
+
+@app.get("/api/proposals")
+def proposals_list():
+    d = H / "state" / "proposals"
+    items = []
+    for p in sorted(d.glob("*.json")) if d.exists() else []:
+        try:
+            items.append(json.loads(p.read_text()))
+        except Exception:
+            continue
+    items.sort(key=lambda x: x.get("score", 0), reverse=True)
+    stats = {}
+    for it in items:
+        s = it.get("status", "open")
+        stats[s] = stats.get(s, 0) + 1
+    return {"proposals": items, "stats": stats}
+
+
+@app.post("/api/proposals/act")
+def proposals_act(id: str = Form(...), action: str = Form(...), note: str = Form("")):
+    if action not in ("approve", "reject", "defer"):
+        raise HTTPException(400, "action not permitted")
+    if action == "reject" and not note.strip():
+        raise HTTPException(400, "a note is required to reject a proposal")
+    if not re.fullmatch(r"[\w.-]+", id):
+        raise HTTPException(400, "invalid proposal id")
+    p = H / "state" / "proposals" / f"{id}.json"
+    if not p.exists():
+        raise HTTPException(404, "no such proposal")
+    data = json.loads(p.read_text())
+    data["status"] = {"approve": "approved", "reject": "rejected", "defer": "deferred"}[action]
+    data["note"] = note
+    p.write_text(json.dumps(data, indent=2))
+    audit(f"proposal {action} {id}")
+    return data
+
+
+@app.post("/api/build")
+def build(intent: str = Form(...), scope: str = Form("")):
+    argv = ["/opt/homebrew/bin/uv", "run", "--project", str(H / "console"),
+            "python", str(H / "build/cascade.py"), intent]
+    if scope:
+        argv.append(scope)
+    jid = uuid.uuid4().hex[:8]
+    JOBS[jid] = {"key": "build", "out": "", "running": True, "code": None}
+    threading.Thread(target=run_job, args=(jid, argv), daemon=True).start()
+    audit(f"build {intent[:80]}")
+    return {"job": jid, "label": "Build: " + intent[:60]}
+
+
+@app.get("/api/cascade/stats")
+def cascade_stats():
+    d = H / "state" / "builds"
+    runs = []
+    for p in sorted(d.glob("*.json")) if d.exists() else []:
+        try:
+            runs.append(json.loads(p.read_text()))
+        except Exception:
+            continue
+    by_tier, total_seconds = {}, 0
+    for r in runs:
+        tier = r.get("resolved_at_tier")
+        key = str(tier) if tier else "unresolved"
+        by_tier[key] = by_tier.get(key, 0) + 1
+        total_seconds += sum(a.get("seconds", 0) for a in r.get("attempts", []))
+    mean = round(total_seconds / len(runs), 1) if runs else 0
+    runs.sort(key=lambda r: r.get("started", ""), reverse=True)
+    recent = []
+    for r in runs[:30]:
+        attempts = r.get("attempts", [])
+        outcome = ("resolved" if r.get("resolved_at_tier")
+                   else (attempts[-1]["result"] if attempts else "no attempts"))
+        recent.append({"intent": r.get("intent", ""), "tier": r.get("resolved_at_tier"),
+                       "seconds": sum(a.get("seconds", 0) for a in attempts), "outcome": outcome})
+    return {"by_tier": by_tier, "mean_seconds": mean, "runs": recent}
+
+
+@app.get("/api/skills")
+def skills_list():
+    d = H / "skills"
+    items = []
+    for p in sorted(d.glob("*.md")) if d.exists() else []:
+        st = p.stat()
+        items.append({"name": p.name, "path": str(p), "size": st.st_size,
+                      "modified": dt.datetime.fromtimestamp(st.st_mtime).isoformat(timespec="minutes")})
+    return {"skills": items}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=4100, log_level="warning")
