@@ -26,7 +26,7 @@ export const LANE_ROLE: Record<string, string> = {
 };
 
 export type Bench = { role: string; id: string; tps: number; gib: number };
-type ModelsData = { resident?: string[]; available?: string[]; bench?: Bench[] };
+type ModelsData = { resident?: string[]; available?: string[]; bench?: Bench[]; aliases?: string[] };
 
 export type LaneStatus = "resident" | "cold" | "cloud" | "unknown";
 
@@ -116,6 +116,7 @@ export function useLaneCapacity() {
     resident,
     bench,
     available: query.data?.available ?? [],
+    aliases: query.data?.aliases ?? [],
     loading: query.isLoading,
     error: query.error as Error | null,
     refresh: query.refetch,
