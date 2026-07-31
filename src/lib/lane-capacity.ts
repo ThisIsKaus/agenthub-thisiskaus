@@ -19,7 +19,7 @@ import { useLocal } from "@/lib/local-bridge";
 import { toNum } from "@/lib/format";
 
 /** Router alias → the bench role that backs it. Cloud lanes have no role. */
-const LANE_ROLE: Record<string, string> = {
+export const LANE_ROLE: Record<string, string> = {
   "local-brain": "quality-brain",
   "local-coder": "coding-local",
   "local-triage": "triage",
