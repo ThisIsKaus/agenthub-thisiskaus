@@ -91,6 +91,7 @@ export function CanvasBlockCard({
 }) {
   const local = useLocal();
   const capacity = useLaneCapacity();
+  const autopilot = useAutopilot();
   const drawer = useJobDrawer();
   const [picker, setPicker] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
