@@ -121,6 +121,13 @@ export type BranchSelection = {
   pins: Record<string, string>;
 };
 
+/**
+ * Every canvas is also a project. A thought and a shipped thing are the same
+ * document at different stages, so there is no second place to look.
+ */
+export const STAGES = ["idea", "shaping", "wip", "review", "shipped", "parked"] as const;
+export type Stage = (typeof STAGES)[number];
+
 export type CanvasDoc = {
   version: 2;
   id: string;
@@ -130,9 +137,18 @@ export type CanvasDoc = {
   blocks: CanvasBlock[];
   branches: BranchSelection[];
   activeBranch: string | null;
+  /** Where this piece of work has got to. A canvas at 'idea' is still a project. */
+  stage: Stage;
+  /** Who it is for: personal, a product, or a named client engagement. */
+  entity: string;
+  /** S0 · S1p · S1c · S2 · S3. Governs what may ever be handed over. */
+  sensitivity: string;
+  /** Skill files loaded into every run of this document. */
+  skills: string[];
   /** Absolute path on the machine once the document has been written. */
   path?: string;
 };
+
 
 /** Runs kept per block. Older ones fall off; the pinned run never does. */
 export const RUN_KEEP = 8;
