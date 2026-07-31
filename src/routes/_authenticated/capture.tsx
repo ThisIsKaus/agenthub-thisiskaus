@@ -150,6 +150,12 @@ function CapturePage() {
             {online ? "live" : "offline"}
           </span>
         </div>
+        <p className="mt-2 max-w-[62ch] text-[13px] leading-relaxed text-muted-foreground">
+          The inbox. One thought, sent to the machine to be classified and filed — it works with
+          the machine asleep and with no network, holding the note on this device until it can
+          hand it over. Use Canvas instead when you want to think something through.
+        </p>
+
 
         <form
           onSubmit={(event) => {

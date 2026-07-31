@@ -128,3 +128,15 @@ export function FigureSkeleton() {
     </div>
   );
 }
+
+/** A plain-language heading that says what a section is for. */
+export function PageIntro({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="border-b border-rule pb-3">
+      <h1 className="font-serif text-2xl leading-none text-paper">{title}</h1>
+      <p className="mt-2 max-w-[62ch] text-[13px] leading-relaxed text-muted-foreground">
+        {children}
+      </p>
+    </div>
+  );
+}

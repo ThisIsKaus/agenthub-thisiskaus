@@ -11,16 +11,18 @@ type Group = { label: string; to: string; subs: Sub[] };
 
 const GROUPS: Group[] = [
   { label: "Overview", to: "/overview", subs: [] },
-  { label: "Ask", to: "/ask", subs: [] },
   {
     label: "Work",
-    to: "/digest",
+    to: "/canvas",
     subs: [
-      { to: "/digest", label: "Digest" },
-      { to: "/capture", label: "Capture" },
-      { to: "/factory", label: "Factory" },
+      { to: "/canvas", label: "Canvas · think" },
+      { to: "/capture", label: "Capture · inbox" },
+      { to: "/digest", label: "Triage · yesterday" },
+      { to: "/factory", label: "Projects · wip" },
     ],
   },
+
+
   {
     label: "Corpus",
     to: "/files",
