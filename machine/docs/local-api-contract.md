@@ -1,5 +1,5 @@
 # AgentHub local API — contract for Lovable
-_Generated from console.py by AST parse, 2026-07-30T20:15. Do not edit by hand._
+_Generated from console.py by AST parse, 2026-07-31T14:29. Do not edit by hand._
 
 ## How to call it
 
@@ -33,14 +33,16 @@ Every POST takes **multipart form fields**, not a JSON body. Sending JSON will
 return HTTP 422. A 403 means the path was outside the allowlist or an approval
 dialog was denied — surface it as a refusal, never as an error.
 
-## Endpoints (29)
+## Endpoints (35)
 
 | Method | Path | Parameters | Purpose |
 |---|---|---|---|
 | GET | `/` | no parameters | index |
 | POST | `/api/ask` | form: { q: string, model?: string, k?: number } | ask |
+| POST | `/api/build` | form: { intent: string, scope?: string } | build |
 | GET | `/api/capabilities` | no parameters | Probed by the unified console to decide whether the local plane is available. |
 | POST | `/api/capture` | form: { text: string } | capture |
+| GET | `/api/cascade/stats` | no parameters | cascade_stats |
 | GET | `/api/cost` | query: { days?: number } | cost |
 | GET | `/api/digest` | query: { date?: string } | digest |
 | POST | `/api/draft` | form: { title: string, body: string } | draft |
@@ -61,9 +63,13 @@ dialog was denied — surface it as a refusal, never as an error.
 | POST | `/api/models/action` | form: { action: string, model?: string } | models_action |
 | GET | `/api/prompts` | no parameters | prompts |
 | POST | `/api/prompts/save` | form: { path: string, content: string } | prompts_save |
+| GET | `/api/proposals` | no parameters | proposals_list |
+| POST | `/api/proposals/act` | form: { id: string, action: string, note?: string } | proposals_act |
 | GET | `/api/roots` | no parameters | roots |
 | POST | `/api/run` | form: { key: string } | run |
 | GET | `/api/selftest` | no parameters | selftest_last |
+| GET | `/api/skills` | no parameters | skills_list |
+| POST | `/api/skills/save` | form: { path: string, content: string } | skills_save |
 | GET | `/api/state` | no parameters | state |
 | GET | `/api/tree` | query: { path?: string } | tree |
 
@@ -83,6 +89,7 @@ Poll GET `/api/job?id=` every 900ms until `running` is false.
 | `report` | Rebuild report | T0 |
 | `repair` | Repair to known-good | T1 |
 | `summarise` | Write memory note | T1 |
+| `diagnose` | Diagnose | T1 |
 
 ## Response shapes worth typing
 

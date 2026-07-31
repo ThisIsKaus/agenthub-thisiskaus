@@ -1,12 +1,12 @@
 # AgentHub — brief for Lovable
-_Generated from the live machine 2026-07-31T08:18. Do not edit._
+_Generated from the live machine 2026-07-31T14:41. Do not edit._
 
 ## What exists
 
 A personal AI hub on one MacBook Pro M5 Max. **Not being rebuilt** — you are building the
 single workspace that fronts it. Running locally: 4 models under LM Studio (quality brain
-114.9 t/s), a router on :4000 with 9 aliases, a knowledge base of many
-chunks across many documents indexed from OneDrive, a local API on
+114.9 t/s), a router on :4000 with 9 aliases, a knowledge base of 49501
+chunks across 3005 documents indexed from OneDrive, a local API on
 :4100 exposing every capability, launchd jobs (nightly digest, 4-hourly backup, self-test),
 and a native macOS approval dialog for anything changing external state.
 
@@ -51,7 +51,7 @@ client named in every artifact header, nothing client-flavoured in kb_main.
 - S2 Envelope Collective (Neelam): reads flagged; writes require her recorded confirmation. Never on her behalf.
 - S3 finance/tax/wealth: LOCAL ONLY, router-enforced. Cloud only via anonymisation recipe + per-task approval.
 
-Corpus by class: {}
+Corpus by class: {"S3": 2191, "S1p": 765, "S2": 43, "S1c": 6}
 
 The remote plane publishes **only status and counts** — never document text, file paths, email
 subjects or personal data. Digest shows item detail on the local plane, counts only on the
@@ -86,8 +86,10 @@ by design; offer no edit control for them.
 | Endpoint | Parameters |
 |---|---|
 | POST `/api/ask` | form: { q: string, model?: string, k?: number } |
+| POST `/api/build` | form: { intent: string, scope?: string } |
 | GET `/api/capabilities` | no parameters |
 | POST `/api/capture` | form: { text: string } |
+| GET `/api/cascade/stats` | no parameters |
 | GET `/api/cost` | query: { days?: number } |
 | GET `/api/digest` | query: { date?: string } |
 | POST `/api/draft` | form: { title: string, body: string } |
@@ -108,14 +110,18 @@ by design; offer no edit control for them.
 | POST `/api/models/action` | form: { action: string, model?: string } |
 | GET `/api/prompts` | no parameters |
 | POST `/api/prompts/save` | form: { path: string, content: string } |
+| GET `/api/proposals` | no parameters |
+| POST `/api/proposals/act` | form: { id: string, action: string, note?: string } |
 | GET `/api/roots` | no parameters |
 | POST `/api/run` | form: { key: string } |
 | GET `/api/selftest` | no parameters |
+| GET `/api/skills` | no parameters |
+| POST `/api/skills/save` | form: { path: string, content: string } |
 | GET `/api/state` | no parameters |
 | GET `/api/tree` | query: { path?: string } |
 
 POST `/api/run` with `key` returns `{job, label}`; poll GET `/api/job?id=` every 900ms until
-`running` is false. Keys: verify(T0), doctor(T0), intake(T1), ingest(T1), eval(T0), backup(T1), report(T0), repair(T1), summarise(T1).
+`running` is false. Keys: verify(T0), doctor(T0), intake(T1), ingest(T1), eval(T0), backup(T1), report(T0), repair(T1), summarise(T1), diagnose(T1).
 
 Key shapes: `Capabilities {ok, version, time, features[], machine}` ·
 `Job {key, out, running, code}` · `AskResult {answer, model, sources[{file, path, distance}]}` ·
@@ -130,7 +136,7 @@ Key shapes: `Capabilities {ok, version, time, features[], machine}` ·
 
 ## Design system — matches the existing local console
 
-Colours: `#0B0B0D` ink `#141416` panel `#191919` panel2 `#26262A` rule `#C8744A` copper `#ECEBE8` paper `#8E8E96` muted `#5E5E66` faint `#7FA88C` ok `#C9A227` watch `#B5544A` risk
+Colours: `#0B0B0D` ink `#141416` panel `#191919` panel-2 `#26262A` rule `#C8744A` copper `#ECEBE8` paper `#8E8E96` muted `#5E5E66` faint `#7FA88C` ok `#C9A227` watch `#B5544A` risk
 Type: Instrument Serif (headings only), Inter (body), Geist Mono (every number, timestamp,
 status pill). Dark editorial, not a SaaS landing page. Hairline 1px borders, never shadows.
 Radius 2px max. Copper for accents and active states only, never a large fill. No gradients,
