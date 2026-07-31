@@ -19,6 +19,7 @@ import {
   emptyDoc,
   newId,
   pinnedRun,
+  STAGES,
   type BranchSelection,
   type BlockKind,
   type CanvasBlock,
