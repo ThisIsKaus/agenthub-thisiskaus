@@ -110,6 +110,22 @@ const CAPACITY = /insufficient system resources|model loading was stopped|out of
 const UPSTREAM =
   /^\s*router \d{3}:|badrequesterror|openaiexception|apiconnectionerror|"error"\s*:\s*\{|failed to load model/i;
 
+/** A lane-level failure: the answer body was an upstream error, not an answer. */
+export class LaneFault extends Error {
+  readonly fault = true;
+  constructor(
+    message: string,
+    readonly kind: "capacity" | "upstream",
+  ) {
+    super(message);
+    this.name = "LaneFault";
+  }
+}
+
+export function isLaneFault(error: unknown): error is LaneFault {
+  return error instanceof LaneFault;
+}
+
 export type AnswerVerdict =
   | { ok: true }
   | { ok: false; kind: "capacity" | "upstream"; message: string };
@@ -129,4 +145,12 @@ export function readAnswer(answer: string, lane: string): AnswerVerdict {
     return { ok: false, kind: "upstream", message: `the router declined this lane — ${head.slice(0, 200)}` };
   }
   return { ok: true };
+}
+
+/** Read a lane response and throw when the body is an upstream failure. */
+export function assertAnswer(answer: string | undefined, laneLabel: string): string {
+  const text = answer ?? "";
+  const verdict = readAnswer(text, laneLabel);
+  if (!verdict.ok) throw new LaneFault(verdict.message, verdict.kind);
+  return text;
 }
