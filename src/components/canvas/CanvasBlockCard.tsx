@@ -8,6 +8,7 @@ import {
   stamp,
 } from "@/components/canvas/RunHistory";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { assertAnswer, isLaneFault, LaneFault, useLaneCapacity } from "@/lib/lane-capacity";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { insertJob } from "@/lib/jobs";
 import {
@@ -24,7 +25,6 @@ import {
 } from "@/lib/canvas-runs";
 import {
   JOB_KEYS,
-  LANES,
   newId,
   pinnedRun,
   runText,
@@ -89,6 +89,7 @@ export function CanvasBlockCard({
   onDuplicate: () => void;
 }) {
   const local = useLocal();
+  const capacity = useLaneCapacity();
   const drawer = useJobDrawer();
   const [picker, setPicker] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
@@ -181,6 +182,11 @@ export function CanvasBlockCard({
   }
 
   function failRun(id: string, error: unknown, fallback: string) {
+    if (isLaneFault(error)) {
+      // The machine answered, but with a refusal to load, not with an answer.
+      patchRun(id, { status: "refused", note: error.message });
+      return;
+    }
     const refused = isRefusal(error);
     patchRun(id, {
       status: refused ? "refused" : "failed",
@@ -224,8 +230,22 @@ export function CanvasBlockCard({
     };
   }
 
+  /**
+   * One call, one contract: a body that carries an upstream error is a failure,
+   * never an answer. Anything else would pin a router error as the block's
+   * output and quote it into every downstream block.
+   */
   async function ask(prompt: string, model: string, k: number): Promise<AskResponse> {
-    return local.post<AskResponse>("/api/ask", { q: prompt, model, k: String(k) });
+    const lane = capacity.byId(model);
+    if (lane?.status === "cold") {
+      throw new LaneFault(
+        `${lane.label} is not loaded — ${lane.note}. Load it on Engine · Models, or choose a resident lane.`,
+        "capacity",
+      );
+    }
+    const data = await local.post<AskResponse>("/api/ask", { q: prompt, model, k: String(k) });
+    assertAnswer(data.answer, lane?.label ?? model);
+    return data;
   }
 
   /** One question, one lane, one answer. */
@@ -382,7 +402,14 @@ export function CanvasBlockCard({
     if (block.kind !== "prompt" || busy || !current) return;
     const answer = runText(current);
     if (!answer.trim()) return;
-    const lane = LANES.find((entry) => entry.id !== current.provenance.model) ?? LANES[1];
+    // Never auto-select a cold lane: loading a second large model is what the
+    // machine refuses, and a refusal is not a second opinion.
+    const lane = capacity.critiqueLane(current.provenance.model);
+    if (!lane) {
+      setStatus(null);
+      onUpdate((live) => ({ ...live, note: "no second lane is loaded — load one on Engine · Models" }));
+      return;
+    }
 
     const prompt = [
       "Review the answer below against the question. Name anything unsupported by the",
@@ -729,9 +756,10 @@ export function CanvasBlockCard({
                 onChange={(event) => onChange({ model: event.target.value } as Partial<CanvasBlock>)}
                 className="border border-rule bg-panel2 px-2 py-1 font-mono text-[11px] text-paper outline-none focus:border-copper"
               >
-                {LANES.map((lane) => (
+                {capacity.lanes.map((lane) => (
                   <option key={lane.id} value={lane.id}>
                     {lane.label} · {lane.cost}
+                    {lane.status === "cold" ? " · not loaded" : lane.status === "resident" ? " · resident" : ""}
                   </option>
                 ))}
               </select>
@@ -766,7 +794,12 @@ export function CanvasBlockCard({
               >
                 one pass per source{targets.length >= 2 ? ` · ${targets.length}` : ""}
               </button>
-
+              {capacity.byId(block.model)?.status === "cold" && (
+                <span className="w-full font-mono text-[10px] text-watch">
+                  {capacity.byId(block.model)?.label} is not loaded — the machine will refuse a second
+                  large model while one is resident. Load it on Engine · Models, or pick a resident lane.
+                </span>
+              )}
             </div>
           )}
 
