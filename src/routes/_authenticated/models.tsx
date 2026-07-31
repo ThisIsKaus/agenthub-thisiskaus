@@ -1,10 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { fixed } from "@/lib/format";
+import { useAutopilot } from "@/lib/model-autopilot";
+import {
+  describePlan,
+  isEmbedder,
+  residentLoad,
+  TASK_CLASSES,
+  type TaskClass,
+} from "@/lib/model-policy";
+import { LANES } from "@/lib/canvas-types";
 
 export const Route = createFileRoute("/_authenticated/models")({
   head: () => ({
@@ -12,12 +21,14 @@ export const Route = createFileRoute("/_authenticated/models")({
       { title: "Models — AgentHub" },
       {
         name: "description",
-        content: "Resident models, measured throughput and router aliases on the machine.",
+        content:
+          "Residency, memory budget and automatic loading for the models on the machine.",
       },
       { property: "og:title", content: "Models — AgentHub" },
       {
         property: "og:description",
-        content: "Resident models, measured throughput and router aliases on the machine.",
+        content:
+          "Residency, memory budget and automatic loading for the models on the machine.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -30,14 +41,6 @@ export const Route = createFileRoute("/_authenticated/models")({
   ),
 });
 
-type Bench = { role: string; id: string; tps: number; gib: number };
-type ModelsData = {
-  resident?: string[];
-  available?: string[];
-  bench?: Bench[];
-  aliases?: string[];
-};
-
 const MODES = [
   { action: "standard", label: "Standard" },
   { action: "coding", label: "Coding" },
@@ -45,31 +48,25 @@ const MODES = [
   { action: "light", label: "Light" },
 ] as const;
 
-function isEmbedder(id: string) {
-  return /embed/i.test(id);
+const BUDGETS = [24, 32, 48, 64, 96] as const;
+
+function Row({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-wrap items-baseline gap-3 border-b border-rule py-2 last:border-b-0">{children}</div>;
 }
 
 function ModelsPage() {
   const local = useLocal();
-  const [data, setData] = useState<ModelsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [note, setNote] = useState<string | null>(null);
+  const { policy, update, togglePin, capacity, plan, apply, ensureLane, working, note, setNote } =
+    useAutopilot();
   const [busy, setBusy] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      setData(await local.get<ModelsData>("/api/models"));
-    } catch {
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [local]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const loading = capacity.loading;
+  const failed = !loading && capacity.error !== null;
+  const resident = capacity.resident;
+  const bench = capacity.bench;
+  const used = residentLoad(resident, bench);
+  const embedderResident = resident.some(isEmbedder);
+  const pct = policy.budgetGib > 0 ? Math.min(100, (used / policy.budgetGib) * 100) : 0;
 
   async function act(action: string, model?: string, label?: string) {
     setBusy(label ?? action);
@@ -77,7 +74,7 @@ function ModelsPage() {
     try {
       await local.post("/api/models/action", { action, model });
       setNote(`${label ?? action} — done`);
-      await load();
+      await capacity.refresh();
     } catch (error) {
       setNote(
         isRefusal(error)
@@ -89,18 +86,207 @@ function ModelsPage() {
     }
   }
 
-  const resident = data?.resident ?? [];
-  const embedderResident = resident.some(isEmbedder);
+  const disabled = busy !== null || working !== null;
 
   return (
     <div className="space-y-4">
+      {failed && (
+        <div className="border border-copper bg-panel px-3 py-3">
+          <p className="text-[13px] leading-relaxed text-copper">
+            The machine is reachable but did not answer <span className="font-mono">/api/models</span>.
+            Nothing below is current.
+          </p>
+          <button
+            type="button"
+            onClick={() => void capacity.refresh()}
+            className="mt-2 border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      <Panel title="Autopilot">
+        <div className="space-y-3">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={policy.autopilot}
+              onChange={(event) => update({ autopilot: event.target.checked })}
+              className="mt-1 accent-copper"
+            />
+            <span className="text-[13px] leading-relaxed text-paper">
+              Load the lane a piece of work needs, evicting the heaviest unpinned model when the
+              budget is tight.
+              <span className="block text-muted-foreground">
+                The embedder and pinned lanes are never evicted. Off, a cold lane is refused with the
+                plan instead of run.
+              </span>
+            </span>
+          </label>
+
+          <div>
+            <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+              <span>Memory budget</span>
+              <span className="tabular-nums text-muted-foreground">
+                {fixed(used, 1)} / {policy.budgetGib} GiB resident
+              </span>
+            </div>
+            <div className="mt-1 h-1.5 w-full bg-panel2">
+              <div
+                className={pct > 90 ? "h-full bg-risk" : pct > 70 ? "h-full bg-watch" : "h-full bg-copper"}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {BUDGETS.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => update({ budgetGib: value })}
+                  className={`border px-2 py-1 font-mono text-[10px] ${
+                    policy.budgetGib === value
+                      ? "border-copper text-copper"
+                      : "border-rule text-muted-foreground hover:border-copper hover:text-copper"
+                  }`}
+                >
+                  {value} GiB
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Panel>
+
+      <Panel title="Routing by work">
+        <p className="mb-2 text-[13px] leading-relaxed text-muted-foreground">
+          Which lane each class of work asks for. Complexity ascends; a heavier lane costs memory and
+          latency, not accuracy alone.
+        </p>
+        <table className="w-full text-left">
+          <tbody>
+            {TASK_CLASSES.map((task) => {
+              const laneId = policy.routes[task.id as TaskClass];
+              const lane = capacity.byId(laneId);
+              return (
+                <tr key={task.id} className="border-b border-rule last:border-b-0 align-baseline">
+                  <td className="py-2 pr-3">
+                    <span className="text-[13px] text-paper">{task.label}</span>
+                    <span className="block text-[11px] text-faint">{task.detail}</span>
+                  </td>
+                  <td className="py-2 pr-3">
+                    <select
+                      value={laneId}
+                      onChange={(event) =>
+                        update({ routes: { [task.id]: event.target.value } as Record<TaskClass, string> })
+                      }
+                      className="border border-rule bg-panel2 px-2 py-1 font-mono text-[11px] text-paper"
+                    >
+                      {LANES.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em]">
+                    <span
+                      className={
+                        lane?.status === "resident"
+                          ? "text-ok"
+                          : lane?.status === "cloud"
+                            ? "text-muted-foreground"
+                            : lane?.status === "cold"
+                              ? "text-watch"
+                              : "text-faint"
+                      }
+                    >
+                      {lane?.status ?? "unknown"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Panel>
+
+      <Panel title="Lanes">
+        {loading ? (
+          <Skeleton className="h-16 w-full" />
+        ) : (
+          <ul>
+            {capacity.lanes.map((lane) => {
+              const target = plan(lane.id);
+              const pinned = policy.pinned.includes(lane.id);
+              return (
+                <li key={lane.id} className="border-b border-rule py-2 last:border-b-0">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-[13px] text-paper">{lane.label}</span>
+                    <span className="font-mono text-[10px] text-faint">{lane.id}</span>
+                    <span
+                      className={`font-mono text-[10px] uppercase tracking-[0.12em] ${
+                        lane.status === "resident"
+                          ? "text-ok"
+                          : lane.status === "cold"
+                            ? "text-watch"
+                            : "text-muted-foreground"
+                      }`}
+                    >
+                      {lane.status}
+                    </span>
+                    {lane.gib != null && (
+                      <span className="font-mono text-[10px] tabular-nums text-faint">
+                        {fixed(lane.gib, 1)} GiB
+                      </span>
+                    )}
+                    {lane.tps != null && (
+                      <span className="font-mono text-[10px] tabular-nums text-faint">
+                        {fixed(lane.tps, 1)} t/s
+                      </span>
+                    )}
+                    <span className="flex-1" />
+                    {lane.status !== "cloud" && (
+                      <button
+                        type="button"
+                        onClick={() => togglePin(lane.id)}
+                        className={`font-mono text-[10px] uppercase tracking-[0.12em] ${
+                          pinned ? "text-copper" : "text-faint hover:text-copper"
+                        }`}
+                      >
+                        {pinned ? "Pinned" : "Pin"}
+                      </button>
+                    )}
+                    {lane.status === "cold" && (
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => void apply(lane.id)}
+                        className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
+                      >
+                        {working === lane.id ? "…" : "Make resident"}
+                      </button>
+                    )}
+                  </div>
+                  {target && target.kind !== "resident" && target.kind !== "cloud" && (
+                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                      {describePlan(target)}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Panel>
+
       <Panel title="Mode">
         <div className="flex flex-wrap gap-2">
           {MODES.map((mode) => (
             <button
               key={mode.action}
               type="button"
-              disabled={busy !== null}
+              disabled={disabled}
               onClick={() => void act(mode.action, undefined, mode.label)}
               className="border border-rule px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
             >
@@ -110,10 +296,20 @@ function ModelsPage() {
         </div>
       </Panel>
 
-      {!loading && !embedderResident && (
-        <p className="border border-copper bg-panel px-3 py-2 text-[13px] leading-relaxed text-copper">
-          The knowledge base cannot work without the embedding model. Switch to any mode to restore it.
-        </p>
+      {!loading && !failed && !embedderResident && (
+        <div className="border border-copper bg-panel px-3 py-2">
+          <p className="text-[13px] leading-relaxed text-copper">
+            The knowledge base cannot work without the embedding model.
+          </p>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => void act("standard", undefined, "Standard")}
+            className="mt-2 border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-50"
+          >
+            Restore it
+          </button>
+        </div>
       )}
 
       <Panel title="Resident">
@@ -124,7 +320,7 @@ function ModelsPage() {
             ))}
           </div>
         ) : resident.length === 0 ? (
-          <Empty>Nothing loaded.</Empty>
+          <Empty>{failed ? "The machine did not answer." : "Nothing loaded."}</Empty>
         ) : (
           <ul>
             {resident.map((model) => (
@@ -135,17 +331,21 @@ function ModelsPage() {
                 <span className="min-w-0 flex-1 break-all font-mono text-[12px] text-paper">
                   {model}
                 </span>
-                {isEmbedder(model) && (
+                <span className="shrink-0 font-mono text-[10px] tabular-nums text-faint">
+                  {fixed(residentLoad([model], bench), 1)} GiB
+                </span>
+                {isEmbedder(model) ? (
                   <span className="shrink-0 font-mono text-[10px] text-faint">embedder</span>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => void act("unload", model, `unload ${model}`)}
+                    className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-risk disabled:opacity-50"
+                  >
+                    Unload
+                  </button>
                 )}
-                <button
-                  type="button"
-                  disabled={busy !== null}
-                  onClick={() => void act("unload", model, `unload ${model}`)}
-                  className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-risk disabled:opacity-50"
-                >
-                  Unload
-                </button>
               </li>
             ))}
           </ul>
@@ -155,15 +355,15 @@ function ModelsPage() {
       <Panel title="Available on disk">
         {loading ? (
           <Skeleton className="h-5 w-2/3" />
-        ) : (data?.available ?? []).length === 0 ? (
+        ) : capacity.available.length === 0 ? (
           <Empty>No other models on disk.</Empty>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {(data?.available ?? []).map((model) => (
+            {capacity.available.map((model) => (
               <button
                 key={model}
                 type="button"
-                disabled={busy !== null}
+                disabled={disabled}
                 onClick={() => void act("load", model, `load ${model}`)}
                 className="border border-rule px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
               >
@@ -177,7 +377,7 @@ function ModelsPage() {
       <Panel title="Measured performance">
         {loading ? (
           <Skeleton className="h-4 w-full" />
-        ) : (data?.bench ?? []).length === 0 ? (
+        ) : bench.length === 0 ? (
           <Empty>No benchmark on record.</Empty>
         ) : (
           <table className="w-full text-left">
@@ -190,7 +390,7 @@ function ModelsPage() {
               </tr>
             </thead>
             <tbody>
-              {(data?.bench ?? []).map((row) => (
+              {bench.map((row) => (
                 <tr key={`${row.role}-${row.id}`} className="border-b border-rule last:border-b-0">
                   <td className="py-2 pr-2 text-[13px] text-paper">{row.role}</td>
                   <td className="break-all py-2 pr-2 font-mono text-[11px] text-muted-foreground">
@@ -214,7 +414,7 @@ function ModelsPage() {
           <Skeleton className="h-5 w-1/2" />
         ) : (
           <div className="flex flex-wrap gap-2">
-            {(data?.aliases ?? []).map((alias) => (
+            {capacity.aliases.map((alias) => (
               <span
                 key={alias}
                 className="border border-rule bg-panel2 px-2 py-1 font-mono text-[10px] text-muted-foreground"
@@ -227,6 +427,13 @@ function ModelsPage() {
       </Panel>
 
       {note && <p className="font-mono text-[10px] text-faint">{note}</p>}
+      <button
+        type="button"
+        onClick={() => void ensureLane(policy.routes.ask)}
+        className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+      >
+        Ready the Ask lane
+      </button>
     </div>
   );
 }
