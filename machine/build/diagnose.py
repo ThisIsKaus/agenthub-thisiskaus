@@ -141,22 +141,33 @@ def from_builds():
     """The cascade's own failures are improvement signals."""
     out = []
     runs = sorted((H / "state" / "builds").glob("*.json"), reverse=True)[:12]
-    failed = []
+    failed, escalated = [], []
+    seen_intent = set()      # newest first, so the latest outcome for an intent wins
     for r in runs:
         try:
             d = json.loads(r.read_text())
         except Exception:
             continue
+        key = d.get("intent", "")[:70]
+        if key in seen_intent:
+            continue          # an older record for work already resolved
+        seen_intent.add(key)
         if d.get("resolved_at_tier") is None:
-            failed.append(d.get("intent", "")[:70])
+            failed.append(key)
         else:
             for a in d.get("attempts", []):
                 if a.get("result", "").startswith("no change") and a.get("tier", 9) <= 3:
-                    failed.append(f"tier {a['tier']} could not do: {d.get('intent','')[:50]}")
-    if len(failed) >= 2:
+                    escalated.append(f"tier {a['tier']} on: {d.get('intent','')[:44]}")
+    if failed:
         out.append(sig("build_failure",
-                       f"{len(failed)} build attempts a local tier could not complete",
-                       " · ".join(failed[:4]),
+                       f"{len(failed)} builds no tier could complete",
+                       "THE WORK IS OUTSTANDING: " + " · ".join(failed[:4])))
+    if len(escalated) >= 2:
+        out.append(sig("debt",
+                       f"{len(escalated)} local-tier attempts escalated to a higher tier",
+                       "THE WORK WAS COMPLETED at a higher tier — this is about making the "
+                       "cheap tiers more capable, not about redoing the change: "
+                       + " · ".join(escalated[:4]),
                        ["machine/build/cascade.py"]))
     return out
 
@@ -173,10 +184,25 @@ def from_logs():
         if flat:
             out.append(sig("deprecation", f"deprecation warnings in {name}",
                            ", ".join(sorted(flat)[:6])))
-        errs = re.findall(r"^.*(Traceback|Error:|FAILED).*$", text, re.M)
-        if len(errs) >= 3:
-            out.append(sig("failure", f"{len(errs)} errors in {name}",
-                           " · ".join(e.strip()[:80] for e in errs[-3:])))
+        blocks = re.split(r"(?=Traceback \(most recent call last\))", text)
+        expected, real = [], []
+        for b_ in blocks[1:]:
+            head = b_[:1200]
+            if ("insufficient system resources" in head or "Failed to load model" in head
+                    or "not in built-in cost map" in head):
+                expected.append(head)
+            else:
+                real.append(head)
+        if expected:
+            out.append(sig("debt", f"{len(expected)} model-load rejections in {name}",
+                           "EXPECTED — the memory envelope refusing to overcommit, working as "
+                           "designed. Only actionable if a tier is being starved."))
+        if len(real) >= 3:
+            first = [re.search(r'File "([^"]+)", line (\d+), in (\w+)', r) for r in real[:6]]
+            where = " · ".join(f"{m.group(1).split('/')[-1]}:{m.group(2)} {m.group(3)}"
+                               for m in first if m)
+            out.append(sig("failure", f"{len(real)} unexplained errors in {name}",
+                           f"frames: {where[:220]}"))
     return out
 
 
@@ -191,7 +217,15 @@ def from_code():
                        sorted({l.split(":")[0] for l in lines})[:4]))
     churn = sh("git log --since='14 days ago' --name-only --pretty=format: -- machine "
                "| grep -v '^$' | sort | uniq -c | sort -rn | head -4")
-    hot = [l.split()[-1] for l in churn.splitlines() if l.strip() and int(l.split()[0]) >= 4]
+    hot = []
+    for l in churn.splitlines():
+        if not l.strip() or int(l.split()[0]) < 4:
+            continue
+        f = l.split()[-1]
+        first = sh(f"git log --diff-filter=A --format=%ct -1 -- {f}", 30)
+        age_days = (dt.datetime.now().timestamp() - int(first)) / 86400 if first.isdigit() else 99
+        if age_days > 7:          # under construction is not the same as resisting change
+            hot.append(f)
     if hot:
         out.append(sig("churn", f"{len(hot)} files changed repeatedly in a fortnight",
                        "repeated change often indicates a design that resists the work: "
@@ -233,11 +267,15 @@ Return ONLY a JSON array, no prose, no markdown fences:
 
 def propose(signals, model="local-brain"):
     import requests
+    recent = sh("git log --since='7 days ago' --pretty=format:'%s' -- machine | head -25")
     ev = "\n".join(f"[{s['kind']}, weight {s['weight']}] {s['title']}\n    {s['evidence']}"
                    for s in sorted(signals, key=lambda x: -x["weight"])[:18])
     body = {"model": model, "temperature": 0, "max_tokens": 6000,
             "messages": [{"role": "system", "content": SYSTEM},
-                         {"role": "user", "content": "Evidence from the running system:\n\n" + ev}]}
+                         {"role": "user", "content":
+                          "Evidence from the running system:\n\n" + ev +
+                          "\n\n## Already shipped in the last week — do NOT propose these again\n"
+                          + (recent or "(nothing)")}]}
     r = requests.post(ROUTER, json=body, timeout=900)
     r.raise_for_status()
     m = r.json()["choices"][0]["message"]
