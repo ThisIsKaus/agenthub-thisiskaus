@@ -32,6 +32,8 @@ type JobDrawerValue = {
   setActiveId: (id: string) => void;
   /** Start a job by key on the local API; expands the drawer and streams output. */
   runJob: (key: string, label?: string, onDone?: (job: JobRun) => void) => Promise<void>;
+  /** Stream an already-started job (one begun by an endpoint other than /api/run). */
+  trackJob: (id: string, key: string, label: string, onDone?: (job: JobRun) => void) => void;
 };
 
 const JobDrawerContext = createContext<JobDrawerValue | null>(null);
