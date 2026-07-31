@@ -316,7 +316,10 @@ function CanvasPage() {
             block={block}
             index={index}
             total={doc.blocks.length}
+            doc={doc}
             onChange={(patch) => patchBlock(block.id, patch)}
+            onUpdate={(updater) => updateBlock(block.id, updater)}
+
             onRemove={() => removeBlock(block.id)}
             onMove={(direction) => moveBlock(index, direction)}
             onDuplicate={() => duplicateBlock(block.id)}
