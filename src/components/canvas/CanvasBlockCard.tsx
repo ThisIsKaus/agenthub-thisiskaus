@@ -750,19 +750,23 @@ export function CanvasBlockCard({
                   {count}
                 </button>
               ))}
-              {targets.length >= 2 && (
-                <button
-                  type="button"
-                  data-testid="toggle-fanout"
-                  onClick={() => onChange({ fanOut: !block.fanOut } as Partial<CanvasBlock>)}
-                  title="Ask each referenced source separately, then merge the answers"
-                  className={`border px-2 py-1 font-mono text-[11px] ${
-                    block.fanOut ? "border-copper text-copper" : "border-rule text-muted-foreground"
-                  }`}
-                >
-                  one pass per source · {targets.length}
-                </button>
-              )}
+              <button
+                type="button"
+                data-testid="toggle-fanout"
+                onClick={() => onChange({ fanOut: !block.fanOut } as Partial<CanvasBlock>)}
+                disabled={targets.length < 2}
+                title={
+                  targets.length < 2
+                    ? "Reference two or more files and this asks each one separately, then merges"
+                    : "Ask each referenced source separately, then merge the answers"
+                }
+                className={`border px-2 py-1 font-mono text-[11px] disabled:cursor-not-allowed disabled:opacity-40 ${
+                  block.fanOut ? "border-copper text-copper" : "border-rule text-muted-foreground"
+                }`}
+              >
+                one pass per source{targets.length >= 2 ? ` · ${targets.length}` : ""}
+              </button>
+
             </div>
           )}
 
