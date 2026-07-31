@@ -25,8 +25,8 @@ export const LANE_ROLE: Record<string, string> = {
   "local-triage": "triage",
 };
 
-type Bench = { role: string; id: string; tps: number; gib: number };
-type ModelsData = { resident?: string[]; bench?: Bench[] };
+export type Bench = { role: string; id: string; tps: number; gib: number };
+type ModelsData = { resident?: string[]; available?: string[]; bench?: Bench[] };
 
 export type LaneStatus = "resident" | "cold" | "cloud" | "unknown";
 
@@ -35,8 +35,14 @@ export type LaneCapacity = {
   label: string;
   cost: string;
   status: LaneStatus;
+  /** The bench role behind this lane, when it is a local lane. */
+  role: string | null;
+  /** The model id LM Studio knows this lane by, when the bench knows it. */
+  modelId: string | null;
   /** Weight to load, when the bench knows it. */
   gib: number | null;
+  /** Measured generation throughput, when the bench knows it. */
+  tps: number | null;
   /** One line, plain: shown in the option and in the refusal. */
   note: string;
 };
