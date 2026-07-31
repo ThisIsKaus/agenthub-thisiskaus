@@ -32,6 +32,8 @@ type JobDrawerValue = {
   setActiveId: (id: string) => void;
   /** Start a job by key on the local API; expands the drawer and streams output. */
   runJob: (key: string, label?: string, onDone?: (job: JobRun) => void) => Promise<void>;
+  /** Stream an already-started job (one begun by an endpoint other than /api/run). */
+  trackJob: (id: string, key: string, label: string, onDone?: (job: JobRun) => void) => void;
 };
 
 const JobDrawerContext = createContext<JobDrawerValue | null>(null);
@@ -66,49 +68,55 @@ export function JobDrawerProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const trackJob = useCallback<JobDrawerValue["trackJob"]>(
+    (id, key, label, onDone) => {
+      setOpen(true);
+      dones.current[id] = onDone;
+      setJobs((previous) =>
+        [
+          {
+            id,
+            key,
+            label,
+            out: "",
+            running: true,
+            code: null,
+            startedAt: new Date(),
+            finishedAt: null,
+          },
+          ...previous.filter((job) => job.id !== id),
+        ].slice(0, KEEP),
+      );
+      setActiveId(id);
+
+      window.clearInterval(timers.current[id]);
+      timers.current[id] = window.setInterval(async () => {
+        try {
+          const job = await local.get<{ out?: string; running?: boolean; code?: number }>(
+            "/api/job",
+            { id },
+          );
+          setJobs((previous) =>
+            previous.map((entry) => (entry.id === id ? { ...entry, out: job.out ?? "" } : entry)),
+          );
+          if (!job.running) finish(id, { out: job.out ?? "", code: job.code ?? 0 });
+        } catch (error) {
+          finish(id, {
+            out: `${isRefusal(error) ? (error.message || "denied at the approval dialog") : "the machine stopped reporting on this job"}`,
+            code: 1,
+          });
+        }
+      }, POLL_MS);
+    },
+    [finish, local],
+  );
+
   const runJob = useCallback<JobDrawerValue["runJob"]>(
     async (key, label, onDone) => {
       setOpen(true);
       try {
         const started = await local.post<{ job: string; label?: string }>("/api/run", { key });
-        const id = String(started.job);
-        dones.current[id] = onDone;
-        setJobs((previous) =>
-          [
-            {
-              id,
-              key,
-              label: label ?? started.label ?? key,
-              out: "",
-              running: true,
-              code: null,
-              startedAt: new Date(),
-              finishedAt: null,
-            },
-            ...previous.filter((job) => job.id !== id),
-          ].slice(0, KEEP),
-        );
-        setActiveId(id);
-
-        timers.current[id] = window.setInterval(async () => {
-          try {
-            const job = await local.get<{ out?: string; running?: boolean; code?: number }>(
-              "/api/job",
-              { id },
-            );
-            setJobs((previous) =>
-              previous.map((entry) =>
-                entry.id === id ? { ...entry, out: job.out ?? "" } : entry,
-              ),
-            );
-            if (!job.running) finish(id, { out: job.out ?? "", code: job.code ?? 0 });
-          } catch (error) {
-            finish(id, {
-              out: `${isRefusal(error) ? (error.message || "denied at the approval dialog") : "the machine stopped reporting on this job"}`,
-              code: 1,
-            });
-          }
-        }, POLL_MS);
+        trackJob(String(started.job), key, label ?? started.label ?? key, onDone);
       } catch (error) {
         const id = `local-${Date.now()}`;
         setJobs((previous) =>
@@ -131,12 +139,12 @@ export function JobDrawerProvider({ children }: { children: ReactNode }) {
         setActiveId(id);
       }
     },
-    [finish, local],
+    [trackJob],
   );
 
   const value = useMemo<JobDrawerValue>(
-    () => ({ jobs, activeId, open, setOpen, setActiveId, runJob }),
-    [jobs, activeId, open, runJob],
+    () => ({ jobs, activeId, open, setOpen, setActiveId, runJob, trackJob }),
+    [jobs, activeId, open, runJob, trackJob],
   );
 
   return <JobDrawerContext.Provider value={value}>{children}</JobDrawerContext.Provider>;
