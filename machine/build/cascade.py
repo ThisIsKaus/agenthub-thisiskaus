@@ -212,17 +212,42 @@ def guard_tests_and_code(changed):
 # ------------------------------------------------------------------ execute
 
 SYSTEM = """You modify Kos Bajpai's AgentHub. Make the smallest change that satisfies the
-intent. Work only in the repository you have been given.
+intent.
 
 Rules that are not negotiable:
 - Never edit machine/scripts/selftest.py or machine/evals/ in the same change as the code
   they verify.
 - Never weaken a security control: the approval dialog, the CORS allowlist, the sensitivity
   filter in the ask endpoint, or the publish allowlist.
-- Python is edited line-wise or by AST, never by multi-line string replacement.
-- If the intent is ambiguous, state the ambiguity and change nothing.
+- If the intent is ambiguous, reply with IMPOSSIBLE and one line of reason."""
 
-Output only a unified diff, or the single word IMPOSSIBLE with one line of reason."""
+LOCAL_SYSTEM = SYSTEM + """
+
+You are given the complete current content of ONE file. Return the COMPLETE new content of
+that file between the markers below, and nothing else. No explanation, no diff, no markdown
+fences, no commentary before or after.
+
+<<<FILE>>>
+(the entire file, including every unchanged line)
+<<<END>>>"""
+
+PATHISH = re.compile(r"\b((?:machine|src|supabase)/[\w./-]+\.\w+)")
+
+
+def target_file(intent, ctx):
+    """Local tiers handle exactly one file. More than one escalates."""
+    named = PATHISH.findall(intent)
+    candidates = sorted(set(named) | set(ctx["files"]))
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def extract_file(out):
+    m = re.search(r"<<<FILE>>>\n?(.*?)\n?<<<END>>>", out, re.S)
+    if m:
+        return m.group(1)
+    # Some models drop the closing marker when they run long.
+    m = re.search(r"<<<FILE>>>\n?(.*)", out, re.S)
+    return m.group(1).rstrip() if m and len(m.group(1)) > 80 else None
 
 
 def run_tier(tier, intent, ctx, trace, branch):
@@ -232,8 +257,7 @@ def run_tier(tier, intent, ctx, trace, branch):
         sh(f"mode {MODE_FOR_TIER[tier]}", 300)
     skills = load_skills(ctx["skills"])
     files = "\n".join(ctx["files"]) or "(determine from the intent)"
-    prior = ("\n\nA previous attempt failed verification. Do not repeat it.\n"
-             + trace[-2500:]) if trace else ""
+    prior = ("\n\nA previous attempt failed. Do not repeat it.\n" + trace[-2000:]) if trace else ""
 
     if tier == 4:
         prompt = (f"{SYSTEM}\n\n## Project skills\n{skills}\n\n## Intent\n{intent}\n"
@@ -249,10 +273,25 @@ def run_tier(tier, intent, ctx, trace, branch):
             code, out2 = sh(f"codex exec --skip-git-repo-check --full-auto \"$(cat {pf})\"", 1800)
             out = out + "\n--- codex fallback ---\n" + out2
         return out
-    else:
-        user = (f"## Project skills\n{skills}\n\n## Intent\n{intent}\n"
-                f"\n## Likely files\n{files}{prior}")
-        return router_call(alias, SYSTEM, user)
+
+    tf = target_file(intent, ctx)
+    if not tf:
+        return "no single target file — a local tier handles one file at a time"
+    fp = REPO / tf
+    if not fp.exists():
+        return f"target does not exist: {tf}"
+
+    user = (f"## Project skills\n{skills}\n\n## Intent\n{intent}\n"
+            f"\n## File: {tf}\n<<<FILE>>>\n{fp.read_text()}\n<<<END>>>{prior}")
+    out = router_call(alias, LOCAL_SYSTEM, user, max_tokens=16000)
+
+    if "IMPOSSIBLE" in out[:200]:
+        return out[:400]
+    new = extract_file(out)
+    if not new or len(new) < 40:
+        return "no complete file returned between the markers\n" + out[-600:]
+    fp.write_text(new if new.endswith("\n") else new + "\n")
+    return f"wrote {tf} ({len(new)} chars)"
 
 
 def changed_files():
