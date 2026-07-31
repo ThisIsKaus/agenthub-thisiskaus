@@ -109,7 +109,7 @@ export function useBoardTelemetry(live: boolean): BoardTelemetry {
   const bench = models.data?.bench ?? [];
   const bestBench =
     bench.length > 0
-      ? bench.reduce((best, row) => ((row.tps ?? 0) > (best.tps ?? 0) ? row : best), bench[0])
+      ? bench.reduce((best, row) => ((num(row.tps) ?? 0) > (num(best.tps) ?? 0) ? row : best), bench[0])
       : null;
 
   const residentGiB = bench.length
