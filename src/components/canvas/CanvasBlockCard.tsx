@@ -8,7 +8,7 @@ import {
   stamp,
 } from "@/components/canvas/RunHistory";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
-import { assertAnswer, isLaneFault, useLaneCapacity } from "@/lib/lane-capacity";
+import { assertAnswer, isLaneFault, LaneFault, useLaneCapacity } from "@/lib/lane-capacity";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { insertJob } from "@/lib/jobs";
 import {
@@ -25,7 +25,6 @@ import {
 } from "@/lib/canvas-runs";
 import {
   JOB_KEYS,
-  LANES,
   newId,
   pinnedRun,
   runText,
@@ -239,8 +238,9 @@ export function CanvasBlockCard({
   async function ask(prompt: string, model: string, k: number): Promise<AskResponse> {
     const lane = capacity.byId(model);
     if (lane?.status === "cold") {
-      throw new LaneFaultLike(
+      throw new LaneFault(
         `${lane.label} is not loaded — ${lane.note}. Load it on Engine · Models, or choose a resident lane.`,
+        "capacity",
       );
     }
     const data = await local.post<AskResponse>("/api/ask", { q: prompt, model, k: String(k) });
@@ -794,7 +794,12 @@ export function CanvasBlockCard({
               >
                 one pass per source{targets.length >= 2 ? ` · ${targets.length}` : ""}
               </button>
-
+              {capacity.byId(block.model)?.status === "cold" && (
+                <span className="w-full font-mono text-[10px] text-watch">
+                  {capacity.byId(block.model)?.label} is not loaded — the machine will refuse a second
+                  large model while one is resident. Load it on Engine · Models, or pick a resident lane.
+                </span>
+              )}
             </div>
           )}
 
