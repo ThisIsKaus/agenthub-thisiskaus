@@ -19,14 +19,14 @@ import { useLocal } from "@/lib/local-bridge";
 import { toNum } from "@/lib/format";
 
 /** Router alias → the bench role that backs it. Cloud lanes have no role. */
-const LANE_ROLE: Record<string, string> = {
+export const LANE_ROLE: Record<string, string> = {
   "local-brain": "quality-brain",
   "local-coder": "coding-local",
   "local-triage": "triage",
 };
 
-type Bench = { role: string; id: string; tps: number; gib: number };
-type ModelsData = { resident?: string[]; bench?: Bench[] };
+export type Bench = { role: string; id: string; tps: number; gib: number };
+type ModelsData = { resident?: string[]; available?: string[]; bench?: Bench[]; aliases?: string[] };
 
 export type LaneStatus = "resident" | "cold" | "cloud" | "unknown";
 
@@ -35,8 +35,14 @@ export type LaneCapacity = {
   label: string;
   cost: string;
   status: LaneStatus;
+  /** The bench role behind this lane, when it is a local lane. */
+  role: string | null;
+  /** The model id LM Studio knows this lane by, when the bench knows it. */
+  modelId: string | null;
   /** Weight to load, when the bench knows it. */
   gib: number | null;
+  /** Measured generation throughput, when the bench knows it. */
+  tps: number | null;
   /** One line, plain: shown in the option and in the refusal. */
   note: string;
 };
@@ -64,22 +70,25 @@ export function useLaneCapacity() {
   const bench = query.data?.bench ?? [];
 
   const lanes: LaneCapacity[] = LANES.map((lane) => {
-    const role = LANE_ROLE[lane.id];
+    const role = LANE_ROLE[lane.id] ?? null;
+    const base = { id: lane.id, label: lane.label, cost: lane.cost, role };
     if (!role) {
-      return { id: lane.id, label: lane.label, cost: lane.cost, status: "cloud", gib: null, note: "off the machine" };
+      return { ...base, status: "cloud", modelId: null, gib: null, tps: null, note: "off the machine" };
     }
     const entry = bench.find((item) => item.role === role);
     const gib = toNum(entry?.gib);
+    const tps = toNum(entry?.tps);
+    const modelId = entry?.id ?? null;
     if (!local.available || query.isLoading || !query.data) {
-      return { id: lane.id, label: lane.label, cost: lane.cost, status: "unknown", gib, note: "" };
+      return { ...base, status: "unknown", modelId, gib, tps, note: "" };
     }
     const isResident = match(resident, entry?.id);
     return {
-      id: lane.id,
-      label: lane.label,
-      cost: lane.cost,
+      ...base,
       status: isResident ? "resident" : "cold",
+      modelId,
       gib,
+      tps,
       note: isResident ? "resident" : gib != null ? `needs ${gib.toFixed(1)} GiB loaded` : "not loaded",
     };
   });
@@ -100,7 +109,18 @@ export function useLaneCapacity() {
     );
   }
 
-  return { lanes, byId, critiqueLane, loading: query.isLoading, refresh: query.refetch };
+  return {
+    lanes,
+    byId,
+    critiqueLane,
+    resident,
+    bench,
+    available: query.data?.available ?? [],
+    aliases: query.data?.aliases ?? [],
+    loading: query.isLoading,
+    error: query.error as Error | null,
+    refresh: query.refetch,
+  };
 }
 
 /**

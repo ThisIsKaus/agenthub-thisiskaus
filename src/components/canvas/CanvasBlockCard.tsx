@@ -9,6 +9,7 @@ import {
 } from "@/components/canvas/RunHistory";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { assertAnswer, isLaneFault, LaneFault, useLaneCapacity } from "@/lib/lane-capacity";
+import { useAutopilot } from "@/lib/model-autopilot";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { insertJob } from "@/lib/jobs";
 import {
@@ -90,6 +91,7 @@ export function CanvasBlockCard({
 }) {
   const local = useLocal();
   const capacity = useLaneCapacity();
+  const autopilot = useAutopilot();
   const drawer = useJobDrawer();
   const [picker, setPicker] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
@@ -238,10 +240,10 @@ export function CanvasBlockCard({
   async function ask(prompt: string, model: string, k: number): Promise<AskResponse> {
     const lane = capacity.byId(model);
     if (lane?.status === "cold") {
-      throw new LaneFault(
-        `${lane.label} is not loaded — ${lane.note}. Load it on Engine · Models, or choose a resident lane.`,
-        "capacity",
-      );
+      // Autopilot makes room and loads it; with autopilot off this is a refusal
+      // carrying the plan, never a router error pinned as an answer.
+      const readied = await autopilot.ensureLane(model);
+      if (!readied.ok) throw new LaneFault(readied.message, "capacity");
     }
     const data = await local.post<AskResponse>("/api/ask", { q: prompt, model, k: String(k) });
     assertAnswer(data.answer, lane?.label ?? model);
@@ -796,8 +798,10 @@ export function CanvasBlockCard({
               </button>
               {capacity.byId(block.model)?.status === "cold" && (
                 <span className="w-full font-mono text-[10px] text-watch">
-                  {capacity.byId(block.model)?.label} is not loaded — the machine will refuse a second
-                  large model while one is resident. Load it on Engine · Models, or pick a resident lane.
+                  {capacity.byId(block.model)?.label} is not loaded —{" "}
+                  {autopilot.policy.autopilot
+                    ? "autopilot will make room and load it before this run."
+                    : "autopilot is off, so this run will be refused. Turn it on, or load the lane on Engine · Models."}
                 </span>
               )}
             </div>
