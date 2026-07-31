@@ -292,7 +292,7 @@ function OverviewPage() {
     },
     {
       label: "Local quality brain",
-      value: bestBench?.tps != null ? bestBench.tps.toFixed(1) : null,
+      value: num(bestBench?.tps) != null ? (num(bestBench?.tps) as number).toFixed(1) : null,
       unit: "t/s",
       detail: bestBench
         ? `${bestBench.role ?? bestBench.id ?? "brain"}${bestBench.ttft != null ? ` · ${bestBench.ttft}s to first token` : ""}`
