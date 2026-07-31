@@ -345,7 +345,15 @@ function CanvasPage() {
   });
 
   useEffect(() => {
-    if (!doc) setDoc(emptyDoc());
+    if (doc) return;
+    const fresh = emptyDoc();
+    // An item sent from the inbox arrives as the first note, already written down.
+    if (seed) {
+      fresh.title = seed.slice(0, 60);
+      fresh.blocks = [{ ...emptyBlock("note"), text: seed }, ...fresh.blocks];
+    }
+    setDoc(fresh);
+
   }, [doc]);
 
   const save = useCallback(
