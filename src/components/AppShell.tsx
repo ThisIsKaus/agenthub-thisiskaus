@@ -38,7 +38,14 @@ const GROUPS: Group[] = [
       { to: "/prompts", label: "Prompts" },
     ],
   },
-  { label: "Improve", to: "/evals", subs: [] },
+  {
+    label: "Improve",
+    to: "/evals",
+    subs: [
+      { to: "/evals", label: "Evals" },
+      { to: "/proposals", label: "Proposals" },
+    ],
+  },
   {
     label: "Health",
     to: "/health",
