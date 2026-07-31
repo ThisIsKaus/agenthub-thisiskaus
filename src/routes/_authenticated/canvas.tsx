@@ -353,8 +353,7 @@ function CanvasPage() {
       fresh.blocks = [{ ...emptyBlock("note"), text: seed }, ...fresh.blocks];
     }
     setDoc(fresh);
-
-  }, [doc]);
+  }, [doc, seed]);
 
   const save = useCallback(
     async (next: CanvasDoc) => {
