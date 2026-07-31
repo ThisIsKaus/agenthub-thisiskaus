@@ -372,11 +372,14 @@ function CanvasPage() {
   return (
     <div className="space-y-4" data-testid="canvas-page">
       <PageIntro title="Canvas">
-        The place to think a piece of work through: ask the corpus, run a machine job, keep notes,
-        and reference files, skills, projects and tools by name — all in one document saved on the
-        machine. A hand-over block is the single way anything leaves it, and only when you press it.
+        A canvas is a project. Thinking and shipping happen in the same document: ask the corpus,
+        run a machine job, keep notes, reference files, skills and tools by name, and move the
+        stage from idea to shipped as the work earns it — there is no second place to look. A
+        hand-over block is the single way anything leaves the machine, and only when you press it.
       </PageIntro>
+      <ProjectBar doc={doc} onChange={patchDoc} skills={skillNames} />
       <HarnessBoard doc={doc} />
+
       <section className="border border-rule bg-panel">
 
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-b border-rule px-4 py-3">
