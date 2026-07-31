@@ -26,7 +26,11 @@ import {
 } from "@/lib/canvas-types";
 
 export const Route = createFileRoute("/_authenticated/canvas")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    seed: typeof search.seed === "string" ? search.seed : undefined,
+  }),
   head: () => ({
+
     meta: [
       { title: "Canvas — AgentHub" },
       {
