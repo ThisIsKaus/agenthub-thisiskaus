@@ -17,6 +17,9 @@ import {
 import {
   emptyBlock,
   emptyDoc,
+  newId,
+  pinnedRun,
+  type BranchSelection,
   type BlockKind,
   type CanvasBlock,
   type CanvasDoc,
@@ -59,6 +62,150 @@ function stamp(iso: string | undefined) {
   if (!iso) return "—";
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? "—" : date.toISOString().slice(0, 16).replace("T", " ");
+}
+
+function HarnessBoard({ doc }: { doc: CanvasDoc }) {
+  const refs = doc.blocks.reduce((sum, block) => sum + block.refs.length, 0);
+  const runs = doc.blocks.reduce((sum, block) => sum + block.runs.length, 0);
+  const linked = doc.blocks.filter((block) => block.dependsOn.length > 0).length;
+  const stages = [
+    { n: "01", label: "Compose", detail: `${doc.blocks.length} blocks` },
+    { n: "02", label: "Ground", detail: `${refs} references` },
+    { n: "03", label: "Orchestrate", detail: linked ? `${linked} linked` : "sequential · fan-out" },
+    { n: "04", label: "Review", detail: "critique · compare" },
+    { n: "05", label: "Prove", detail: `${runs} run records` },
+  ];
+
+  return (
+    <section className="border border-rule bg-panel" data-testid="harness-board">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-rule px-4 py-2.5">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
+          Execution harness
+        </p>
+        <p className="font-mono text-[10px] text-faint">local · append-only runs · content-addressed</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-5">
+        {stages.map((stage, index) => (
+          <div
+            key={stage.n}
+            className="relative border-b border-rule px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
+          >
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono text-[9px] text-copper">{stage.n}</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-paper">
+                {stage.label}
+              </span>
+            </div>
+            <p className="mt-1 font-mono text-[9.5px] text-faint">{stage.detail}</p>
+            {index < stages.length - 1 && (
+              <span className="absolute right-[-5px] top-1/2 z-10 hidden -translate-y-1/2 bg-panel px-0.5 font-mono text-[10px] text-copper sm:block">
+                →
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BranchBar({
+  doc,
+  onChange,
+}: {
+  doc: CanvasDoc;
+  onChange: (patch: Partial<CanvasDoc>) => void;
+}) {
+  function snapshot(name: string): BranchSelection {
+    return {
+      id: newId("branch"),
+      name,
+      created: new Date().toISOString(),
+      pins: Object.fromEntries(
+        doc.blocks.flatMap((block) => {
+          const run = pinnedRun(block);
+          return run ? [[block.id, run.id]] : [];
+        }),
+      ),
+    };
+  }
+
+  function createBranch() {
+    const branch = snapshot(`Path ${doc.branches.length + 1}`);
+    onChange({ branches: [...doc.branches, branch], activeBranch: branch.id });
+  }
+
+  function selectBranch(id: string | null) {
+    const branch = doc.branches.find((entry) => entry.id === id);
+    onChange({
+      activeBranch: id,
+      blocks: branch
+        ? doc.blocks.map((block) => ({
+            ...block,
+            pinnedRunId: branch.pins[block.id] ?? block.pinnedRunId,
+          }))
+        : doc.blocks,
+    });
+  }
+
+  function updateBranch() {
+    if (!doc.activeBranch) return;
+    const next = snapshot("");
+    onChange({
+      branches: doc.branches.map((branch) =>
+        branch.id === doc.activeBranch ? { ...branch, pins: next.pins } : branch,
+      ),
+    });
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-t border-rule px-4 py-2" data-testid="branch-bar">
+      <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">branches</span>
+      <button
+        type="button"
+        onClick={() => selectBranch(null)}
+        className={`border px-2 py-1 font-mono text-[10px] ${
+          doc.activeBranch === null ? "border-copper text-copper" : "border-rule text-muted-foreground"
+        }`}
+      >
+        main
+      </button>
+      {doc.branches.map((branch) => (
+        <button
+          key={branch.id}
+          type="button"
+          onClick={() => selectBranch(branch.id)}
+          title={`${Object.keys(branch.pins).length} pinned block outputs`}
+          className={`border px-2 py-1 font-mono text-[10px] ${
+            doc.activeBranch === branch.id
+              ? "border-copper text-copper"
+              : "border-rule text-muted-foreground hover:text-paper"
+          }`}
+        >
+          {branch.name}
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={createBranch}
+        className="border border-rule px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-copper hover:text-copper"
+      >
+        + branch
+      </button>
+      {doc.activeBranch && (
+        <button
+          type="button"
+          onClick={updateBranch}
+          className="font-mono text-[9px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+        >
+          update pins
+        </button>
+      )}
+      <span className="ml-auto font-mono text-[9px] text-faint">
+        A branch is a named set of pinned outputs—not a copy.
+      </span>
+    </div>
+  );
 }
 
 function CanvasPage() {
@@ -225,6 +372,7 @@ function CanvasPage() {
         and reference files, skills, projects and tools by name — all in one document saved on the
         machine. A hand-over block is the single way anything leaves it, and only when you press it.
       </PageIntro>
+      <HarnessBoard doc={doc} />
       <section className="border border-rule bg-panel">
 
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-b border-rule px-4 py-3">
@@ -270,6 +418,8 @@ function CanvasPage() {
           <span className="tabular-nums">edited {stamp(doc.updated)}</span>
           {saving && <span className="text-copper">{saving}</span>}
         </div>
+
+        <BranchBar doc={doc} onChange={patchDoc} />
 
         {libraryOpen && (
           <div className="border-t border-rule" data-testid="canvas-library">
