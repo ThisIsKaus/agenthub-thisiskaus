@@ -5,6 +5,7 @@ import { useOnline } from "@/hooks/use-online";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocal } from "@/lib/local-bridge";
 import { JobDrawer } from "@/components/JobDrawer";
+import { fixed } from "@/lib/format";
 
 type Sub = { to: string; label: string };
 type Group = { label: string; to: string; subs: Sub[] };
@@ -141,7 +142,7 @@ export function AppShell() {
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Pill label="serving" value={String(services.lms ?? "—")} className={tone(services.lms)} />
             <PlanePill />
-            <Pill label="mtd" value={`$${Number(spend.mtd ?? 0).toFixed(2)}`} />
+            <Pill label="mtd" value={`$${fixed(spend.mtd, 2, "0.00")}`} />
             <Pill label="wip" value={`${factory.wip ?? 0}/${factory.limit ?? 2}`} />
           </div>
 

@@ -4,6 +4,7 @@ import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { fixed } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/models")({
   head: () => ({
@@ -196,10 +197,10 @@ function ModelsPage() {
                     {row.id}
                   </td>
                   <td className="py-2 text-right font-mono text-[12px] tabular-nums text-paper">
-                    {row.tps?.toFixed?.(1) ?? row.tps}
+                    {fixed(row.tps, 1)}
                   </td>
                   <td className="py-2 text-right font-mono text-[12px] tabular-nums text-muted-foreground">
-                    {row.gib?.toFixed?.(1) ?? row.gib}
+                    {fixed(row.gib, 1)}
                   </td>
                 </tr>
               ))}

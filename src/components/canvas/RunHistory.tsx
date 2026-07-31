@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { diffWords, shortHash } from "@/lib/canvas-runs";
 import { runText, type AskSource, type Run } from "@/lib/canvas-types";
+import { fixed, toNum } from "@/lib/format";
 
 export function stamp(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -21,18 +22,20 @@ export function groupSources(sources: AskSource[]): GroupedSource[] {
     const name = source.file ?? source.path ?? "—";
     const existing = byName.get(name);
     if (!existing) {
-      byName.set(name, { name, best: source.distance, passages: 1 });
+      byName.set(name, { name, best: toNum(source.distance) ?? undefined, passages: 1 });
       continue;
     }
     existing.passages += 1;
-    if (source.distance != null && (existing.best == null || source.distance < existing.best)) {
-      existing.best = source.distance;
+    const distance = toNum(source.distance);
+    if (distance != null && (existing.best == null || distance < existing.best)) {
+      existing.best = distance;
     }
   }
   return [...byName.values()].sort((a, b) => (a.best ?? Infinity) - (b.best ?? Infinity));
 }
 
-export function distanceTone(distance: number | undefined) {
+export function distanceTone(value: unknown) {
+  const distance = toNum(value);
   if (distance == null) return { className: "text-faint", title: undefined as string | undefined };
   if (distance < 0.5) return { className: "text-ok", title: undefined };
   if (distance <= 0.7) return { className: "text-muted-foreground", title: undefined };
@@ -62,7 +65,7 @@ export function SourceList({ sources, askedK }: { sources: AskSource[]; askedK?:
                 className={`font-mono text-[10px] tabular-nums ${tone.className}`}
                 title={tone.title}
               >
-                {source.best != null ? source.best.toFixed(3) : "—"}
+                {fixed(source.best, 3)}
               </span>
             </li>
           );
