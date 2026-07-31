@@ -16,6 +16,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { LANES } from "@/lib/canvas-types";
 import { useLocal } from "@/lib/local-bridge";
+import { toNum } from "@/lib/format";
 
 /** Router alias → the bench role that backs it. Cloud lanes have no role. */
 const LANE_ROLE: Record<string, string> = {
@@ -68,7 +69,7 @@ export function useLaneCapacity() {
       return { id: lane.id, label: lane.label, cost: lane.cost, status: "cloud", gib: null, note: "off the machine" };
     }
     const entry = bench.find((item) => item.role === role);
-    const gib = entry?.gib ?? null;
+    const gib = toNum(entry?.gib);
     if (!local.available || query.isLoading || !query.data) {
       return { id: lane.id, label: lane.label, cost: lane.cost, status: "unknown", gib, note: "" };
     }
@@ -79,7 +80,7 @@ export function useLaneCapacity() {
       cost: lane.cost,
       status: isResident ? "resident" : "cold",
       gib,
-      note: isResident ? "resident" : gib ? `needs ${gib.toFixed(1)} GiB loaded` : "not loaded",
+      note: isResident ? "resident" : gib != null ? `needs ${gib.toFixed(1)} GiB loaded` : "not loaded",
     };
   });
 
