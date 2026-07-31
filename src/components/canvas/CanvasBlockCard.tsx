@@ -659,16 +659,21 @@ export function CanvasBlockCard({
             >
               + reference
             </button>
-            {available.length > 0 && (
-              <button
-                type="button"
-                data-testid="add-dependency"
-                onClick={() => setDeps((open) => !open)}
-                className="border border-rule px-2 py-[3px] font-mono text-[10.5px] text-faint hover:border-copper hover:text-copper"
-              >
-                + built from
-              </button>
-            )}
+            <button
+              type="button"
+              data-testid="add-dependency"
+              onClick={() => setDeps((open) => !open)}
+              disabled={available.length === 0}
+              title={
+                available.length === 0
+                  ? "Add a second block first — then this one can be built from its answer"
+                  : "Feed another block's pinned answer into this one"
+              }
+              className="border border-rule px-2 py-[3px] font-mono text-[10.5px] text-faint hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-rule disabled:hover:text-faint"
+            >
+              + built from
+            </button>
+
           </div>
 
           {deps && (
