@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSystemRouteImport } from './routes/_authenticated/system'
+import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
+import { Route as AuthenticatedProposalsRouteImport } from './routes/_authenticated/proposals'
 import { Route as AuthenticatedPromptsRouteImport } from './routes/_authenticated/prompts'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedModelsRouteImport } from './routes/_authenticated/models'
+import { Route as AuthenticatedModelScannerRouteImport } from './routes/_authenticated/model-scanner'
 import { Route as AuthenticatedMemoryRouteImport } from './routes/_authenticated/memory'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
@@ -24,6 +27,7 @@ import { Route as AuthenticatedEvalsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
 import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
+import { Route as AuthenticatedBuildRouteImport } from './routes/_authenticated/build'
 import { Route as AuthenticatedAskRouteImport } from './routes/_authenticated/ask'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -42,6 +46,16 @@ const AuthenticatedSystemRoute = AuthenticatedSystemRouteImport.update({
   path: '/system',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSkillsRoute = AuthenticatedSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProposalsRoute = AuthenticatedProposalsRouteImport.update({
+  id: '/proposals',
+  path: '/proposals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPromptsRoute = AuthenticatedPromptsRouteImport.update({
   id: '/prompts',
   path: '/prompts',
@@ -57,6 +71,12 @@ const AuthenticatedModelsRoute = AuthenticatedModelsRouteImport.update({
   path: '/models',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedModelScannerRoute =
+  AuthenticatedModelScannerRouteImport.update({
+    id: '/model-scanner',
+    path: '/model-scanner',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMemoryRoute = AuthenticatedMemoryRouteImport.update({
   id: '/memory',
   path: '/memory',
@@ -102,6 +122,11 @@ const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
   path: '/capture',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBuildRoute = AuthenticatedBuildRouteImport.update({
+  id: '/build',
+  path: '/build',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAskRoute = AuthenticatedAskRouteImport.update({
   id: '/ask',
   path: '/ask',
@@ -121,6 +146,7 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ask': typeof AuthenticatedAskRoute
+  '/build': typeof AuthenticatedBuildRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
@@ -130,9 +156,12 @@ export interface FileRoutesByFullPath {
   '/health': typeof AuthenticatedHealthRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
+  '/model-scanner': typeof AuthenticatedModelScannerRoute
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
+  '/proposals': typeof AuthenticatedProposalsRoute
+  '/skills': typeof AuthenticatedSkillsRoute
   '/system': typeof AuthenticatedSystemRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -140,6 +169,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ask': typeof AuthenticatedAskRoute
+  '/build': typeof AuthenticatedBuildRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
@@ -149,9 +179,12 @@ export interface FileRoutesByTo {
   '/health': typeof AuthenticatedHealthRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
+  '/model-scanner': typeof AuthenticatedModelScannerRoute
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
+  '/proposals': typeof AuthenticatedProposalsRoute
+  '/skills': typeof AuthenticatedSkillsRoute
   '/system': typeof AuthenticatedSystemRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -161,6 +194,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/ask': typeof AuthenticatedAskRoute
+  '/_authenticated/build': typeof AuthenticatedBuildRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
   '/_authenticated/cost': typeof AuthenticatedCostRoute
   '/_authenticated/digest': typeof AuthenticatedDigestRoute
@@ -170,9 +204,12 @@ export interface FileRoutesById {
   '/_authenticated/health': typeof AuthenticatedHealthRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/memory': typeof AuthenticatedMemoryRoute
+  '/_authenticated/model-scanner': typeof AuthenticatedModelScannerRoute
   '/_authenticated/models': typeof AuthenticatedModelsRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/prompts': typeof AuthenticatedPromptsRoute
+  '/_authenticated/proposals': typeof AuthenticatedProposalsRoute
+  '/_authenticated/skills': typeof AuthenticatedSkillsRoute
   '/_authenticated/system': typeof AuthenticatedSystemRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -182,6 +219,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/ask'
+    | '/build'
     | '/capture'
     | '/cost'
     | '/digest'
@@ -191,9 +229,12 @@ export interface FileRouteTypes {
     | '/health'
     | '/knowledge'
     | '/memory'
+    | '/model-scanner'
     | '/models'
     | '/overview'
     | '/prompts'
+    | '/proposals'
+    | '/skills'
     | '/system'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -201,6 +242,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/ask'
+    | '/build'
     | '/capture'
     | '/cost'
     | '/digest'
@@ -210,9 +252,12 @@ export interface FileRouteTypes {
     | '/health'
     | '/knowledge'
     | '/memory'
+    | '/model-scanner'
     | '/models'
     | '/overview'
     | '/prompts'
+    | '/proposals'
+    | '/skills'
     | '/system'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -221,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/_authenticated/ask'
+    | '/_authenticated/build'
     | '/_authenticated/capture'
     | '/_authenticated/cost'
     | '/_authenticated/digest'
@@ -230,9 +276,12 @@ export interface FileRouteTypes {
     | '/_authenticated/health'
     | '/_authenticated/knowledge'
     | '/_authenticated/memory'
+    | '/_authenticated/model-scanner'
     | '/_authenticated/models'
     | '/_authenticated/overview'
     | '/_authenticated/prompts'
+    | '/_authenticated/proposals'
+    | '/_authenticated/skills'
     | '/_authenticated/system'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -268,6 +317,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSystemRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/skills': {
+      id: '/_authenticated/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof AuthenticatedSkillsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/proposals': {
+      id: '/_authenticated/proposals'
+      path: '/proposals'
+      fullPath: '/proposals'
+      preLoaderRoute: typeof AuthenticatedProposalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/prompts': {
       id: '/_authenticated/prompts'
       path: '/prompts'
@@ -287,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/models'
       fullPath: '/models'
       preLoaderRoute: typeof AuthenticatedModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/model-scanner': {
+      id: '/_authenticated/model-scanner'
+      path: '/model-scanner'
+      fullPath: '/model-scanner'
+      preLoaderRoute: typeof AuthenticatedModelScannerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/memory': {
@@ -352,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCaptureRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/build': {
+      id: '/_authenticated/build'
+      path: '/build'
+      fullPath: '/build'
+      preLoaderRoute: typeof AuthenticatedBuildRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ask': {
       id: '/_authenticated/ask'
       path: '/ask'
@@ -378,6 +455,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAskRoute: typeof AuthenticatedAskRoute
+  AuthenticatedBuildRoute: typeof AuthenticatedBuildRoute
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
   AuthenticatedCostRoute: typeof AuthenticatedCostRoute
   AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
@@ -387,14 +465,18 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedMemoryRoute: typeof AuthenticatedMemoryRoute
+  AuthenticatedModelScannerRoute: typeof AuthenticatedModelScannerRoute
   AuthenticatedModelsRoute: typeof AuthenticatedModelsRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedPromptsRoute: typeof AuthenticatedPromptsRoute
+  AuthenticatedProposalsRoute: typeof AuthenticatedProposalsRoute
+  AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
   AuthenticatedSystemRoute: typeof AuthenticatedSystemRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAskRoute: AuthenticatedAskRoute,
+  AuthenticatedBuildRoute: AuthenticatedBuildRoute,
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
   AuthenticatedCostRoute: AuthenticatedCostRoute,
   AuthenticatedDigestRoute: AuthenticatedDigestRoute,
@@ -404,9 +486,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHealthRoute: AuthenticatedHealthRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedMemoryRoute: AuthenticatedMemoryRoute,
+  AuthenticatedModelScannerRoute: AuthenticatedModelScannerRoute,
   AuthenticatedModelsRoute: AuthenticatedModelsRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedPromptsRoute: AuthenticatedPromptsRoute,
+  AuthenticatedProposalsRoute: AuthenticatedProposalsRoute,
+  AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
   AuthenticatedSystemRoute: AuthenticatedSystemRoute,
 }
 
