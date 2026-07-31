@@ -326,8 +326,9 @@ function CanvasPage() {
       </div>
 
       <p className="font-mono text-[10px] leading-relaxed text-faint">
-        Canvases are written to the machine as files and never leave it. A capture block is the one
-        exception: it hands text over, and only when you press Capture.
+        Canvases are written to the machine as files and never leave it. A hand-over block is the
+        one exception: it passes text out, and only when you press it.
+
       </p>
     </div>
   );
