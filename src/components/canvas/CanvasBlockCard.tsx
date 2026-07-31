@@ -798,8 +798,10 @@ export function CanvasBlockCard({
               </button>
               {capacity.byId(block.model)?.status === "cold" && (
                 <span className="w-full font-mono text-[10px] text-watch">
-                  {capacity.byId(block.model)?.label} is not loaded — the machine will refuse a second
-                  large model while one is resident. Load it on Engine · Models, or pick a resident lane.
+                  {capacity.byId(block.model)?.label} is not loaded —{" "}
+                  {autopilot.policy.autopilot
+                    ? "autopilot will make room and load it before this run."
+                    : "autopilot is off, so this run will be refused. Turn it on, or load the lane on Engine · Models."}
                 </span>
               )}
             </div>
