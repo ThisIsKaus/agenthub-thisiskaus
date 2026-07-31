@@ -804,17 +804,23 @@ export function CanvasBlockCard({
                     ? "Run"
                     : "Hand over"}
               </button>
-              {block.kind === "prompt" && current?.output.type === "answer" && (
+              {block.kind === "prompt" && (
                 <button
                   type="button"
                   data-testid="critique-block"
                   onClick={() => void runCritique()}
-                  disabled={busy}
-                  className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-40"
+                  disabled={busy || current?.output.type !== "answer"}
+                  title={
+                    current?.output.type === "answer"
+                      ? "Re-read the answer on a different model and correct it"
+                      : "Ask something first — then a second model reviews the answer"
+                  }
+                  className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-rule disabled:hover:text-muted-foreground"
                 >
                   Critique on another lane
                 </button>
               )}
+
               {busy && (
                 <span className="font-mono text-[10px] tabular-nums text-faint">
                   {status ?? "working…"} {elapsed}s
