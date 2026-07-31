@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
-import { Empty, Skeleton } from "@/components/data";
+import { Empty, PageIntro, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Panel } from "@/components/AppShell";
-import { Empty, Figure, StatusPill, formatStamp } from "@/components/data";
+import { Empty, Figure, PageIntro, StatusPill, formatStamp } from "@/components/data";
 import { stateQueryOptions } from "@/lib/state";
 import { insertJob } from "@/lib/jobs";
 import { useOnline } from "@/hooks/use-online";
@@ -75,6 +75,12 @@ function FactoryPage() {
 
   return (
     <div className="space-y-4">
+      <PageIntro title="Projects">
+        The build pipeline: every product or client engagement, what stage it is at, and how many
+        are active against the WIP limit. Advance a stage or queue intake and ingest here — the
+        machine claims the job within 30 seconds. This is the only view that survives the machine
+        being asleep.
+      </PageIntro>
       <Panel title="Work in progress">
         <div className="grid grid-cols-2 gap-px">
           <Figure
