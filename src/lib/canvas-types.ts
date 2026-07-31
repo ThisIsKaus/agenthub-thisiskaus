@@ -221,7 +221,12 @@ export function emptyDoc(title = "Untitled canvas"): CanvasDoc {
     blocks: [emptyBlock("prompt")],
     branches: [],
     activeBranch: null,
+    stage: "idea",
+    entity: "personal",
+    sensitivity: "S1p",
+    skills: [],
   };
+
 }
 
 /** The run a block currently means, or null when it has never been run. */
