@@ -659,16 +659,21 @@ export function CanvasBlockCard({
             >
               + reference
             </button>
-            {available.length > 0 && (
-              <button
-                type="button"
-                data-testid="add-dependency"
-                onClick={() => setDeps((open) => !open)}
-                className="border border-rule px-2 py-[3px] font-mono text-[10.5px] text-faint hover:border-copper hover:text-copper"
-              >
-                + built from
-              </button>
-            )}
+            <button
+              type="button"
+              data-testid="add-dependency"
+              onClick={() => setDeps((open) => !open)}
+              disabled={available.length === 0}
+              title={
+                available.length === 0
+                  ? "Add a second block first — then this one can be built from its answer"
+                  : "Feed another block's pinned answer into this one"
+              }
+              className="border border-rule px-2 py-[3px] font-mono text-[10.5px] text-faint hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-rule disabled:hover:text-faint"
+            >
+              + built from
+            </button>
+
           </div>
 
           {deps && (
@@ -745,19 +750,23 @@ export function CanvasBlockCard({
                   {count}
                 </button>
               ))}
-              {targets.length >= 2 && (
-                <button
-                  type="button"
-                  data-testid="toggle-fanout"
-                  onClick={() => onChange({ fanOut: !block.fanOut } as Partial<CanvasBlock>)}
-                  title="Ask each referenced source separately, then merge the answers"
-                  className={`border px-2 py-1 font-mono text-[11px] ${
-                    block.fanOut ? "border-copper text-copper" : "border-rule text-muted-foreground"
-                  }`}
-                >
-                  one pass per source · {targets.length}
-                </button>
-              )}
+              <button
+                type="button"
+                data-testid="toggle-fanout"
+                onClick={() => onChange({ fanOut: !block.fanOut } as Partial<CanvasBlock>)}
+                disabled={targets.length < 2}
+                title={
+                  targets.length < 2
+                    ? "Reference two or more files and this asks each one separately, then merges"
+                    : "Ask each referenced source separately, then merge the answers"
+                }
+                className={`border px-2 py-1 font-mono text-[11px] disabled:cursor-not-allowed disabled:opacity-40 ${
+                  block.fanOut ? "border-copper text-copper" : "border-rule text-muted-foreground"
+                }`}
+              >
+                one pass per source{targets.length >= 2 ? ` · ${targets.length}` : ""}
+              </button>
+
             </div>
           )}
 
@@ -795,17 +804,23 @@ export function CanvasBlockCard({
                     ? "Run"
                     : "Hand over"}
               </button>
-              {block.kind === "prompt" && current?.output.type === "answer" && (
+              {block.kind === "prompt" && (
                 <button
                   type="button"
                   data-testid="critique-block"
                   onClick={() => void runCritique()}
-                  disabled={busy}
-                  className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-40"
+                  disabled={busy || current?.output.type !== "answer"}
+                  title={
+                    current?.output.type === "answer"
+                      ? "Re-read the answer on a different model and correct it"
+                      : "Ask something first — then a second model reviews the answer"
+                  }
+                  className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-rule disabled:hover:text-muted-foreground"
                 >
                   Critique on another lane
                 </button>
               )}
+
               {busy && (
                 <span className="font-mono text-[10px] tabular-nums text-faint">
                   {status ?? "working…"} {elapsed}s
