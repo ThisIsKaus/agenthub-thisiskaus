@@ -212,11 +212,124 @@ function BranchBar({
   );
 }
 
+const ENTITIES = ["personal", "Agenticality", "NXI", "Envelope Collective", "client"];
+const SENSITIVITIES = ["S0", "S1p", "S1c", "S2", "S3"];
+
+/** A canvas carries its own project record: stage, who it is for, and how far it may travel. */
+function ProjectBar({
+  doc,
+  onChange,
+  skills,
+}: {
+  doc: CanvasDoc;
+  onChange: (patch: Partial<CanvasDoc>) => void;
+  skills: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="border border-rule bg-panel" data-testid="project-bar">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
+        <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">stage</span>
+        {STAGES.map((stage) => (
+          <button
+            key={stage}
+            type="button"
+            onClick={() => onChange({ stage })}
+            className={`border px-2 py-1 font-mono text-[10px] ${
+              doc.stage === stage
+                ? "border-copper text-copper"
+                : "border-rule text-muted-foreground hover:text-paper"
+            }`}
+          >
+            {stage}
+          </button>
+        ))}
+        <select
+          value={doc.entity}
+          onChange={(event) => onChange({ entity: event.target.value })}
+          aria-label="Entity"
+          className="ml-auto border border-rule bg-panel2 px-2 py-1 font-mono text-[10px] text-paper outline-none focus:border-copper"
+        >
+          {(ENTITIES.includes(doc.entity) ? ENTITIES : [doc.entity, ...ENTITIES]).map((entity) => (
+            <option key={entity} value={entity}>
+              {entity}
+            </option>
+          ))}
+        </select>
+        <select
+          value={doc.sensitivity}
+          onChange={(event) => onChange({ sensitivity: event.target.value })}
+          aria-label="Sensitivity"
+          className="border border-rule bg-panel2 px-2 py-1 font-mono text-[10px] text-paper outline-none focus:border-copper"
+        >
+          {SENSITIVITIES.map((sensitivity) => (
+            <option key={sensitivity} value={sensitivity}>
+              {sensitivity}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 border-t border-rule px-4 py-2">
+        <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">skills</span>
+        {doc.skills.length === 0 && (
+          <span className="font-mono text-[10px] text-faint">none loaded</span>
+        )}
+        {doc.skills.map((name) => (
+          <button
+            key={name}
+            type="button"
+            onClick={() => onChange({ skills: doc.skills.filter((item) => item !== name) })}
+            title="Remove from this canvas"
+            className="border border-copper px-2 py-1 font-mono text-[10px] text-copper"
+          >
+            {name} ×
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="border border-rule px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-copper hover:text-copper"
+        >
+          + skill
+        </button>
+        <span className="ml-auto font-mono text-[9px] text-faint">
+          {doc.sensitivity === "S3" ? "S3 — local only, never handed over" : "loaded into every run"}
+        </span>
+      </div>
+      {open && (
+        <div className="flex flex-wrap gap-2 border-t border-rule px-4 py-2">
+          {skills.length === 0 && (
+            <span className="font-mono text-[10px] text-faint">no skill files on the machine</span>
+          )}
+          {skills
+            .filter((name) => !doc.skills.includes(name))
+            .map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => {
+                  onChange({ skills: [...doc.skills, name] });
+                  setOpen(false);
+                }}
+                className="border border-rule px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-copper hover:text-copper"
+              >
+                {name}
+              </button>
+            ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function CanvasPage() {
   const local = useLocal();
   const queryClient = useQueryClient();
-  const { roots } = useReferenceCatalogue();
+  const { roots, skills: skillRefs } = useReferenceCatalogue();
   const dir = useMemo(() => canvasDir(roots), [roots]);
+  const skillNames = useMemo(() => skillRefs.map((ref) => ref.label), [skillRefs]);
+  const { seed } = Route.useSearch();
+
 
   const [doc, setDoc] = useState<CanvasDoc | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
