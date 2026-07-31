@@ -44,6 +44,7 @@ const GROUPS: Group[] = [
     subs: [
       { to: "/evals", label: "Evals" },
       { to: "/proposals", label: "Proposals" },
+      { to: "/build", label: "Build" },
     ],
   },
   {
