@@ -9,6 +9,7 @@ import {
 } from "@/components/canvas/RunHistory";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { assertAnswer, isLaneFault, LaneFault, useLaneCapacity } from "@/lib/lane-capacity";
+import { useAutopilot } from "@/lib/model-autopilot";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { insertJob } from "@/lib/jobs";
 import {
@@ -238,10 +239,10 @@ export function CanvasBlockCard({
   async function ask(prompt: string, model: string, k: number): Promise<AskResponse> {
     const lane = capacity.byId(model);
     if (lane?.status === "cold") {
-      throw new LaneFault(
-        `${lane.label} is not loaded — ${lane.note}. Load it on Engine · Models, or choose a resident lane.`,
-        "capacity",
-      );
+      // Autopilot makes room and loads it; with autopilot off this is a refusal
+      // carrying the plan, never a router error pinned as an answer.
+      const readied = await autopilot.ensureLane(model);
+      if (!readied.ok) throw new LaneFault(readied.message, "capacity");
     }
     const data = await local.post<AskResponse>("/api/ask", { q: prompt, model, k: String(k) });
     assertAnswer(data.answer, lane?.label ?? model);

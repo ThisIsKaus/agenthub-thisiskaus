@@ -50,10 +50,6 @@ const MODES = [
 
 const BUDGETS = [24, 32, 48, 64, 96] as const;
 
-function Row({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-wrap items-baseline gap-3 border-b border-rule py-2 last:border-b-0">{children}</div>;
-}
-
 function ModelsPage() {
   const local = useLocal();
   const { policy, update, togglePin, capacity, plan, apply, ensureLane, working, note, setNote } =
