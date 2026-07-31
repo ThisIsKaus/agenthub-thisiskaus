@@ -39,6 +39,7 @@ except Exception:
 READ_ROOTS = [H / "canon", H / "docs", H / "drafts", H / "digests", H / "evals",
               H / "logs", H / "factory", H / "inbox", H / "report", FAC]
 WRITE_ROOTS = [H / "canon", H / "docs", H / "drafts", H / "evals", H / "factory", H / "inbox"]
+SKILLS_ROOTS = [H / "skills"]
 BLOCKED_ROOTS = [H / "vault"]
 NEVER_WRITE_SUFFIX = {".py", ".sh", ".zsh", ".bash", ".plist", ".lock"}
 TEXT_SUFFIX = {".md", ".txt", ".json", ".jsonl", ".yaml", ".yml", ".csv"}
@@ -58,6 +59,7 @@ COMMANDS = {
     "summarise":     {"argv": ["/opt/homebrew/bin/uv", "run", "--project", str(H / "console"),
                                "python", str(H / "console/sessions.py"), "summarise"],
                       "label": "Write memory note", "tier": "T1"},
+    "diagnose":      {"argv": [str(H / "build/diagnose.py")], "label": "Diagnose", "tier": "T1"},
 }
 
 JOBS = {}
@@ -511,6 +513,20 @@ def prompts_save(path: str = Form(...), content: str = Form(...)):
         return {"saved": "triage system prompt",
                 "note": "re-run Score triage — a prompt change without a re-score is unverified"}
     return save_file(path=path, content=content)
+
+
+# ---------------------------------------------------------------- skills
+
+@app.post("/api/skills/save")
+def skills_save(path: str = Form(...), content: str = Form(...)):
+    p = _resolve(path, SKILLS_ROOTS)
+    if p.suffix.lower() in NEVER_WRITE_SUFFIX:
+        raise HTTPException(403, "executable and system files are read-only from the console")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(content)
+    audit(f"saved skill {p.name}")
+    git_commit(f"console: edit {p.name}")
+    return {"saved": str(p)}
 
 
 # ---------------------------------------------------------------- digest and corrections
