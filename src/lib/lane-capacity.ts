@@ -70,22 +70,25 @@ export function useLaneCapacity() {
   const bench = query.data?.bench ?? [];
 
   const lanes: LaneCapacity[] = LANES.map((lane) => {
-    const role = LANE_ROLE[lane.id];
+    const role = LANE_ROLE[lane.id] ?? null;
+    const base = { id: lane.id, label: lane.label, cost: lane.cost, role };
     if (!role) {
-      return { id: lane.id, label: lane.label, cost: lane.cost, status: "cloud", gib: null, note: "off the machine" };
+      return { ...base, status: "cloud", modelId: null, gib: null, tps: null, note: "off the machine" };
     }
     const entry = bench.find((item) => item.role === role);
     const gib = toNum(entry?.gib);
+    const tps = toNum(entry?.tps);
+    const modelId = entry?.id ?? null;
     if (!local.available || query.isLoading || !query.data) {
-      return { id: lane.id, label: lane.label, cost: lane.cost, status: "unknown", gib, note: "" };
+      return { ...base, status: "unknown", modelId, gib, tps, note: "" };
     }
     const isResident = match(resident, entry?.id);
     return {
-      id: lane.id,
-      label: lane.label,
-      cost: lane.cost,
+      ...base,
       status: isResident ? "resident" : "cold",
+      modelId,
       gib,
+      tps,
       note: isResident ? "resident" : gib != null ? `needs ${gib.toFixed(1)} GiB loaded` : "not loaded",
     };
   });
@@ -106,7 +109,17 @@ export function useLaneCapacity() {
     );
   }
 
-  return { lanes, byId, critiqueLane, loading: query.isLoading, refresh: query.refetch };
+  return {
+    lanes,
+    byId,
+    critiqueLane,
+    resident,
+    bench,
+    available: query.data?.available ?? [],
+    loading: query.isLoading,
+    error: query.error as Error | null,
+    refresh: query.refetch,
+  };
 }
 
 /**
