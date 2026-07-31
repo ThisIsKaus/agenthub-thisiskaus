@@ -399,6 +399,16 @@ def schedule():
         lastb = lines[-1] if lines else ""
     rec(g, "last backup done", "done" in lastb, lastb[:80] or "no entries", "backup.sh")
 
+    # A snapshot existing is not a backup. Count what is actually in it — restic archives a
+    # symlink as a single entry, so a hollow snapshot still reports success.
+    n = sh(f"{H}/scripts/with-secrets.sh /opt/homebrew/bin/restic ls latest 2>/dev/null | wc -l", 120)
+    try:
+        n = int(n.strip())
+    except Exception:
+        n = 0
+    rec(g, "backup has contents", n >= 1000, f"{n} entries in the latest snapshot",
+        "a snapshot with few entries means restic followed a symlink instead of the tree")
+
 
 # ---------------------------------------------------------------- hygiene
 

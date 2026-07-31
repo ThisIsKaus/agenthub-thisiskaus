@@ -23,13 +23,12 @@ if [[ -f "$D" ]]; then
   ~/AgentHub/scripts/factory status >> "$D"
   ~/AgentHub/scripts/notify.sh "Digest ready: $SUMMARY"
 fi
-/opt/homebrew/bin/uv run --python 3.12 ~/AgentHub/report/build_report.py
 ~/AgentHub/scripts/rotate.sh
 if [[ "$(date +%d)" == "01" ]]; then
   echo "monthly restore verification"
   rm -rf /tmp/rv && mkdir -p /tmp/rv
-  ~/AgentHub/scripts/with-secrets.sh /opt/homebrew/bin/restic restore latest --target /tmp/rv --include ~/AgentHub/canon >/dev/null 2>&1
-  if diff -q /tmp/rv$HOME/AgentHub/canon/policies.md ~/AgentHub/canon/policies.md >/dev/null 2>&1; then
+  ~/AgentHub/scripts/with-secrets.sh /opt/homebrew/bin/restic restore latest --target /tmp/rv --include ~/Workspace/machine/canon >/dev/null 2>&1
+  if diff -q /tmp/rv$HOME/Workspace/machine/canon/policies.md ~/AgentHub/canon/policies.md >/dev/null 2>&1; then
     echo "restore verified - byte identical"
   else
     echo "RESTORE MISMATCH - backups cannot be trusted"
