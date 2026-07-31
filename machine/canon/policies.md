@@ -132,3 +132,11 @@ this repository, and keep any branch Lovable syncs in a working state, because p
 appear in its editor. Divergence is resolved by merging, never by rewriting.
 Lovable owns src/, supabase/ and the root build config. machine/ is maintained locally and is
 documented as off-limits in AGENTS.md.
+
+## Build cascade tiers (v2.2, 31 Jul 2026)
+Tier 3 (local-brain, 35B) is the local entry point, not tier 2 (local-coder, 27B). Measured
+on the same intent: the 27B took 263s and 390s and failed both times; the 35B took 65s, passed
+verification, and produced better structured output than the frontier tier. The Phase 2 bench
+predicted this at 24.8 t/s against 114.9. Tier 2 stays reachable with --tier 2 and returns as
+the default only if evidence reverses. Local tiers write whole files; unified diffs require
+inventing line numbers, which small models do badly.

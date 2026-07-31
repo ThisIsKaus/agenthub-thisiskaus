@@ -42,7 +42,10 @@ ARCHITECTURAL = re.compile(
 
 # Local tiers need their model resident. The 36GB envelope cannot hold the 27B and the 35B
 # at once — LM Studio refuses the second load — so the cascade switches sets per tier.
-MODE_FOR_TIER = {2: "coding", 3: "standard"}
+# Tier 2 (27B) measured 263s and 390s and failed both times; tier 3 (35B) took 65s and
+# produced better output than tier 4. The bench predicted it: 24.8 t/s against 114.9.
+# Tier 3 is now the local entry point. Tier 2 remains reachable with --tier 2.
+MODE_FOR_TIER = {2: "coding"}   # tier 3 uses the standard set, already resident
 
 TIERS = {
     1: ("local-triage", "4B classifier"),
@@ -310,7 +313,7 @@ def main():
         sys.exit("an intent is required")
 
     ctx = classify(intent)
-    start = args.tier or max(ctx["tier"], 1)
+    start = args.tier or max(ctx["tier"], 3)   # local entry point is tier 3, on evidence
 
     if args.plan:
         print(json.dumps({"intent": intent, **ctx, "starting_tier": start}, indent=2))
