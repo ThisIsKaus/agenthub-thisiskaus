@@ -4,6 +4,7 @@ import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { toNum } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/files")({
   head: () => ({
@@ -41,7 +42,8 @@ type Tree = { root?: string; parent?: string | null; dirs?: (Dir | string)[]; fi
 type FileContent = { path: string; name: string; raw: string; html?: string; editable?: boolean };
 type Roots = { roots?: (string | { name?: string; path: string })[] } | (string | { name?: string; path: string })[];
 
-function bytes(size: number | undefined) {
+function bytes(value: unknown) {
+  const size = toNum(value);
   if (size == null) return "";
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;

@@ -5,6 +5,7 @@ import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
+import { toNum } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/model-scanner")({
   head: () => ({
@@ -76,16 +77,18 @@ type ScanData = {
 const HYPOTHESIS =
   "A candidate is a hypothesis until it is benchmarked on this machine. Downloads and published benchmarks are not evidence about your hardware.";
 
-function num(value: number | undefined, digits = 0, suffix = "") {
-  if (value === undefined || value === null || Number.isNaN(value)) return "—";
-  return `${value.toFixed(digits)}${suffix}`;
+function num(value: unknown, digits = 0, suffix = "") {
+  const parsed = toNum(value);
+  if (parsed === null) return "—";
+  return `${parsed.toFixed(digits)}${suffix}`;
 }
 
-function compact(value: number | undefined) {
-  if (value === undefined || value === null) return "—";
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
-  return String(value);
+function compact(value: unknown) {
+  const parsed = toNum(value);
+  if (parsed === null) return "—";
+  if (parsed >= 1_000_000) return `${(parsed / 1_000_000).toFixed(1)}M`;
+  if (parsed >= 1_000) return `${(parsed / 1_000).toFixed(1)}k`;
+  return String(parsed);
 }
 
 function fitOf(candidate: Candidate, envelope: Envelope | undefined): "fits" | "evict" | "cannot" {

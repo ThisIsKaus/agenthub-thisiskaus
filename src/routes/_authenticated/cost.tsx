@@ -4,6 +4,7 @@ import { Panel } from "@/components/AppShell";
 import { Empty, Figure, FigureSkeleton, Row, Skeleton, formatStamp } from "@/components/data";
 import { stateQueryOptions } from "@/lib/state";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
+import { count, fixed, toNum } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/cost")({
   head: () => ({
@@ -94,12 +95,12 @@ function CostPage() {
           <div className="grid grid-cols-2 gap-px sm:grid-cols-3">
             <Figure
               label="spend month to date"
-              value={`$${mtd.toFixed(2)}`}
-              detail={`$${dailyAverage.toFixed(2)} daily average over ${daysElapsed} days`}
+              value={`$${fixed(mtd, 2)}`}
+              detail={`$${fixed(dailyAverage, 2)} daily average over ${daysElapsed} days`}
               tone="copper"
             />
-            <Figure label="metered requests" value={requests.toLocaleString()} />
-            <Figure label="per request" value={`$${perRequest.toFixed(4)}`} />
+            <Figure label="metered requests" value={count(requests)} />
+            <Figure label="per request" value={`$${fixed(perRequest, 4)}`} />
           </div>
         )}
         <p className="mt-4 max-w-prose text-[13px] leading-relaxed text-muted-foreground">
@@ -132,7 +133,7 @@ function CostPage() {
                   />
                 </span>
                 <span className="w-16 shrink-0 text-right font-mono text-[10px] tabular-nums text-paper">
-                  ${day.amount.toFixed(2)}
+                  ${fixed(day.amount, 2)}
                 </span>
               </li>
             ))}
@@ -156,7 +157,9 @@ function CostPage() {
                 key={modelLabel(model, index)}
                 label={modelLabel(model, index)}
                 value={
-                  typeof model === "object" && model.tps ? `${model.tps.toFixed(1)} tok/s` : "local"
+                  typeof model === "object" && toNum(model.tps) != null
+                    ? `${fixed(model.tps, 1)} tok/s`
+                    : "local"
                 }
               />
             ))}

@@ -5,6 +5,7 @@ import { Empty, Figure, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
+import { toNum } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/evals")({
   head: () => ({
@@ -39,16 +40,16 @@ type Scores = {
 };
 type EvalResult = { date?: string; model?: string; scores?: Scores };
 type EvalsData = { results?: EvalResult[]; set_size?: number; real_items?: number };
-function pct(value: number | undefined) {
-  if (value == null) return "—";
-  const percent = value <= 1 ? value * 100 : value;
-  return `${percent.toFixed(0)}%`;
+function pct(value: unknown) {
+  const parsed = toNum(value);
+  if (parsed == null) return "—";
+  return `${(parsed <= 1 ? parsed * 100 : parsed).toFixed(0)}%`;
 }
 
-function isBelowFull(value: number | undefined) {
-  if (value == null) return false;
-  const percent = value <= 1 ? value * 100 : value;
-  return percent < 100;
+function isBelowFull(value: unknown) {
+  const parsed = toNum(value);
+  if (parsed == null) return false;
+  return (parsed <= 1 ? parsed * 100 : parsed) < 100;
 }
 
 function EvalsPage() {
