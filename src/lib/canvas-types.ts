@@ -265,8 +265,18 @@ export function normaliseDoc(raw: unknown, path?: string): CanvasDoc | null {
     blocks: blocks.length ? blocks : [emptyBlock("prompt")],
     branches: Array.isArray(value.branches) ? (value.branches as BranchSelection[]).filter(isBranch) : [],
     activeBranch: typeof value.activeBranch === "string" ? value.activeBranch : null,
+    stage: (STAGES as readonly string[]).includes(value.stage as string)
+      ? (value.stage as Stage)
+      : "idea",
+    entity: typeof value.entity === "string" && value.entity ? value.entity : "personal",
+    sensitivity:
+      typeof value.sensitivity === "string" && value.sensitivity ? value.sensitivity : "S1p",
+    skills: Array.isArray(value.skills)
+      ? (value.skills as unknown[]).filter((item): item is string => typeof item === "string")
+      : [],
     path,
   };
+
 }
 
 function isBranch(value: unknown): value is BranchSelection {
