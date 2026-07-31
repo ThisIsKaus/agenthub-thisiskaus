@@ -129,6 +129,20 @@ function CanvasPage() {
     );
   }
 
+  /** Functional block update — safe when several runs land at once. */
+  function updateBlock(id: string, updater: (block: CanvasBlock) => CanvasBlock) {
+    dirty.current = true;
+    setDoc((current) =>
+      current
+        ? {
+            ...current,
+            blocks: current.blocks.map((block) => (block.id === id ? updater(block) : block)),
+          }
+        : current,
+    );
+  }
+
+
   function addBlock(kind: BlockKind) {
     dirty.current = true;
     setDoc((current) =>
