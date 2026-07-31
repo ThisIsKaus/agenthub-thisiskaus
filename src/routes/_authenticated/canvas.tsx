@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocalOnly } from "@/components/LocalOnly";
+import { PageIntro } from "@/components/data";
 import { CanvasBlockCard } from "@/components/canvas/CanvasBlockCard";
 import { useReferenceCatalogue } from "@/lib/canvas-refs";
 import { useLocal } from "@/lib/local-bridge";
@@ -51,7 +52,7 @@ const ADD: { kind: BlockKind; label: string }[] = [
   { kind: "prompt", label: "Ask" },
   { kind: "note", label: "Note" },
   { kind: "job", label: "Run" },
-  { kind: "capture", label: "Capture" },
+  { kind: "capture", label: "Hand over" },
 ];
 
 function stamp(iso: string | undefined) {
@@ -205,7 +206,13 @@ function CanvasPage() {
 
   return (
     <div className="space-y-4" data-testid="canvas-page">
+      <PageIntro title="Canvas">
+        The place to think a piece of work through: ask the corpus, run a machine job, keep notes,
+        and reference files, skills, projects and tools by name — all in one document saved on the
+        machine. A hand-over block is the single way anything leaves it, and only when you press it.
+      </PageIntro>
       <section className="border border-rule bg-panel">
+
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-b border-rule px-4 py-3">
           <input
             value={doc.title}
@@ -319,8 +326,9 @@ function CanvasPage() {
       </div>
 
       <p className="font-mono text-[10px] leading-relaxed text-faint">
-        Canvases are written to the machine as files and never leave it. A capture block is the one
-        exception: it hands text over, and only when you press Capture.
+        Canvases are written to the machine as files and never leave it. A hand-over block is the
+        one exception: it passes text out, and only when you press it.
+
       </p>
     </div>
   );

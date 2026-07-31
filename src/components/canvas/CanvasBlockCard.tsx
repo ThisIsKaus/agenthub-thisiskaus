@@ -53,7 +53,7 @@ const KIND_LABEL: Record<CanvasBlock["kind"], string> = {
   prompt: "Ask",
   note: "Note",
   job: "Run",
-  capture: "Capture",
+  capture: "Hand over",
 };
 
 export function CanvasBlockCard({
@@ -378,7 +378,7 @@ export function CanvasBlockCard({
                 disabled={busy || !canRun}
                 className="border border-copper px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-copper disabled:opacity-40"
               >
-                {block.kind === "prompt" ? "Ask" : block.kind === "job" ? "Run" : "Capture"}
+                {block.kind === "prompt" ? "Ask" : block.kind === "job" ? "Run" : "Hand over"}
               </button>
               {busy && (
                 <span className="font-mono text-[10px] tabular-nums text-faint">

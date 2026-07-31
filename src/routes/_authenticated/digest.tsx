@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
-import { Empty, Skeleton } from "@/components/data";
+import { Empty, PageIntro, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 
@@ -89,7 +89,14 @@ function DigestPage() {
 
   return (
     <div className="space-y-4">
+      <PageIntro title="Triage">
+        Everything the machine read overnight — mail, files, notes — sorted into one line each,
+        with its class, entity and sensitivity. Read it to see what needs you. Where the machine
+        classified something wrongly, correct it: that correction becomes a golden eval item, so
+        the same mistake is measured from then on. Detail stays on the machine.
+      </PageIntro>
       <div className="border border-copper bg-panel px-3 py-2">
+
         <p className="text-[13px] leading-relaxed text-copper">
           Corrections here become golden items in the eval set. This is how the system learns.
         </p>
