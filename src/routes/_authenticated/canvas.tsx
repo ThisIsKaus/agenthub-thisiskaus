@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocalOnly } from "@/components/LocalOnly";
+import { PageIntro } from "@/components/data";
 import { CanvasBlockCard } from "@/components/canvas/CanvasBlockCard";
 import { useReferenceCatalogue } from "@/lib/canvas-refs";
 import { useLocal } from "@/lib/local-bridge";
