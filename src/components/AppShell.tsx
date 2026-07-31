@@ -35,6 +35,7 @@ const GROUPS: Group[] = [
     to: "/models",
     subs: [
       { to: "/models", label: "Models" },
+      { to: "/model-scanner", label: "Models · Scanner" },
       { to: "/prompts", label: "Prompts" },
       { to: "/skills", label: "Skills" },
     ],

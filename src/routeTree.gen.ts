@@ -17,6 +17,7 @@ import { Route as AuthenticatedProposalsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPromptsRouteImport } from './routes/_authenticated/prompts'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedModelsRouteImport } from './routes/_authenticated/models'
+import { Route as AuthenticatedModelScannerRouteImport } from './routes/_authenticated/model-scanner'
 import { Route as AuthenticatedMemoryRouteImport } from './routes/_authenticated/memory'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
@@ -70,6 +71,12 @@ const AuthenticatedModelsRoute = AuthenticatedModelsRouteImport.update({
   path: '/models',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedModelScannerRoute =
+  AuthenticatedModelScannerRouteImport.update({
+    id: '/model-scanner',
+    path: '/model-scanner',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMemoryRoute = AuthenticatedMemoryRouteImport.update({
   id: '/memory',
   path: '/memory',
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/health': typeof AuthenticatedHealthRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
+  '/model-scanner': typeof AuthenticatedModelScannerRoute
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
@@ -171,6 +179,7 @@ export interface FileRoutesByTo {
   '/health': typeof AuthenticatedHealthRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
+  '/model-scanner': typeof AuthenticatedModelScannerRoute
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
@@ -195,6 +204,7 @@ export interface FileRoutesById {
   '/_authenticated/health': typeof AuthenticatedHealthRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/memory': typeof AuthenticatedMemoryRoute
+  '/_authenticated/model-scanner': typeof AuthenticatedModelScannerRoute
   '/_authenticated/models': typeof AuthenticatedModelsRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/prompts': typeof AuthenticatedPromptsRoute
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/knowledge'
     | '/memory'
+    | '/model-scanner'
     | '/models'
     | '/overview'
     | '/prompts'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/knowledge'
     | '/memory'
+    | '/model-scanner'
     | '/models'
     | '/overview'
     | '/prompts'
@@ -264,6 +276,7 @@ export interface FileRouteTypes {
     | '/_authenticated/health'
     | '/_authenticated/knowledge'
     | '/_authenticated/memory'
+    | '/_authenticated/model-scanner'
     | '/_authenticated/models'
     | '/_authenticated/overview'
     | '/_authenticated/prompts'
@@ -337,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/models'
       fullPath: '/models'
       preLoaderRoute: typeof AuthenticatedModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/model-scanner': {
+      id: '/_authenticated/model-scanner'
+      path: '/model-scanner'
+      fullPath: '/model-scanner'
+      preLoaderRoute: typeof AuthenticatedModelScannerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/memory': {
@@ -445,6 +465,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedMemoryRoute: typeof AuthenticatedMemoryRoute
+  AuthenticatedModelScannerRoute: typeof AuthenticatedModelScannerRoute
   AuthenticatedModelsRoute: typeof AuthenticatedModelsRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedPromptsRoute: typeof AuthenticatedPromptsRoute
@@ -465,6 +486,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHealthRoute: AuthenticatedHealthRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedMemoryRoute: AuthenticatedMemoryRoute,
+  AuthenticatedModelScannerRoute: AuthenticatedModelScannerRoute,
   AuthenticatedModelsRoute: AuthenticatedModelsRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedPromptsRoute: AuthenticatedPromptsRoute,
@@ -485,3 +507,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
