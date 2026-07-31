@@ -38,6 +38,12 @@ if [[ "$(date +%d)" == "01" ]]; then
   rm -rf /tmp/rv
 fi
 python3 ~/AgentHub/scripts/selftest.py --quiet
+SELFTEST_STATUS=$?
+if [[ $SELFTEST_STATUS -eq 0 ]]; then
+  ~/AgentHub/build/diagnose.py
+else
+  echo "skipped diagnose: self-test failed"
+fi
 ~/AgentHub/scripts/doctor.sh
 date +%F > $STAMP
 echo "=== nightly done $(date -Iseconds)"
