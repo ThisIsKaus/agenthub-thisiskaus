@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSystemRouteImport } from './routes/_authenticated/system'
+import { Route as AuthenticatedProposalsRouteImport } from './routes/_authenticated/proposals'
 import { Route as AuthenticatedPromptsRouteImport } from './routes/_authenticated/prompts'
 import { Route as AuthenticatedOverviewRouteImport } from './routes/_authenticated/overview'
 import { Route as AuthenticatedModelsRouteImport } from './routes/_authenticated/models'
@@ -40,6 +41,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedSystemRoute = AuthenticatedSystemRouteImport.update({
   id: '/system',
   path: '/system',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProposalsRoute = AuthenticatedProposalsRouteImport.update({
+  id: '/proposals',
+  path: '/proposals',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPromptsRoute = AuthenticatedPromptsRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
+  '/proposals': typeof AuthenticatedProposalsRoute
   '/system': typeof AuthenticatedSystemRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/models': typeof AuthenticatedModelsRoute
   '/overview': typeof AuthenticatedOverviewRoute
   '/prompts': typeof AuthenticatedPromptsRoute
+  '/proposals': typeof AuthenticatedProposalsRoute
   '/system': typeof AuthenticatedSystemRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/_authenticated/models': typeof AuthenticatedModelsRoute
   '/_authenticated/overview': typeof AuthenticatedOverviewRoute
   '/_authenticated/prompts': typeof AuthenticatedPromptsRoute
+  '/_authenticated/proposals': typeof AuthenticatedProposalsRoute
   '/_authenticated/system': typeof AuthenticatedSystemRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/models'
     | '/overview'
     | '/prompts'
+    | '/proposals'
     | '/system'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/models'
     | '/overview'
     | '/prompts'
+    | '/proposals'
     | '/system'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/_authenticated/models'
     | '/_authenticated/overview'
     | '/_authenticated/prompts'
+    | '/_authenticated/proposals'
     | '/_authenticated/system'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -266,6 +278,13 @@ declare module '@tanstack/react-router' {
       path: '/system'
       fullPath: '/system'
       preLoaderRoute: typeof AuthenticatedSystemRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/proposals': {
+      id: '/_authenticated/proposals'
+      path: '/proposals'
+      fullPath: '/proposals'
+      preLoaderRoute: typeof AuthenticatedProposalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/prompts': {
@@ -390,6 +409,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModelsRoute: typeof AuthenticatedModelsRoute
   AuthenticatedOverviewRoute: typeof AuthenticatedOverviewRoute
   AuthenticatedPromptsRoute: typeof AuthenticatedPromptsRoute
+  AuthenticatedProposalsRoute: typeof AuthenticatedProposalsRoute
   AuthenticatedSystemRoute: typeof AuthenticatedSystemRoute
 }
 
@@ -407,6 +427,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModelsRoute: AuthenticatedModelsRoute,
   AuthenticatedOverviewRoute: AuthenticatedOverviewRoute,
   AuthenticatedPromptsRoute: AuthenticatedPromptsRoute,
+  AuthenticatedProposalsRoute: AuthenticatedProposalsRoute,
   AuthenticatedSystemRoute: AuthenticatedSystemRoute,
 }
 
