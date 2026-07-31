@@ -207,7 +207,7 @@ function OverviewPage() {
           tone: "ok",
         },
         {
-          text: cloudAliases != null ? `${cloudAliases} cloud aliases · metered` : `${aliasCount ?? "—"} aliases`,
+          text: cloudAliases != null ? `${cloudAliases} cloud aliases · metered` : "cloud aliases —",
           tone: "copper",
         },
         { text: `$${mtd.toFixed(4)} month to date` },
@@ -286,7 +286,7 @@ function OverviewPage() {
   const facts: Fact[] = [
     {
       label: "Checks passing",
-      value: fmt(passed),
+      value: health.passed != null ? fmt(passed) : null,
       detail: `${warnings} warnings · ${failed} failures · ${formatStamp(health.at)}`,
       tone: healthTone,
     },
@@ -425,7 +425,7 @@ function OverviewPage() {
           caption={
             live
               ? `Read from the machine at ${clockOf(state?.updated_at ?? new Date().toISOString())}`
-              : `Local figures need the machine · published state ${provenance}`
+              : `Local figures need the machine · ${provenance}`
           }
         />
       </section>
