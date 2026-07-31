@@ -51,7 +51,7 @@ const ADD: { kind: BlockKind; label: string }[] = [
   { kind: "prompt", label: "Ask" },
   { kind: "note", label: "Note" },
   { kind: "job", label: "Run" },
-  { kind: "capture", label: "Capture" },
+  { kind: "capture", label: "Hand over" },
 ];
 
 function stamp(iso: string | undefined) {
