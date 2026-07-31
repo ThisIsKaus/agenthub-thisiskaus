@@ -11,18 +11,9 @@ type Group = { label: string; to: string; subs: Sub[] };
 
 const GROUPS: Group[] = [
   { label: "Overview", to: "/overview", subs: [] },
-  {
-    label: "Work",
-    to: "/canvas",
-    subs: [
-      { to: "/canvas", label: "Canvas · think" },
-      { to: "/capture", label: "Capture · inbox" },
-      { to: "/digest", label: "Triage · yesterday" },
-      { to: "/factory", label: "Projects · wip" },
-    ],
-  },
-
-
+  { label: "Canvas", to: "/canvas", subs: [] },
+  { label: "Inbox", to: "/inbox", subs: [] },
+  { label: "Skills", to: "/skills", subs: [] },
   {
     label: "Corpus",
     to: "/files",
@@ -37,9 +28,8 @@ const GROUPS: Group[] = [
     to: "/models",
     subs: [
       { to: "/models", label: "Models" },
-      { to: "/model-scanner", label: "Models · Scanner" },
+      { to: "/model-scanner", label: "Scanner" },
       { to: "/prompts", label: "Prompts" },
-      { to: "/skills", label: "Skills" },
     ],
   },
   {
@@ -60,6 +50,7 @@ const GROUPS: Group[] = [
     ],
   },
 ];
+
 
 function tone(value: string | undefined) {
   if (value === "up" || value === "ok" || value === "passed") return "text-ok";
