@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
+import { CascadePanel } from "@/components/CascadePanel";
 import { useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 
@@ -201,6 +202,10 @@ function HealthPage() {
           </ul>
         )}
       </Panel>
+
+      <LocalOnly>
+        <CascadePanel />
+      </LocalOnly>
     </div>
   );
 }
