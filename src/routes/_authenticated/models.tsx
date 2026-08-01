@@ -1,25 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { fixed } from "@/lib/format";
-import { useAutopilot } from "@/lib/model-autopilot";
+import { useJobDrawer } from "@/lib/job-drawer";
 import {
-  EMBEDDER_COSTS,
+  EMBEDDER_CHECK_INTERVAL_MS,
+  modelId,
+  normalizeIds,
   useEmbedderGuard,
-  type EmbedderState,
 } from "@/lib/embedder";
 import type { Bench } from "@/lib/lane-capacity";
-import {
-  describePlan,
-  isEmbedder,
-  residentLoad,
-  TASK_CLASSES,
-  type TaskClass,
-} from "@/lib/model-policy";
-import { LANES } from "@/lib/canvas-types";
 
 export const Route = createFileRoute("/_authenticated/models")({
   head: () => ({
@@ -28,13 +22,13 @@ export const Route = createFileRoute("/_authenticated/models")({
       {
         name: "description",
         content:
-          "Residency, memory budget and automatic loading for the models on the machine.",
+          "Tiered residency, memory budget and failover ladder for the models on the machine.",
       },
       { property: "og:title", content: "Models — AgentHub" },
       {
         property: "og:description",
         content:
-          "Residency, memory budget and automatic loading for the models on the machine.",
+          "Tiered residency, memory budget and failover ladder for the models on the machine.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -47,35 +41,163 @@ export const Route = createFileRoute("/_authenticated/models")({
   ),
 });
 
-const MODES = [
-  { action: "standard", label: "Standard" },
-  { action: "coding", label: "Coding" },
-  { action: "tools", label: "Tools" },
-  { action: "light", label: "Light" },
+type MemoryEntry = { id?: string; gib?: unknown };
+type MemoryBlock = {
+  pressure?: "green" | "amber" | "red" | "unknown";
+  budget?: {
+    envelope_gib?: unknown;
+    pinned_gib?: unknown;
+    elastic_gib?: unknown;
+    headroom_gib?: unknown;
+    wired_limit_mb?: unknown;
+    source?: unknown;
+    compressed_gib?: unknown;
+    free_gib?: unknown;
+    wired_gib?: unknown;
+    active_gib?: unknown;
+  };
+  pinned?: MemoryEntry[];
+  elastic?: MemoryEntry[];
+  unexpected?: MemoryEntry[];
+  core_intact?: boolean;
+  advice?: string;
+};
+
+type ModelsData = {
+  resident?: unknown[];
+  available?: unknown[];
+  bench?: Bench[];
+  aliases?: unknown[];
+  memory?: MemoryBlock;
+};
+
+type FailoverRung = {
+  rung?: unknown;
+  name?: string;
+  tested?: string | null;
+  ok?: boolean | null;
+  detail?: string;
+};
+
+const RUN_KEYS = [
+  "verify",
+  "doctor",
+  "intake",
+  "ingest",
+  "eval",
+  "backup",
+  "report",
+  "repair",
+  "summarise",
+  "diagnose",
 ] as const;
 
-const BUDGETS = [24, 32, 48, 64, 96] as const;
+const RUNG_DEFAULT_KEY: Record<number, string> = {
+  1: "verify",
+  2: "repair",
+  3: "doctor",
+  4: "diagnose",
+  5: "report",
+};
+
+function runKeyFor(rung: number, name: string) {
+  const text = (name ?? "").toLowerCase();
+  const direct = RUN_KEYS.find((key) => text.includes(key));
+  return direct ?? RUNG_DEFAULT_KEY[rung] ?? "diagnose";
+}
+
+const PRESSURE_DOT: Record<string, string> = {
+  green: "bg-ok",
+  amber: "bg-watch",
+  red: "bg-risk",
+  unknown: "bg-faint",
+};
+
+function n(value: unknown, fallback = 0): number {
+  const parsed = typeof value === "number" ? value : Number(String(value ?? "").trim());
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
 
 function ModelsPage() {
   const local = useLocal();
-  const { policy, update, togglePin, capacity, plan, apply, ensureLane, working, note, setNote } =
-    useAutopilot();
+  const { runJob } = useJobDrawer();
   const [busy, setBusy] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
-  const loading = capacity.loading;
-  const failed = !loading && capacity.error !== null;
-  const resident = capacity.resident;
-  const bench = capacity.bench;
-  const used = residentLoad(resident, bench);
-  const pct = policy.budgetGib > 0 ? Math.min(100, (used / policy.budgetGib) * 100) : 0;
+  const models = useQuery({
+    queryKey: ["models"],
+    enabled: local.available,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    queryFn: () => local.get<ModelsData>("/api/models"),
+  });
 
-  async function act(action: string, model?: string, label?: string) {
-    setBusy(label ?? action);
+  const failover = useQuery({
+    queryKey: ["failover"],
+    enabled: local.available,
+    staleTime: 60_000,
+    queryFn: () => local.get<FailoverRung[]>("/api/failover"),
+  });
+
+  const loading = models.isLoading;
+  const failed = !loading && models.error !== null;
+
+  const data = models.data ?? {};
+  const bench = data.bench ?? [];
+  const resident = normalizeIds(data.resident);
+  const memory = data.memory ?? {};
+  const budget = memory.budget ?? {};
+
+  const envelope = n(budget.envelope_gib);
+  const pinnedGib = n(budget.pinned_gib);
+  const elasticGib = n(budget.elastic_gib);
+  const headroomGib = n(budget.headroom_gib, Math.max(0, envelope - pinnedGib - elasticGib));
+  const pinned = memory.pinned ?? [];
+  const elastic = memory.elastic ?? [];
+  const unexpected = memory.unexpected ?? [];
+  const pressure = memory.pressure ?? "unknown";
+
+  const pct = (value: number) => (envelope > 0 ? Math.max(0, Math.min(100, (value / envelope) * 100)) : 0);
+  const elasticLabel = elastic.map((entry) => modelId(entry)).filter(Boolean).join(" · ");
+
+  const pinnedIds = useMemo(
+    () => new Set(pinned.map((entry) => modelId(entry).toLowerCase()).filter(Boolean)),
+    [pinned],
+  );
+
+  const elasticRows = useMemo(() => {
+    const isPinned = (id: string) => {
+      const value = id.toLowerCase();
+      for (const other of pinnedIds) {
+        if (other === value || other.includes(value) || value.includes(other)) return true;
+      }
+      return false;
+    };
+    return bench
+      .filter((row) => row.id && !isPinned(row.id) && !/embed/i.test(row.id) && !/embed/i.test(row.role ?? ""))
+      .slice(0, 3)
+      .map((row) => {
+        const value = (row.id ?? "").toLowerCase();
+        const loaded =
+          elastic.some((entry) => {
+            const other = modelId(entry).toLowerCase();
+            return other && (other === value || other.includes(value) || value.includes(other));
+          }) ||
+          resident.some((entry) => {
+            const other = entry.toLowerCase();
+            return other === value || other.includes(value) || value.includes(other);
+          });
+        return { ...row, loaded };
+      });
+  }, [bench, elastic, pinnedIds, resident]);
+
+  async function act(action: string, model: string | undefined, label: string) {
+    setBusy(label);
     setNote("awaiting the machine…");
     try {
       await local.post("/api/models/action", { action, model });
-      setNote(`${label ?? action} — done`);
-      await capacity.refresh();
+      setNote(`${label} — done`);
+      await models.refetch();
     } catch (error) {
       setNote(
         isRefusal(error)
@@ -87,19 +209,19 @@ function ModelsPage() {
     }
   }
 
-  const disabled = busy !== null || working !== null;
+  const disabled = busy !== null;
 
   return (
     <div className="space-y-4">
       {failed && (
         <div className="border border-copper bg-panel px-3 py-3">
           <p className="text-[13px] leading-relaxed text-copper">
-            The machine is reachable but did not answer <span className="font-mono">/api/models</span>.
-            Nothing below is current.
+            The machine is reachable but did not answer{" "}
+            <span className="font-mono">/api/models</span>. Nothing below is current.
           </p>
           <button
             type="button"
-            onClick={() => void capacity.refresh()}
+            onClick={() => void models.refetch()}
             className="mt-2 border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper"
           >
             Try again
@@ -107,268 +229,276 @@ function ModelsPage() {
         </div>
       )}
 
-      <EmbedderPanel
-        resident={resident}
-        available={capacity.available}
-        bench={bench}
-        ready={!loading && !failed}
-        refresh={capacity.refresh}
-      />
+      {/* THE BUDGET BAR */}
+      <section className="border border-rule bg-panel px-3 py-3">
+        <h2 className="font-serif text-[17px] text-paper">Memory budget</h2>
 
-      <Panel title="Autopilot">
-        <div className="space-y-3">
-          <label className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              checked={policy.autopilot}
-              onChange={(event) => update({ autopilot: event.target.checked })}
-              className="mt-1 accent-copper"
-            />
-            <span className="text-[13px] leading-relaxed text-paper">
-              Load the lane a piece of work needs, evicting the heaviest unpinned model when the
-              budget is tight.
-              <span className="block text-muted-foreground">
-                The embedder and pinned lanes are never evicted. Off, a cold lane is refused with the
-                plan instead of run.
-              </span>
-            </span>
-          </label>
+        <p className="mt-2 flex flex-wrap items-baseline gap-x-2 font-mono text-[11px] text-muted-foreground">
+          <span
+            aria-hidden
+            className={`inline-block h-2 w-2 rounded-full ${PRESSURE_DOT[pressure] ?? "bg-faint"}`}
+          />
+          <span className="uppercase tracking-[0.14em] text-paper">{pressure}</span>
+          <span className="tabular-nums">
+            compressed {fixed(budget.compressed_gib, 1)} GiB · free {fixed(budget.free_gib, 1)} GiB ·
+            wired limit{" "}
+            {budget.wired_limit_mb != null && budget.wired_limit_mb !== ""
+              ? `${fixed(budget.wired_limit_mb, 0)} MB`
+              : String(budget.source ?? "unknown")}
+          </span>
+        </p>
 
-          <div>
-            <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-              <span>Memory budget</span>
-              <span className="tabular-nums text-muted-foreground">
-                {fixed(used, 1)} / {policy.budgetGib} GiB resident
-              </span>
-            </div>
-            <div className="mt-1 h-1.5 w-full bg-panel2">
+        {loading ? (
+          <Skeleton className="mt-3 h-7 w-full" />
+        ) : (
+          <>
+            <div className="mt-3 flex h-7 w-full">
               <div
-                className={pct > 90 ? "h-full bg-risk" : pct > 70 ? "h-full bg-watch" : "h-full bg-copper"}
-                style={{ width: `${pct}%` }}
+                className="h-full bg-ok"
+                style={{ width: `${pct(pinnedGib)}%` }}
+                title="pinned · always resident"
+              />
+              <div
+                className="h-full bg-copper"
+                style={{ width: `${pct(elasticGib)}%` }}
+                title="elastic"
+              />
+              <div
+                className="h-full border border-rule"
+                style={{ width: `${pct(headroomGib)}%` }}
+                title="headroom"
               />
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {BUDGETS.map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => update({ budgetGib: value })}
-                  className={`border px-2 py-1 font-mono text-[10px] ${
-                    policy.budgetGib === value
-                      ? "border-copper text-copper"
-                      : "border-rule text-muted-foreground hover:border-copper hover:text-copper"
-                  }`}
-                >
-                  {value} GiB
-                </button>
-              ))}
+            <div className="mt-1 flex w-full font-mono text-[11px] text-faint">
+              <div className="overflow-hidden pr-2" style={{ width: `${pct(pinnedGib)}%` }}>
+                <span className="whitespace-nowrap text-ok">
+                  pinned · {fixed(pinnedGib, 1)} GiB · always resident
+                </span>
+              </div>
+              <div className="overflow-hidden pr-2" style={{ width: `${pct(elasticGib)}%` }}>
+                {elasticGib > 0 && (
+                  <span className="whitespace-nowrap break-all text-copper">{elasticLabel}</span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <span className="whitespace-nowrap">
+                  {elasticGib > 0
+                    ? `${fixed(headroomGib, 1)} GiB free`
+                    : "no large model loaded — loads on demand"}
+                </span>
+              </div>
             </div>
-          </div>
-        </div>
-      </Panel>
-
-      <Panel title="Routing by work">
-        <p className="mb-2 text-[13px] leading-relaxed text-muted-foreground">
-          Which lane each class of work asks for. Complexity ascends; a heavier lane costs memory and
-          latency, not accuracy alone.
-        </p>
-        <table className="w-full text-left">
-          <tbody>
-            {TASK_CLASSES.map((task) => {
-              const laneId = policy.routes[task.id as TaskClass];
-              const lane = capacity.byId(laneId);
-              return (
-                <tr key={task.id} className="border-b border-rule last:border-b-0 align-baseline">
-                  <td className="py-2 pr-3">
-                    <span className="text-[13px] text-paper">{task.label}</span>
-                    <span className="block text-[11px] text-faint">{task.detail}</span>
-                  </td>
-                  <td className="py-2 pr-3">
-                    <select
-                      value={laneId}
-                      onChange={(event) =>
-                        update({ routes: { [task.id]: event.target.value } as Record<TaskClass, string> })
-                      }
-                      className="border border-rule bg-panel2 px-2 py-1 font-mono text-[11px] text-paper"
-                    >
-                      {LANES.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em]">
-                    <span
-                      className={
-                        lane?.status === "resident"
-                          ? "text-ok"
-                          : lane?.status === "cloud"
-                            ? "text-muted-foreground"
-                            : lane?.status === "cold"
-                              ? "text-watch"
-                              : "text-faint"
-                      }
-                    >
-                      {lane?.status ?? "unknown"}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </Panel>
-
-      <Panel title="Lanes">
-        {loading ? (
-          <Skeleton className="h-16 w-full" />
-        ) : (
-          <ul>
-            {capacity.lanes.map((lane) => {
-              const target = plan(lane.id);
-              const pinned = policy.pinned.includes(lane.id);
-              return (
-                <li key={lane.id} className="border-b border-rule py-2 last:border-b-0">
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="text-[13px] text-paper">{lane.label}</span>
-                    <span className="font-mono text-[10px] text-faint">{lane.id}</span>
-                    <span
-                      className={`font-mono text-[10px] uppercase tracking-[0.12em] ${
-                        lane.status === "resident"
-                          ? "text-ok"
-                          : lane.status === "cold"
-                            ? "text-watch"
-                            : "text-muted-foreground"
-                      }`}
-                    >
-                      {lane.status}
-                    </span>
-                    {lane.gib != null && (
-                      <span className="font-mono text-[10px] tabular-nums text-faint">
-                        {fixed(lane.gib, 1)} GiB
-                      </span>
-                    )}
-                    {lane.tps != null && (
-                      <span className="font-mono text-[10px] tabular-nums text-faint">
-                        {fixed(lane.tps, 1)} t/s
-                      </span>
-                    )}
-                    <span className="flex-1" />
-                    {lane.status !== "cloud" && (
-                      <button
-                        type="button"
-                        onClick={() => togglePin(lane.id)}
-                        className={`font-mono text-[10px] uppercase tracking-[0.12em] ${
-                          pinned ? "text-copper" : "text-faint hover:text-copper"
-                        }`}
-                      >
-                        {pinned ? "Pinned" : "Pin"}
-                      </button>
-                    )}
-                    {lane.status === "cold" && (
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => void apply(lane.id)}
-                        className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
-                      >
-                        {working === lane.id ? "…" : "Make resident"}
-                      </button>
-                    )}
-                  </div>
-                  {target && target.kind !== "resident" && target.kind !== "cloud" && (
-                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                      {describePlan(target)}
-                    </p>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          </>
         )}
-      </Panel>
 
-      <Panel title="Mode">
-        <div className="flex flex-wrap gap-2">
-          {MODES.map((mode) => (
-            <button
-              key={mode.action}
-              type="button"
-              disabled={disabled}
-              onClick={() => void act(mode.action, undefined, mode.label)}
-              className="border border-rule px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
-            >
-              {busy === mode.label ? "…" : mode.label}
-            </button>
-          ))}
-        </div>
-      </Panel>
+        <p className="mt-3 text-[11px] leading-relaxed text-faint">
+          macOS compresses idle pages, so a machine can report memory free while every inference pays
+          a decompression tax.
+        </p>
+        {memory.advice && (
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{memory.advice}</p>
+        )}
+      </section>
 
-
-
-      <Panel title="Resident">
-        {loading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} className="h-4 w-full" />
-            ))}
-          </div>
-        ) : resident.length === 0 ? (
-          <Empty>{failed ? "The machine did not answer." : "Nothing loaded."}</Empty>
-        ) : (
-          <ul>
-            {resident.map((model) => (
+      {/* DUPLICATE INSTANCES */}
+      {unexpected.length > 0 && (
+        <section className="border border-watch bg-panel px-3 py-3">
+          <p className="text-[13px] leading-relaxed text-watch">
+            {unexpected.length} duplicate model instances are resident. LM Studio spawned these rather
+            than reusing one; they hold weights and inflate compressed memory.
+          </p>
+          <ul className="mt-2 space-y-1">
+            {unexpected.map((entry, index) => (
               <li
-                key={model}
-                className="flex items-baseline gap-3 border-b border-rule py-2 last:border-b-0"
+                key={`${modelId(entry)}-${index}`}
+                className="break-all font-mono text-[11px] text-muted-foreground"
               >
-                <span className="min-w-0 flex-1 break-all font-mono text-[12px] text-paper">
-                  {model}
-                </span>
-                <span className="shrink-0 font-mono text-[10px] tabular-nums text-faint">
-                  {fixed(residentLoad([model], bench), 1)} GiB
-                </span>
-                {isEmbedder(model) ? (
-                  <span className="shrink-0 font-mono text-[10px] text-faint">embedder</span>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => void act("unload", model, `unload ${model}`)}
-                    className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-risk disabled:opacity-50"
-                  >
-                    Unload
-                  </button>
+                {modelId(entry)}
+                {entry.gib != null && (
+                  <span className="ml-2 tabular-nums text-faint">{fixed(entry.gib, 1)} GiB</span>
                 )}
               </li>
             ))}
           </ul>
-        )}
-      </Panel>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => void act("pin", undefined, "clear duplicates")}
+            className="mt-2 border border-watch px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-watch disabled:opacity-50"
+          >
+            {busy === "clear duplicates" ? "…" : "Clear duplicates"}
+          </button>
+        </section>
+      )}
 
-      <Panel title="Available on disk">
+      {/* PINNED CORE */}
+      <Panel title="Pinned core">
         {loading ? (
-          <Skeleton className="h-5 w-2/3" />
-        ) : capacity.available.length === 0 ? (
-          <Empty>No other models on disk.</Empty>
+          <Skeleton className="h-12 w-full" />
+        ) : pinned.length === 0 ? (
+          <Empty>The machine names no pinned models.</Empty>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {capacity.available.map((model) => (
-              <button
-                key={model}
-                type="button"
-                disabled={disabled}
-                onClick={() => void act("load", model, `load ${model}`)}
-                className="border border-rule px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
-              >
-                {model}
-              </button>
-            ))}
-          </div>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <th className="py-1.5 font-normal">Model</th>
+                <th className="py-1.5 text-right font-normal">Size</th>
+                <th className="py-1.5 text-right font-normal">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pinned.map((entry, index) => (
+                <tr key={`${modelId(entry)}-${index}`} className="border-b border-rule last:border-b-0">
+                  <td className="break-all py-2 pr-2 font-mono text-[11px] text-paper">
+                    {modelId(entry)}
+                  </td>
+                  <td className="py-2 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                    {fixed(entry.gib, 1)} GiB
+                  </td>
+                  <td className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-ok">
+                    pinned
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <p className="mt-2 text-[11px] leading-relaxed text-faint">
+          The embedder and the triage model serve every scheduled job, so they are pinned and cannot
+          be evicted. The knowledge base stops working without the embedder.
+        </p>
+        <RetrievalProof
+          resident={data.resident}
+          available={data.available}
+          bench={bench}
+          ready={!loading && !failed}
+          refresh={models.refetch}
+        />
+      </Panel>
+
+      {/* ELASTIC TIER */}
+      <Panel title="Elastic tier">
+        {loading ? (
+          <Skeleton className="h-12 w-full" />
+        ) : elasticRows.length === 0 ? (
+          <Empty>The bench names no large models outside the pinned core.</Empty>
+        ) : (
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <th className="py-1.5 font-normal">Model</th>
+                <th className="py-1.5 font-normal">Role</th>
+                <th className="py-1.5 text-right font-normal">Gen t/s</th>
+                <th className="py-1.5 text-right font-normal">GiB</th>
+                <th className="py-1.5 text-right font-normal">State</th>
+                <th className="py-1.5 text-right font-normal" />
+              </tr>
+            </thead>
+            <tbody>
+              {elasticRows.map((row) => (
+                <tr key={row.id} className="border-b border-rule last:border-b-0">
+                  <td className="break-all py-2 pr-2 font-mono text-[11px] text-paper">{row.id}</td>
+                  <td className="py-2 pr-2 text-[12px] text-muted-foreground">{row.role}</td>
+                  <td className="py-2 text-right font-mono text-[11px] tabular-nums text-paper">
+                    {fixed(row.tps, 1)}
+                  </td>
+                  <td className="py-2 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                    {fixed(row.gib, 1)}
+                  </td>
+                  <td
+                    className={`py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] ${row.loaded ? "text-ok" : "text-faint"}`}
+                  >
+                    {row.loaded ? "loaded" : "not loaded"}
+                  </td>
+                  <td className="py-2 pl-2 text-right">
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      title="Loading this evicts the currently loaded large model"
+                      onClick={() => void act("load", row.id, `load ${row.id}`)}
+                      className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
+                    >
+                      {busy === `load ${row.id}` ? "…" : "Load"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </Panel>
 
+      {/* FAILOVER LADDER */}
+      <Panel title="Failover ladder">
+        {failover.isLoading ? (
+          <Skeleton className="h-12 w-full" />
+        ) : !failover.data || failover.data.length === 0 ? (
+          <Empty>The machine did not report a ladder.</Empty>
+        ) : (
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <th className="py-1.5 font-normal">Rung</th>
+                <th className="py-1.5 font-normal">Name</th>
+                <th className="py-1.5 text-right font-normal">Tested</th>
+                <th className="py-1.5 text-right font-normal">Result</th>
+                <th className="py-1.5 text-right font-normal" />
+              </tr>
+            </thead>
+            <tbody>
+              {failover.data.map((row, index) => {
+                const rung = n(row.rung, index + 1);
+                const key = runKeyFor(rung, row.name ?? "");
+                return (
+                  <tr key={`${rung}-${row.name}`} className="border-b border-rule align-top last:border-b-0">
+                    <td className="py-2 pr-2 font-mono text-[11px] tabular-nums text-faint">{rung}</td>
+                    <td className="py-2 pr-2">
+                      <span className="text-[13px] text-paper">{row.name ?? "—"}</span>
+                      {row.detail && (
+                        <span className="block text-[11px] text-faint">{row.detail}</span>
+                      )}
+                      {(rung === 2 || rung === 3) && (
+                        <span className="block text-[11px] text-watch">
+                          Disruptive — stops the serving layer or the router.
+                        </span>
+                      )}
+                      {rung === 5 && (
+                        <span className="block text-[11px] text-faint">
+                          Cloud fallback never applies to material classed S1c, S2 or S3. Those tasks
+                          fail closed.
+                        </span>
+                      )}
+                    </td>
+                    <td
+                      className={`py-2 text-right font-mono text-[11px] ${row.tested ? "text-muted-foreground" : "text-watch"}`}
+                    >
+                      {row.tested ? String(row.tested) : "never"}
+                    </td>
+                    <td
+                      className={`py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] ${
+                        row.ok === true ? "text-ok" : row.ok === false ? "text-risk" : "text-faint"
+                      }`}
+                    >
+                      {row.ok === true ? "pass" : row.ok === false ? "fail" : "—"}
+                    </td>
+                    <td className="py-2 pl-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => void runJob(key, `failover ${rung} · ${key}`)}
+                        className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+                      >
+                        Test
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Panel>
+
+      {/* MEASURED PERFORMANCE */}
       <Panel title="Measured performance">
         {loading ? (
           <Skeleton className="h-4 w-full" />
@@ -381,6 +511,7 @@ function ModelsPage() {
                 <th className="py-1.5 font-normal">Role</th>
                 <th className="py-1.5 font-normal">Model</th>
                 <th className="py-1.5 text-right font-normal">Gen t/s</th>
+                <th className="py-1.5 text-right font-normal">TTFT</th>
                 <th className="py-1.5 text-right font-normal">GiB</th>
               </tr>
             </thead>
@@ -395,6 +526,9 @@ function ModelsPage() {
                     {fixed(row.tps, 1)}
                   </td>
                   <td className="py-2 text-right font-mono text-[12px] tabular-nums text-muted-foreground">
+                    {fixed((row as Bench & { ttft?: unknown }).ttft, 2)}
+                  </td>
+                  <td className="py-2 text-right font-mono text-[12px] tabular-nums text-muted-foreground">
                     {fixed(row.gib, 1)}
                   </td>
                 </tr>
@@ -402,206 +536,117 @@ function ModelsPage() {
             </tbody>
           </table>
         )}
+        <p className="mt-2 text-[11px] leading-relaxed text-faint">
+          Measured on this machine through the production endpoint. Published benchmarks are not
+          evidence about your hardware.
+        </p>
       </Panel>
 
+      {/* ROUTER ALIASES */}
       <Panel title="Router aliases">
         {loading ? (
           <Skeleton className="h-5 w-1/2" />
+        ) : (data.aliases ?? []).length === 0 ? (
+          <Empty>No aliases reported.</Empty>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {capacity.aliases.map((alias) => (
-              <span
-                key={alias}
-                className="border border-rule bg-panel2 px-2 py-1 font-mono text-[10px] text-muted-foreground"
-              >
-                {alias}
-              </span>
-            ))}
-          </div>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <th className="py-1.5 font-normal">Alias</th>
+                <th className="py-1.5 font-normal">Target</th>
+                <th className="py-1.5 text-right font-normal">Lane</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data.aliases ?? []).map((entry, index) => {
+                const record = (entry && typeof entry === "object" ? entry : {}) as Record<
+                  string,
+                  unknown
+                >;
+                const alias = modelId(entry) || String(record.alias ?? entry ?? "");
+                const target = String(record.target ?? record.model ?? "—");
+                const lane = String(record.lane ?? (/gpt|claude|cloud/i.test(alias) ? "metered" : "local"));
+                return (
+                  <tr key={`${alias}-${index}`} className="border-b border-rule last:border-b-0">
+                    <td className="break-all py-2 pr-2 font-mono text-[11px] text-paper">{alias}</td>
+                    <td className="break-all py-2 pr-2 font-mono text-[11px] text-muted-foreground">
+                      {target}
+                    </td>
+                    <td className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                      {lane}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </Panel>
 
       {note && <p className="font-mono text-[10px] text-faint">{note}</p>}
-      <button
-        type="button"
-        onClick={() => void ensureLane(policy.routes.ask)}
-        className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
-      >
-        Ready the Ask lane
-      </button>
+      <p className="font-mono text-[10px] text-faint">
+        Models · residency read live from the machine · budget from LM Studio and macOS memory
+        pressure
+      </p>
     </div>
   );
 }
 
-const TONE: Record<EmbedderState, string> = {
-  resident: "border-rule",
-  answering: "border-rule",
-  partial: "border-watch",
-  missing: "border-risk",
-  restoring: "border-copper",
-  unknown: "border-rule",
-};
-
-const HEADLINE: Record<EmbedderState, string> = {
-  resident: "All loaded and answering",
-  answering: "Answering (not in the resident list)",
-  partial: "Some not loaded",
-  missing: "Not answering",
-  restoring: "Loading",
-  unknown: "Unproved",
-};
-
-const TEXT_TONE: Record<EmbedderState, string> = {
-  resident: "text-ok",
-  answering: "text-ok",
-  partial: "text-watch",
-  missing: "text-risk",
-  restoring: "text-watch",
-  unknown: "text-watch",
-};
-
-/** One sentence answering the only question that matters: is it working? */
-const VERDICT: Record<EmbedderState, string> = {
-  resident:
-    "Every embedding model the machine knows about is loaded, and a live probe came back with sources. Retrieval is working.",
-  answering:
-    "A live probe came back with sources, so retrieval is working — the model list just does not report it under a name we recognise. Evidence beats the list.",
-  partial:
-    "Retrieval works, but not every embedding model is loaded. The guard is reloading the rest so anything that reaches for one finds it.",
-  missing: "A live probe came back with no sources. Retrieval is not working right now.",
-  restoring: "Loading the embedding models.",
-  unknown:
-    "Not proved yet. The model list is only an inventory — it does not show whether embedding actually answers. Run the probe to know.",
-};
-
-function stamp(value: Date | null) {
-  return value ? value.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
-}
-
 /**
- * Embedding is the one dependency whose absence is silent: questions still
- * answer, they just answer from nothing. So the whole embedding set gets a
- * standing panel — every known model, whether each is resident, proof, and a
- * narrow repair — and a watchdog that keeps them all loaded without being
- * asked, including after a machine restart. The panel never asserts "dead"
- * from an inventory read alone; only a failed live probe earns that word.
+ * Residency is an inventory read; only a live round-trip proves embedding
+ * answers. Verified on the six-hour cadence, and on demand here.
  */
-function EmbedderPanel({
+function RetrievalProof({
   resident,
   available,
   bench,
   ready,
   refresh,
 }: {
-  resident: string[];
-  available: string[];
+  resident: unknown;
+  available: unknown;
   bench: Bench[];
   ready: boolean;
   refresh: () => Promise<unknown>;
 }) {
-  const { health, restore, prove, restoring, proving } = useEmbedderGuard({
+  const { health, prove, proving } = useEmbedderGuard({
     sources: { resident, available, bench },
     ready,
     refresh,
   });
-  const down = health.state === "missing";
-  const busy = restoring || proving;
+
+  const verdict =
+    health.proved === true
+      ? "retrieval answered with sources"
+      : health.proved === false
+        ? "retrieval returned nothing"
+        : "unproved since this session began";
 
   return (
-    <section className={`border ${TONE[health.state]} bg-panel px-3 py-3`}>
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="font-serif text-[15px] text-paper">Embedding</h2>
-        <span
-          className={`font-mono text-[10px] uppercase tracking-[0.14em] ${TEXT_TONE[health.state]}`}
-        >
-          {HEADLINE[health.state]}
-        </span>
-        <span className="flex-1" />
-        <span className="font-mono text-[10px] tabular-nums text-faint">
-          {health.residentCount}/{health.knownCount} resident · checked {stamp(health.checkedAt)} ·
-          verified {stamp(health.provedAt)}
-        </span>
-      </div>
-
-      <p className="mt-2 text-[13px] leading-relaxed text-paper">{VERDICT[health.state]}</p>
-
-      {health.models.length === 0 ? (
-        <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-          no embedding model named on the machine
-        </p>
-      ) : (
-        <ul className="mt-2 divide-y divide-rule border-y border-rule">
-          {health.models.map((model) => (
-            <li key={model.id} className="flex flex-wrap items-baseline gap-x-2 py-1.5">
-              <span
-                aria-hidden
-                className={`h-1.5 w-1.5 shrink-0 rounded-full ${model.listed ? "bg-ok" : "bg-risk"}`}
-              />
-              <span className="break-all font-mono text-[11px] text-paper">{model.id}</span>
-              {model.primary && (
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-copper">
-                  primary
-                </span>
-              )}
-              <span className="flex-1" />
-              <span className="font-mono text-[10px] tabular-nums text-faint">
-                {model.gib === null ? "— GiB" : `${fixed(model.gib, 1)} GiB`}
-              </span>
-              <span
-                className={`w-[7.5rem] text-right font-mono text-[10px] uppercase tracking-[0.12em] ${model.listed ? "text-ok" : "text-risk"}`}
-              >
-                {model.listed ? "resident" : "not loaded"}
-              </span>
-              {!model.listed && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void restore(model.id)}
-                  className="border border-copper px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
-                >
-                  Load
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {down && (
-        <ul className="mt-2 space-y-1 border-l border-risk pl-3">
-          {EMBEDDER_COSTS.map((line) => (
-            <li key={line} className="text-[13px] leading-relaxed text-muted-foreground">
-              {line}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void prove()}
-          className="border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
-        >
-          {proving ? "Verifying…" : "Verify now"}
-        </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void restore()}
-          className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-40"
-        >
-          {restoring ? "Loading…" : "Load embedder"}
-        </button>
-      </div>
-
-      <p className="mt-2 text-[11px] leading-relaxed text-faint">
-        {health.message ??
-          `Pinned as a standing dependency and excluded from model eviction. AgentHub checks residency and proves retrieval on connection, after reconnect, and every six hours${health.repairs ? ` · ${health.repairs} reload${health.repairs === 1 ? "" : "s"} this session` : ""}.`}
-      </p>
-    </section>
+    <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule pt-2">
+      <span
+        className={`font-mono text-[10px] uppercase tracking-[0.12em] ${
+          health.proved === true ? "text-ok" : health.proved === false ? "text-risk" : "text-watch"
+        }`}
+      >
+        {verdict}
+      </span>
+      <span className="font-mono text-[10px] tabular-nums text-faint">
+        verified{" "}
+        {health.provedAt
+          ? health.provedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "—"}{" "}
+        · every {Math.round(EMBEDDER_CHECK_INTERVAL_MS / 3_600_000)} h
+      </span>
+      <span className="flex-1" />
+      <button
+        type="button"
+        disabled={proving}
+        onClick={() => void prove()}
+        className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
+      >
+        {proving ? "…" : "Probe retrieval"}
+      </button>
+    </div>
   );
 }
-
-
