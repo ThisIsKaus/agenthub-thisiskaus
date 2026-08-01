@@ -45,7 +45,10 @@ export function isEmbedder(entry: unknown): boolean {
   return /embed/i.test(modelId(entry));
 }
 
-export type EmbedderState = "resident" | "missing" | "restoring" | "unknown";
+export type EmbedderState = "resident" | "answering" | "missing" | "restoring" | "unknown";
+
+/** A proof is only worth trusting for so long. */
+const PROOF_TTL_MS = 10 * 60_000;
 
 export type EmbedderHealth = {
   state: EmbedderState;
@@ -53,13 +56,18 @@ export type EmbedderHealth = {
   target: string | null;
   /** The id actually resident, when it is. */
   residentId: string | null;
+  /** Whether the machine's model list claims it is loaded. */
+  listed: boolean;
   /** Last time residency was read from the machine. */
   checkedAt: Date | null;
   /** Last time a live embedding round-trip proved it answers. */
   provedAt: Date | null;
+  /** Outcome of that round-trip: true = returned sources, false = returned none. */
+  proved: boolean | null;
   attempts: number;
   message: string | null;
 };
+
 
 type Sources = {
   resident: unknown;
@@ -105,23 +113,39 @@ export function useEmbedderGuard({ sources, ready, auto, refresh }: GuardOptions
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [provedAt, setProvedAt] = useState<Date | null>(null);
+  const [proved, setProved] = useState<boolean | null>(null);
+  const [proving, setProving] = useState(false);
   const attempts = useRef(0);
   const [checkedAt, setCheckedAt] = useState<Date | null>(null);
 
   const residentId = residentEmbedder(sources.resident);
+  const listed = Boolean(residentId);
 
   useEffect(() => {
     if (ready) setCheckedAt(new Date());
   }, [ready, residentId]);
 
   const target = embedderTarget(sources) ?? residentId;
+
+  // Evidence beats inventory. A live round-trip that came back with sources is
+  // proof the embedder is working, whatever the model list happens to say; the
+  // list is only believed when there is no fresher proof to contradict it.
+  const proofFresh =
+    provedAt !== null && Date.now() - provedAt.getTime() < PROOF_TTL_MS && proved !== null;
+
   const state: EmbedderState = restoring
     ? "restoring"
-    : !ready
-      ? "unknown"
-      : residentId
-        ? "resident"
-        : "missing";
+    : proofFresh
+      ? proved
+        ? listed
+          ? "resident"
+          : "answering"
+        : "missing"
+      : !ready
+        ? "unknown"
+        : listed
+          ? "resident"
+          : "unknown";
 
   const restore = useCallback(async (): Promise<boolean> => {
     if (!target) {
@@ -152,44 +176,69 @@ export function useEmbedderGuard({ sources, ready, auto, refresh }: GuardOptions
     }
   }, [local, refresh, target]);
 
-  /** Prove it answers, not merely that it is listed. */
+  /**
+   * Prove it embeds, not merely that it is listed. `/api/kb` only reads a table
+   * of counts — it never touches the model — so the only honest probe is a real
+   * retrieval: one short question, one source. Sources coming back means the
+   * question became a vector.
+   */
   const prove = useCallback(async (): Promise<boolean> => {
-    setMessage("asking the corpus one question…");
+    setProving(true);
+    setMessage("embedding one probe question…");
     try {
-      const result = await local.get<{ chunks?: number }>("/api/kb");
-      if (result && typeof result === "object") {
-        setProvedAt(new Date());
-        setMessage("retrieval answered.");
+      const result = await local.post<{ sources?: unknown[] }>("/api/ask", {
+        q: "embedder health probe",
+        k: 1,
+      });
+      const hits = Array.isArray(result?.sources) ? result.sources.length : 0;
+      setProvedAt(new Date());
+      if (hits > 0) {
+        setProved(true);
+        setMessage(`retrieval answered with ${hits} source — the embedder is vectorising.`);
         return true;
       }
-      setMessage("the corpus did not answer.");
+      setProved(false);
+      setMessage(
+        "the question answered but returned no sources — nothing was vectorised, so the embedder is not serving.",
+      );
       return false;
-    } catch {
-      setMessage("the corpus did not answer.");
+    } catch (error) {
+      setProvedAt(new Date());
+      setProved(false);
+      setMessage(
+        isRefusal(error)
+          ? error.message || "denied at the approval dialog"
+          : "the probe did not complete — retrieval could not be proved.",
+      );
       return false;
+    } finally {
+      setProving(false);
     }
   }, [local]);
 
   // Repair once, quietly, when residency is genuinely known to be missing.
   useEffect(() => {
     if (!auto || !ready || restoring) return;
-    if (residentId) {
+    if (listed) {
       attempts.current = 0;
       return;
     }
     if (attempts.current >= MAX_AUTO_ATTEMPTS) return;
     void restore();
-  }, [auto, ready, restoring, residentId, restore]);
+  }, [auto, ready, restoring, listed, restore]);
 
   const health: EmbedderHealth = {
     state,
     target,
     residentId,
+    listed,
     checkedAt,
     provedAt,
+    proved,
     attempts: attempts.current,
     message,
   };
 
-  return { health, restore, prove, restoring };
+
+  return { health, restore, prove, restoring, proving };
 }

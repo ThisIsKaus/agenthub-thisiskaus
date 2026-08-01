@@ -436,16 +436,39 @@ function ModelsPage() {
 
 const TONE: Record<EmbedderState, string> = {
   resident: "border-rule",
+  answering: "border-rule",
   missing: "border-risk",
   restoring: "border-copper",
   unknown: "border-rule",
 };
 
 const HEADLINE: Record<EmbedderState, string> = {
-  resident: "Retrieval is alive",
-  missing: "Retrieval is dead",
-  restoring: "Restoring retrieval",
-  unknown: "Retrieval unverified",
+  resident: "Loaded and answering",
+  answering: "Answering (not in the resident list)",
+  missing: "Not answering",
+  restoring: "Loading",
+  unknown: "Unproved",
+};
+
+const TEXT_TONE: Record<EmbedderState, string> = {
+  resident: "text-ok",
+  answering: "text-ok",
+  missing: "text-risk",
+  restoring: "text-watch",
+  unknown: "text-watch",
+};
+
+/** One sentence answering the only question that matters: is it working? */
+const VERDICT: Record<EmbedderState, string> = {
+  resident:
+    "The machine lists it as loaded and a live probe came back with sources. Retrieval is working.",
+  answering:
+    "A live probe came back with sources, so retrieval is working — the model list just does not report it under a name we recognise. Evidence beats the list.",
+  missing:
+    "A live probe came back with no sources. Retrieval is not working right now.",
+  restoring: "Loading the embedding model.",
+  unknown:
+    "Not proved yet. The model list is only an inventory — it does not show whether embedding actually answers. Run the probe to know.",
 };
 
 function stamp(value: Date | null) {
@@ -456,7 +479,8 @@ function stamp(value: Date | null) {
  * The embedder is the one dependency whose absence is silent: questions still
  * answer, they just answer from nothing. So it gets its own standing panel —
  * state, consequence, proof and a narrow repair — rather than a banner that
- * only appears once the damage is done.
+ * only appears once the damage is done. The panel never asserts "dead" from an
+ * inventory read alone; only a failed live probe earns that word.
  */
 function EmbedderPanel({
   resident,
@@ -473,39 +497,50 @@ function EmbedderPanel({
   auto: boolean;
   refresh: () => Promise<unknown>;
 }) {
-  const { health, restore, prove, restoring } = useEmbedderGuard({
+  const { health, restore, prove, restoring, proving } = useEmbedderGuard({
     sources: { resident, available, bench },
     ready,
     auto,
     refresh,
   });
   const down = health.state === "missing";
+  const busy = restoring || proving;
 
   return (
     <section className={`border ${TONE[health.state]} bg-panel px-3 py-3`}>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 className="font-serif text-[15px] text-paper">Embedder</h2>
         <span
-          className={`font-mono text-[10px] uppercase tracking-[0.14em] ${
-            down ? "text-risk" : health.state === "resident" ? "text-ok" : "text-watch"
-          }`}
+          className={`font-mono text-[10px] uppercase tracking-[0.14em] ${TEXT_TONE[health.state]}`}
         >
           {HEADLINE[health.state]}
         </span>
         <span className="flex-1" />
         <span className="font-mono text-[10px] tabular-nums text-faint">
-          read {stamp(health.checkedAt)} · proved {stamp(health.provedAt)}
+          list read {stamp(health.checkedAt)} · probed {stamp(health.provedAt)}
         </span>
       </div>
 
       <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">
         {health.residentId ?? health.target ?? "no embedding model named on the machine"}
+        <span className="text-faint">
+          {" · "}
+          {health.listed ? "in the resident list" : "not in the resident list"}
+          {" · "}
+          {health.proved === null
+            ? "never probed"
+            : health.proved
+              ? "probe returned sources"
+              : "probe returned nothing"}
+        </span>
       </p>
 
+      <p className="mt-2 text-[13px] leading-relaxed text-paper">{VERDICT[health.state]}</p>
+
       {down && (
-        <ul className="mt-2 space-y-1">
+        <ul className="mt-2 space-y-1 border-l border-risk pl-3">
           {EMBEDDER_COSTS.map((line) => (
-            <li key={line} className="text-[13px] leading-relaxed text-paper">
+            <li key={line} className="text-[13px] leading-relaxed text-muted-foreground">
               {line}
             </li>
           ))}
@@ -515,28 +550,29 @@ function EmbedderPanel({
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
-          disabled={restoring || health.state === "resident"}
-          onClick={() => void restore()}
+          disabled={busy || proving}
+          onClick={() => void prove()}
           className="border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
         >
-          {restoring ? "Loading…" : "Load the embedder"}
+          {proving ? "Probing…" : "Probe retrieval"}
         </button>
         <button
           type="button"
-          disabled={restoring}
-          onClick={() => void prove()}
+          disabled={busy}
+          onClick={() => void restore()}
           className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-40"
         >
-          Prove retrieval
+          {restoring ? "Loading…" : "Load the embedder"}
         </button>
       </div>
 
       <p className="mt-2 text-[11px] leading-relaxed text-faint">
         {health.message ??
           (auto
-            ? "Watched every read. It is never evicted to make room, and it is reloaded on its own if it disappears."
+            ? "Watched every read. It is never evicted to make room, and it is reloaded on its own if it drops out of the list."
             : "Autopilot is off — it will not be reloaded without you.")}
       </p>
     </section>
   );
 }
+
