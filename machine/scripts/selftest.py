@@ -242,6 +242,16 @@ def memory():
         "the top hit for a policy question should be policies.md")
 
     dists = [float(m) for m in re.findall(r"dist ([\d.]+)", out)]
+    gold = H / "evals" / "retrieval_golden.jsonl"
+    n_gold = len([l for l in gold.read_text().splitlines() if l.strip()]) if gold.exists() else 0
+    rec(g, "golden set sized", n_gold >= 80, f"{n_gold} questions",
+        "cd ~/AgentHub/kbtool && uv run python golden.py --build 100")
+    out = sh(f"cd {H}/kbtool && /opt/homebrew/bin/uv run python retrieve.py "
+             f"'Division 293 election FY21-22' 2>/dev/null | head -2", 180)
+    rec(g, "hybrid retrieval live", "bm25" in out.lower(),
+        "bm25 path active" if "bm25" in out.lower() else "dense only — FTS index missing",
+        "the full-text index did not build; identifiers will not be found")
+
     rec(g, "KB match quality", bool(dists) and min(dists) < 0.80,
         f"best distance {min(dists):.3f}" if dists else "none",
         "below 0.80 indicates a genuine match; higher means the corpus lacks the answer", warn=True)

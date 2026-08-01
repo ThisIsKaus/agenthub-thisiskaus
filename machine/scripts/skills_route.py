@@ -98,25 +98,32 @@ def main():
         scored = sorted(((cosine(pv, sv), s["name"]) for s, sv in zip(skills, svecs)),
                         reverse=True)
         top, runner = scored[0], (scored[1] if len(scored) > 1 else (0.0, None))
-        gap = round(100 * (top[0] - runner[0]) / top[0], 1) if top[0] else 0.0
+        # Raw cosine on nomic has a high floor — unrelated text still scores ~0.5 — so a
+        # percentage gap is meaningless. Measure separation in standard deviations above the
+        # field instead: scale-invariant, and it tells you whether the winner actually won.
+        vals = [v for v, _ in scored]
+        mean = sum(vals) / len(vals)
+        sd = (sum((v - mean) ** 2 for v in vals) / len(vals)) ** 0.5 or 1e-9
+        gap = round((top[0] - runner[0]) / sd, 2)
+        conf = round((top[0] - mean) / sd, 2)
         ok = top[1] == c["expected"]
-        coll = gap < 15
+        coll = gap < 0.5
         correct += ok
         collisions += coll
         rows.append({"prompt": c["prompt"], "expected": c["expected"], "routed_to": top[1],
                      "score": round(top[0], 4), "runner_up": runner[1],
-                     "runner_up_score": round(runner[0], 4), "gap_pct": gap,
+                     "runner_up_score": round(runner[0], 4), "gap_sd": gap, "confidence_sd": conf,
                      "collision": coll, "correct": ok})
 
     OUT.write_text(json.dumps(rows, indent=2))
     n = len(rows)
     print(f"\n  accuracy   {correct}/{n} ({100*correct//n}%)")
-    print(f"  collisions {collisions}/{n} — a gap under 15% is fragile even when correct")
+    print(f"  collisions {collisions}/{n} — separation under 0.5 sd is fragile")
     for r in rows:
         if not r["correct"] or r["collision"]:
             flag = "WRONG" if not r["correct"] else "tight"
             print(f"    {flag}  {r['prompt'][:44]:46} -> {r['routed_to']} "
-                  f"(wanted {r['expected']}, gap {r['gap_pct']}%)")
+                  f"(wanted {r['expected']}, sep {r['gap_sd']}sd)")
     print(f"\nsaved -> {OUT}")
     return 0 if correct == n else 1
 

@@ -370,13 +370,18 @@ def ask(q: str = Form(...), model: str = Form("local-brain"), k: int = Form(5)):
         e.raise_for_status()
         vec = e.json()["data"][0]["embedding"]
         tbl = lancedb.connect(str(H / "kb")).open_table("kb_main")
-        q_ = tbl.search(vec).limit(max(1, min(k, 12)))
-        if model.startswith("cloud-"):
-            # S1c, S2 and S3 never leave this machine. This must FAIL CLOSED: if the filter
-            # cannot be applied, the outer handler returns without context rather than
-            # sending unfiltered chunks to a metered lane.
-            q_ = q_.where("sensitivity NOT IN ('S1c','S2','S3')")
-        rows = q_.to_pandas()
+        # One retrieval path for the ask endpoint and every eval, so a change is
+        # measured everywhere at once. Hybrid: dense for meaning, BM25 for
+        # identifiers, fused on rank. Lane still governs sensitivity.
+        sys.path.insert(0, str(H / 'kbtool'))
+        import retrieve as _r
+        lane = 'cloud' if model.startswith('cloud-') else 'local'
+        hits = _r.search(q, k=max(1, min(k, 12)), lane=lane)
+        for _h in hits:
+            sources.append({'file': _h['file'], 'path': _h['path'],
+                            'distance': round(1 - _h['rrf'] * 60, 3),
+                            'found_by': _h['found_by']})
+            context += '\n--- ' + _h['file'] + '\n' + _h['text'][:1500] + '\n'
         for _, r in rows.iterrows():
             sources.append({"file": Path(r["path"]).name, "path": r["path"],
                             "distance": round(float(r["_distance"]), 3)})

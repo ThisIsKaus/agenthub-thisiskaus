@@ -12,5 +12,6 @@ dependencies = [
     "python-docx>=1.2.0",
     "python-pptx>=1.0.2",
     "requests>=2.34.2",
+    "tantivy>=0.26.0",
     "textract-py3>=3.0.1",
 ]

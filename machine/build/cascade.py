@@ -173,8 +173,22 @@ def classify(intent):
                 da = sum(x*x for x in a) ** 0.5
                 db = sum(y*y for y in b) ** 0.5
                 return n / (da*db) if da and db else 0.0
-            ranked = sorted(((cos(q, d), c[0]) for c, d in zip(cat, docs)), reverse=True)
-            skills += [n for sc, n in ranked[:3] if sc > 0.35]
+            scores = [cos(q, d) for d in docs]
+            mean = sum(scores) / len(scores)
+            sd = (sum((v - mean) ** 2 for v in scores) / len(scores)) ** 0.5 or 1e-9
+            ranked = sorted(((sc, c[0]) for sc, c in zip(scores, cat)), reverse=True)
+            # A skill earns its place by standing above the field, not by clearing a raw
+            # cosine floor — nomic scores everything highly, so 0.35 admitted pure noise.
+            # Two gates, not one. Separation says the winner stood above the field; the
+            # margin over the next skill says it actually won. portfolio-guardian was
+            # clearing 1.2sd on unrelated queries — a weak winner on everything.
+            picked = []
+            for i, (sc, n) in enumerate(ranked[:2]):
+                sep = (sc - mean) / sd
+                margin = (sc - ranked[i + 1][0]) / sd if i + 1 < len(ranked) else 9.0
+                if sep >= 1.5 and margin >= 0.3:
+                    picked.append(n)
+            skills += picked
     except Exception:
         pass   # selection is an optimisation; a build must not fail because it is unavailable
 
