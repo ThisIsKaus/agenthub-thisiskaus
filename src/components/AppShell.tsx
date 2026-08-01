@@ -5,24 +5,16 @@ import { useOnline } from "@/hooks/use-online";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocal } from "@/lib/local-bridge";
 import { JobDrawer } from "@/components/JobDrawer";
+import { fixed } from "@/lib/format";
 
 type Sub = { to: string; label: string };
 type Group = { label: string; to: string; subs: Sub[] };
 
 const GROUPS: Group[] = [
   { label: "Overview", to: "/overview", subs: [] },
-  {
-    label: "Work",
-    to: "/canvas",
-    subs: [
-      { to: "/canvas", label: "Canvas · think" },
-      { to: "/capture", label: "Capture · inbox" },
-      { to: "/digest", label: "Triage · yesterday" },
-      { to: "/factory", label: "Projects · wip" },
-    ],
-  },
-
-
+  { label: "Canvas", to: "/canvas", subs: [] },
+  { label: "Inbox", to: "/inbox", subs: [] },
+  { label: "Skills", to: "/skills", subs: [] },
   {
     label: "Corpus",
     to: "/files",
@@ -37,9 +29,8 @@ const GROUPS: Group[] = [
     to: "/models",
     subs: [
       { to: "/models", label: "Models" },
-      { to: "/model-scanner", label: "Models · Scanner" },
+      { to: "/model-scanner", label: "Scanner" },
       { to: "/prompts", label: "Prompts" },
-      { to: "/skills", label: "Skills" },
     ],
   },
   {
@@ -60,6 +51,7 @@ const GROUPS: Group[] = [
     ],
   },
 ];
+
 
 function tone(value: string | undefined) {
   if (value === "up" || value === "ok" || value === "passed") return "text-ok";
@@ -150,7 +142,7 @@ export function AppShell() {
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Pill label="serving" value={String(services.lms ?? "—")} className={tone(services.lms)} />
             <PlanePill />
-            <Pill label="mtd" value={`$${Number(spend.mtd ?? 0).toFixed(2)}`} />
+            <Pill label="mtd" value={`$${fixed(spend.mtd, 2, "0.00")}`} />
             <Pill label="wip" value={`${factory.wip ?? 0}/${factory.limit ?? 2}`} />
           </div>
 
