@@ -113,7 +113,6 @@ function ModelsPage() {
         bench={bench}
         ready={!loading && !failed}
         refresh={capacity.refresh}
-        refresh={capacity.refresh}
       />
 
       <Panel title="Autopilot">
