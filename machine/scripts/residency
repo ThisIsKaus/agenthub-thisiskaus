@@ -30,19 +30,7 @@ case "${1:-status}" in
     ;;
 
   status)
-    python3 ~/AgentHub/scripts/memory_state.py | python3 -c '
-import json,sys
-d=json.load(sys.stdin); b=d["budget"]
-dot={"green":"●","amber":"●","red":"●"}.get(d["pressure"],"○")
-print(f"pressure {dot} {d[\"pressure\"]}  ·  compressed {b[\"compressed_gib\"]} GiB  ·  free {b[\"free_gib\"]} GiB")
-print(f"wired limit: {b[\"wired_limit_mb\"] or b[\"source\"]}")
-print()
-print(f"PINNED   {b[\"pinned_gib\"]:>6} GiB   " + (", ".join(r["id"] for r in d["pinned"]) or "NONE — run: residency pin"))
-print(f"ELASTIC  {b[\"elastic_gib\"]:>6} GiB   " + (", ".join(r["id"] for r in d["elastic"]) or "none loaded (loads on demand)"))
-print(f"HEADROOM {b[\"headroom_gib\"]:>6} GiB   of a {b[\"envelope_gib\"]} GiB envelope")
-if d["unexpected"]: print("\nUNEXPECTED: " + ", ".join(r["id"] for r in d["unexpected"]))
-print(f"\n{d[\"advice\"]}")
-'
+    python3 ~/AgentHub/scripts/residency_status.py
     ;;
 
   clear)

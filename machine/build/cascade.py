@@ -257,7 +257,6 @@ def extract_file(out):
 
 def run_tier(tier, intent, ctx, trace, branch):
     alias, label = TIERS[tier]
-    if tier in MODE_FOR_TIER:
     skills = load_skills(ctx["skills"])
     files = "\n".join(ctx["files"]) or "(determine from the intent)"
     prior = ("\n\nA previous attempt failed. Do not repeat it.\n" + trace[-2000:]) if trace else ""

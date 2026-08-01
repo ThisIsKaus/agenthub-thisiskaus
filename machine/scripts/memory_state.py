@@ -71,9 +71,10 @@ def resident():
         parts = line.split()
         ident = parts[0]
         size = 0.0
-        m = re.search(r"([\d.]+)\s*GB", line)
+        m = re.search(r"([\d.]+)\s*(GB|MB)", line)
         if m:
-            size = round(float(m.group(1)) * 0.9313, 2)   # GB reported, GiB budgeted
+            v = float(m.group(1)) * (1 / 1024 if m.group(2) == "MB" else 1)
+            size = round(v * 0.9313, 2)   # reported in GB/MB, budgeted in GiB
         row = {"id": ident, "gib": size}
         (pinned if ident in PINNED else elastic if ident in ELASTIC else other).append(row)
     return pinned, elastic, other
