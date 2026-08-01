@@ -112,7 +112,7 @@ function ModelsPage() {
         available={capacity.available}
         bench={bench}
         ready={!loading && !failed}
-        auto={policy.autopilot}
+        refresh={capacity.refresh}
         refresh={capacity.refresh}
       />
 
