@@ -20,3 +20,6 @@ report/state-history.jsonl
 # Golden eval sets are the learning artefact, not logs — always tracked
 !evals/triage_set.jsonl
 !evals/retrieval_set.jsonl
+
+# kb-skills is its own repository, cloned here as the skill library
+skills-lib/

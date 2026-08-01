@@ -145,13 +145,38 @@ def classify(intent):
         tier = 0
         reasons = ["deterministic — no model required"]
 
-    skills = ["context", "cascade-rules"]
-    if any("console" in h for h in hints):
-        skills += ["local-api", "planes"]
-    if any(k in intent.lower() for k in ("sensitiv", "s3", "client", "vault", "cloud")):
-        skills += ["sensitivity"]
-    if any(k in intent.lower() for k in ("ui", "component", "tab", "page", "design")):
-        skills += ["design", "planes"]
+    # Skills are selected by matching the intent against their descriptions, not by a
+    # hardcoded list. That list froze my judgement into code and missed twice; this improves
+    # as the descriptions improve, which the routing eval measures.
+    skills = ["agenthub-cascade-rules", "agenthub-overview"]
+    try:
+        import requests
+        sys.path.insert(0, str(HOME / "AgentHub" / "scripts"))
+        from skills_lint import frontmatter
+        cat = []
+        for d in sorted((HOME / "AgentHub" / "skills").iterdir()):
+            f = d / "SKILL.md"
+            if not d.is_dir() or not f.exists():
+                continue
+            fm, _ = frontmatter(f.read_text(errors="ignore"))
+            if fm and fm.get("description"):
+                cat.append((d.name, fm["description"]))
+        if cat:
+            e = requests.post("http://127.0.0.1:4000/v1/embeddings", timeout=300,
+                              json={"model": "local-embed",
+                                    "input": [f"search_query: {intent}"] +
+                                             [f"search_document: {c[1]}" for c in cat]})
+            v = [d["embedding"] for d in sorted(e.json()["data"], key=lambda x: x["index"])]
+            q, docs = v[0], v[1:]
+            def cos(a, b):
+                n = sum(x*y for x, y in zip(a, b))
+                da = sum(x*x for x in a) ** 0.5
+                db = sum(y*y for y in b) ** 0.5
+                return n / (da*db) if da and db else 0.0
+            ranked = sorted(((cos(q, d), c[0]) for c, d in zip(cat, docs)), reverse=True)
+            skills += [n for sc, n in ranked[:3] if sc > 0.35]
+    except Exception:
+        pass   # selection is an optimisation; a build must not fail because it is unavailable
 
     return {"tier": tier, "reasons": reasons or ["no escalation signal — start cheap"],
             "files": hints, "skills": sorted(set(skills))}
@@ -323,6 +348,12 @@ def main():
     rid = dt.datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:4]
     RUNS.mkdir(parents=True, exist_ok=True)
     branch = "build/" + re.sub(r"[^a-z0-9]+", "-", intent.lower())[:40].strip("-") + "-" + rid[-4:]
+    try:
+        sys.path.insert(0, str(HOME / "AgentHub" / "console"))
+        import sessions
+        sessions.log("skill-activation", intent, ", ".join(ctx["skills"]), "cascade")
+    except Exception:
+        pass
     record = {"id": rid, "intent": intent, "branch": branch, "context": ctx,
               "started": dt.datetime.now().isoformat(timespec="seconds"), "attempts": []}
 

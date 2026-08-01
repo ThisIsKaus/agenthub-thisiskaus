@@ -27,7 +27,7 @@ def read(p, default=""):
 
 def design_tokens():
     """Read the actual CSS variables the local console uses."""
-    css = read("skills/tokens.css") or read("console/console.html")
+    css = read("design/tokens.css") or read("skills/tokens.css")
     m = re.search(r":root\{(.*?)\}", css, re.S)
     if not m:
         return []

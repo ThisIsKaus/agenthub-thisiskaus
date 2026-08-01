@@ -1,0 +1,8 @@
+#!/bin/zsh
+case "${1:-lint}" in
+  lint)  python3 ~/AgentHub/scripts/skills_lint.py "${@:2}" ;;
+  route) cd ~/AgentHub/kbtool && uv run python ~/AgentHub/scripts/skills_route.py "${@:2}" ;;
+  pull)  git -C ~/AgentHub/skills-lib pull --no-rebase -q && echo "library updated" && python3 ~/AgentHub/scripts/skills_lint.py | tail -3 ;;
+  push)  git -C ~/AgentHub/skills-lib add -A && git -C ~/AgentHub/skills-lib commit -q -m "${2:-skills: update from AgentHub}" && git -C ~/AgentHub/skills-lib push -q && echo "pushed to kb-skills" ;;
+  *) echo "usage: skills lint|route|pull|push" ;;
+esac

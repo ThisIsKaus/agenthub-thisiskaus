@@ -442,6 +442,28 @@ def schedule():
 
 def hygiene():
     g = "hygiene"
+    out = sh(f"/usr/bin/python3 {H}/scripts/skills_lint.py --json", 90)
+    try:
+        sk = json.loads(out)
+    except Exception:
+        sk = {}
+    rec(g, "skills pass the spec", sk.get("failed") == 0,
+        f"{len(sk.get('skills', []))} skills, {sk.get('failed', '?')} failed", "skills lint")
+    rec(g, "discovery budget", (sk.get("discovery_tokens") or 0) <= (sk.get("budget") or 6000),
+        f"{sk.get('discovery_tokens')} of {sk.get('budget')} tokens",
+        "merge or retire skills — discovery sits in context permanently")
+    runs = sorted((H / "skills-lib" / "evals").glob("routing-stress-test-*.json"), reverse=True)
+    if runs:
+        try:
+            rows = json.loads(runs[0].read_text())
+            acc = sum(1 for r in rows if r.get("correct"))
+            rec(g, "skill routing accuracy", acc == len(rows),
+                f"{acc}/{len(rows)} on {runs[0].stem[-10:]}", "skills route")
+        except Exception:
+            pass
+    else:
+        rec(g, "skill routing scored", False, "never run", "skills route", warn=True)
+
     docs = list((H / "docs").glob("*.md")) if (H / "docs").is_dir() else []
     rec(g, "build docs present", len(docs) >= 8, f"{len(docs)} documents",
         "the rebuild path is untested until the docs live in the repo")

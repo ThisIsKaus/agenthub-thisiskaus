@@ -206,6 +206,49 @@ def from_logs():
     return out
 
 
+def from_skills():
+    """The gap kb-skills named itself: it cannot see usage, and AgentHub can."""
+    out, lib = [], H / "skills"
+    if not lib.exists():
+        return out
+    names = {x.name for x in lib.iterdir() if x.is_dir() and not x.name.startswith(".")}
+    used = set()
+    db = H / "state" / "sessions.db"
+    if db.exists():
+        try:
+            import sqlite3
+            c = sqlite3.connect(str(db), timeout=8)
+            for (a_,) in c.execute("SELECT answer FROM events WHERE kind='skill-activation'"
+                                   " ORDER BY id DESC LIMIT 400"):
+                used.update(x.strip() for x in (a_ or "").split(","))
+            c.close()
+        except Exception:
+            pass
+    dead = sorted(names - used)
+    if len(dead) >= 5 and used:
+        out.append(sig("debt", f"{len(dead)} skills have never been activated",
+                       "an unused skill is dead weight in the discovery budget: "
+                       + ", ".join(dead[:6])))
+    runs = sorted((H / "skills-lib" / "evals").glob("routing-stress-test-*.json"), reverse=True)
+    if runs:
+        try:
+            import json as _j
+            rows = _j.loads(runs[0].read_text())
+            wrong = [r for r in rows if not r.get("correct")]
+            tight = [r for r in rows if r.get("collision") and r.get("correct")]
+            if wrong:
+                out.append(sig("regression", f"{len(wrong)} skills route to the wrong target",
+                               " · ".join(f"{r['prompt'][:40]} -> {r['routed_to']}"
+                                          for r in wrong[:3]), ["skills"]))
+            if len(tight) >= 3:
+                out.append(sig("warning", f"{len(tight)} routing decisions are within 15%",
+                               "a narrow gap is a collision waiting to happen: "
+                               + " · ".join(r["expected"] for r in tight[:4])))
+        except Exception:
+            pass
+    return out
+
+
 def from_code():
     out = []
     hits = sh("grep -rn 'TODO\\|FIXME\\|XXX\\|HACK' machine --include='*.py' --include='*.sh' "
@@ -235,7 +278,7 @@ def from_code():
 
 def collect():
     out = []
-    for fn in (from_selftest, from_evals, from_sessions, from_corrections,
+    for fn in (from_selftest, from_evals, from_sessions, from_corrections, from_skills,
                from_builds, from_logs, from_code):
         try:
             out += fn()

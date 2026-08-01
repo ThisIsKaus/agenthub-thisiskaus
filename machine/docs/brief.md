@@ -1,12 +1,12 @@
 # AgentHub — brief for Lovable
-_Generated from the live machine 2026-07-31T14:41. Do not edit._
+_Generated from the live machine 2026-08-01T21:37. Do not edit._
 
 ## What exists
 
 A personal AI hub on one MacBook Pro M5 Max. **Not being rebuilt** — you are building the
 single workspace that fronts it. Running locally: 4 models under LM Studio (quality brain
-114.9 t/s), a router on :4000 with 9 aliases, a knowledge base of 49501
-chunks across 3005 documents indexed from OneDrive, a local API on
+114.9 t/s), a router on :4000 with 9 aliases, a knowledge base of 49503
+chunks across 3006 documents indexed from OneDrive, a local API on
 :4100 exposing every capability, launchd jobs (nightly digest, 4-hourly backup, self-test),
 and a native macOS approval dialog for anything changing external state.
 
@@ -51,7 +51,7 @@ client named in every artifact header, nothing client-flavoured in kb_main.
 - S2 Envelope Collective (Neelam): reads flagged; writes require her recorded confirmation. Never on her behalf.
 - S3 finance/tax/wealth: LOCAL ONLY, router-enforced. Cloud only via anonymisation recipe + per-task approval.
 
-Corpus by class: {"S3": 2191, "S1p": 765, "S2": 43, "S1c": 6}
+Corpus by class: {"S3": 2191, "S1p": 766, "S2": 43, "S1c": 6}
 
 The remote plane publishes **only status and counts** — never document text, file paths, email
 subjects or personal data. Digest shows item detail on the local plane, counts only on the
