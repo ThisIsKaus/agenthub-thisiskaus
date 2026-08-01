@@ -48,10 +48,10 @@ export function isEmbedder(entry: unknown): boolean {
 
 export type EmbedderState = "resident" | "answering" | "partial" | "missing" | "restoring" | "unknown";
 
-/** A proof is only worth trusting for so long. */
-const PROOF_TTL_MS = 10 * 60_000;
-/** How often the watchdog re-reads residency and reloads anything that dropped. */
-const WATCH_INTERVAL_MS = 60_000;
+/** Residency and retrieval are verified together on this cadence. */
+export const EMBEDDER_CHECK_INTERVAL_MS = 6 * 60 * 60_000;
+/** A successful proof remains current until the next scheduled verification. */
+const PROOF_TTL_MS = EMBEDDER_CHECK_INTERVAL_MS + 5 * 60_000;
 
 /** One embedding model the machine knows about, and whether it is loaded. */
 export type EmbedderEntry = {
@@ -113,6 +113,11 @@ export function embedderCatalogue(sources: Sources): string[] {
   sources.bench.forEach((row) => {
     if (/embed/i.test(row.role ?? "") || /embed/i.test(row.id ?? "")) push(row.id ?? "");
   });
+  // The pinned bench is the machine's production contract. `/api/models`
+  // may expose LM Studio instance aliases such as `model:2`, `model:3`, ...;
+  // those are load slots, not distinct embedding models. Only fall back to
+  // inventory discovery on machines whose bench does not name an embedder.
+  if (seen.size) return [...seen];
   normalizeIds(sources.resident).forEach(push);
   normalizeIds(sources.available).forEach(push);
   return [...seen];
@@ -296,27 +301,33 @@ export function useEmbedderGuard({ sources, ready, refresh }: GuardOptions) {
     }
   }, [local]);
 
-  // The watchdog. Embedders are not optional, so this is not a preference: any
-  // known embedding model that is not resident is reloaded, on first read, on
-  // reconnect after a machine restart, and on a timer thereafter.
+  // One verification cycle checks both halves of health: inventory first,
+  // followed by an actual retrieval. It runs on first connection/reconnection
+  // and every six hours while AgentHub is open.
   useEffect(() => {
     if (!ready || restoring) return;
-    if (!missing.length) {
-      attempts.current = 0;
-      return;
-    }
     if (attempts.current >= MAX_AUTO_ATTEMPTS) return;
-    void restore();
-  }, [ready, restoring, missing.length, restore, tick]);
+    let cancelled = false;
+    const verify = async () => {
+      attempts.current += 1;
+      if (missing.length) await restore();
+      if (!cancelled) await prove();
+    };
+    void verify();
+    return () => {
+      cancelled = true;
+    };
+    // `tick` deliberately starts a new six-hour cycle.
+  }, [ready, tick]);
 
-  // Heartbeat: re-read residency so a drop is noticed without a page visit.
+  // Six-hour heartbeat: re-read residency, then let the cycle above repair and
+  // prove retrieval. Focus/reconnect checks are supplied by the local bridge.
   useEffect(() => {
     if (!ready) return;
     const id = setInterval(() => {
       attempts.current = 0;
-      setTick((value) => value + 1);
-      void refresh();
-    }, WATCH_INTERVAL_MS);
+      void refresh().finally(() => setTick((value) => value + 1));
+    }, EMBEDDER_CHECK_INTERVAL_MS);
     return () => clearInterval(id);
   }, [ready, refresh]);
 
