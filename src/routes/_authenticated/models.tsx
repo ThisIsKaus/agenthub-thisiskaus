@@ -292,21 +292,15 @@ function ModelsPage() {
         </div>
       </Panel>
 
-      {!loading && !failed && !embedderResident && (
-        <div className="border border-copper bg-panel px-3 py-2">
-          <p className="text-[13px] leading-relaxed text-copper">
-            The knowledge base cannot work without the embedding model.
-          </p>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => void act("standard", undefined, "Standard")}
-            className="mt-2 border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-50"
-          >
-            Restore it
-          </button>
-        </div>
-      )}
+      <EmbedderPanel
+        resident={resident}
+        available={capacity.available}
+        bench={bench}
+        ready={!loading && !failed}
+        auto={policy.autopilot}
+        refresh={capacity.refresh}
+      />
+
 
       <Panel title="Resident">
         {loading ? (
