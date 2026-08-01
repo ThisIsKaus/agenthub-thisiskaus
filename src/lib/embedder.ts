@@ -106,8 +106,14 @@ export function useEmbedderGuard({ sources, ready, auto, refresh }: GuardOptions
   const [message, setMessage] = useState<string | null>(null);
   const [provedAt, setProvedAt] = useState<Date | null>(null);
   const attempts = useRef(0);
+  const [checkedAt, setCheckedAt] = useState<Date | null>(null);
 
   const residentId = residentEmbedder(sources.resident);
+
+  useEffect(() => {
+    if (ready) setCheckedAt(new Date());
+  }, [ready, residentId]);
+
   const target = embedderTarget(sources) ?? residentId;
   const state: EmbedderState = restoring
     ? "restoring"
@@ -179,7 +185,7 @@ export function useEmbedderGuard({ sources, ready, auto, refresh }: GuardOptions
     state,
     target,
     residentId,
-    checkedAt: ready ? new Date() : null,
+    checkedAt,
     provedAt,
     attempts: attempts.current,
     message,
