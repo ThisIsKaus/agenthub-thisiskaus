@@ -163,7 +163,10 @@ def models():
         f"{b_.get('compressed_gib')} GiB compressed",
         "an idle large model costs more than an unloaded one", warn=True)
 
-    fo = safe(lambda: json.loads((H / "state" / "failover.json").read_text()), {})
+    try:
+        fo = json.loads((H / "state" / "failover.json").read_text())
+    except Exception:
+        fo = {}
     untested = [k for k in ("1", "2", "3", "4", "5-S0", "5-S3") if k not in fo]
     rec(g, "failover rungs tested", not untested,
         f"untested: {', '.join(untested)}" if untested else "all rungs fired",

@@ -113,7 +113,9 @@ def classify(intent):
         reasons.append("touches a security control")
 
     hints = []
-    for kw, path in (("approval", "scripts/approve.sh"), ("approve", "scripts/approve.sh"),
+    for kw, path in (("ask", "console/console.py"), ("retriev", "console/console.py"),
+                     ("scope", "console/console.py"), ("endpoint", "console/console.py"),
+                     ("approval", "scripts/approve.sh"), ("approve", "scripts/approve.sh"),
                      ("cors", "console/console.py"), ("allowlist", "scripts/remote-agent.py"),
                      ("sensitiv", "console/console.py"), ("publish", "scripts/remote-agent.py"),
                      ("selftest", "scripts/selftest.py"), ("verify", "scripts/selftest.py"),
