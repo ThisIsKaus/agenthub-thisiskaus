@@ -437,14 +437,16 @@ function ModelsPage() {
 const TONE: Record<EmbedderState, string> = {
   resident: "border-rule",
   answering: "border-rule",
+  partial: "border-watch",
   missing: "border-risk",
   restoring: "border-copper",
   unknown: "border-rule",
 };
 
 const HEADLINE: Record<EmbedderState, string> = {
-  resident: "Loaded and answering",
+  resident: "All loaded and answering",
   answering: "Answering (not in the resident list)",
+  partial: "Some not loaded",
   missing: "Not answering",
   restoring: "Loading",
   unknown: "Unproved",
@@ -453,6 +455,7 @@ const HEADLINE: Record<EmbedderState, string> = {
 const TEXT_TONE: Record<EmbedderState, string> = {
   resident: "text-ok",
   answering: "text-ok",
+  partial: "text-watch",
   missing: "text-risk",
   restoring: "text-watch",
   unknown: "text-watch",
@@ -461,12 +464,13 @@ const TEXT_TONE: Record<EmbedderState, string> = {
 /** One sentence answering the only question that matters: is it working? */
 const VERDICT: Record<EmbedderState, string> = {
   resident:
-    "The machine lists it as loaded and a live probe came back with sources. Retrieval is working.",
+    "Every embedding model the machine knows about is loaded, and a live probe came back with sources. Retrieval is working.",
   answering:
     "A live probe came back with sources, so retrieval is working — the model list just does not report it under a name we recognise. Evidence beats the list.",
-  missing:
-    "A live probe came back with no sources. Retrieval is not working right now.",
-  restoring: "Loading the embedding model.",
+  partial:
+    "Retrieval works, but not every embedding model is loaded. The guard is reloading the rest so anything that reaches for one finds it.",
+  missing: "A live probe came back with no sources. Retrieval is not working right now.",
+  restoring: "Loading the embedding models.",
   unknown:
     "Not proved yet. The model list is only an inventory — it does not show whether embedding actually answers. Run the probe to know.",
 };
@@ -476,31 +480,29 @@ function stamp(value: Date | null) {
 }
 
 /**
- * The embedder is the one dependency whose absence is silent: questions still
- * answer, they just answer from nothing. So it gets its own standing panel —
- * state, consequence, proof and a narrow repair — rather than a banner that
- * only appears once the damage is done. The panel never asserts "dead" from an
- * inventory read alone; only a failed live probe earns that word.
+ * Embedding is the one dependency whose absence is silent: questions still
+ * answer, they just answer from nothing. So the whole embedding set gets a
+ * standing panel — every known model, whether each is resident, proof, and a
+ * narrow repair — and a watchdog that keeps them all loaded without being
+ * asked, including after a machine restart. The panel never asserts "dead"
+ * from an inventory read alone; only a failed live probe earns that word.
  */
 function EmbedderPanel({
   resident,
   available,
   bench,
   ready,
-  auto,
   refresh,
 }: {
   resident: string[];
   available: string[];
   bench: Bench[];
   ready: boolean;
-  auto: boolean;
   refresh: () => Promise<unknown>;
 }) {
   const { health, restore, prove, restoring, proving } = useEmbedderGuard({
     sources: { resident, available, bench },
     ready,
-    auto,
     refresh,
   });
   const down = health.state === "missing";
@@ -509,7 +511,7 @@ function EmbedderPanel({
   return (
     <section className={`border ${TONE[health.state]} bg-panel px-3 py-3`}>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="font-serif text-[15px] text-paper">Embedder</h2>
+        <h2 className="font-serif text-[15px] text-paper">Embedding</h2>
         <span
           className={`font-mono text-[10px] uppercase tracking-[0.14em] ${TEXT_TONE[health.state]}`}
         >
@@ -517,25 +519,54 @@ function EmbedderPanel({
         </span>
         <span className="flex-1" />
         <span className="font-mono text-[10px] tabular-nums text-faint">
-          list read {stamp(health.checkedAt)} · probed {stamp(health.provedAt)}
+          {health.residentCount}/{health.knownCount} resident · list read {stamp(health.checkedAt)} ·
+          probed {stamp(health.provedAt)}
         </span>
       </div>
 
-      <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">
-        {health.residentId ?? health.target ?? "no embedding model named on the machine"}
-        <span className="text-faint">
-          {" · "}
-          {health.listed ? "in the resident list" : "not in the resident list"}
-          {" · "}
-          {health.proved === null
-            ? "never probed"
-            : health.proved
-              ? "probe returned sources"
-              : "probe returned nothing"}
-        </span>
-      </p>
-
       <p className="mt-2 text-[13px] leading-relaxed text-paper">{VERDICT[health.state]}</p>
+
+      {health.models.length === 0 ? (
+        <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+          no embedding model named on the machine
+        </p>
+      ) : (
+        <ul className="mt-2 divide-y divide-rule border-y border-rule">
+          {health.models.map((model) => (
+            <li key={model.id} className="flex flex-wrap items-baseline gap-x-2 py-1.5">
+              <span
+                aria-hidden
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ${model.listed ? "bg-ok" : "bg-risk"}`}
+              />
+              <span className="break-all font-mono text-[11px] text-paper">{model.id}</span>
+              {model.primary && (
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-copper">
+                  primary
+                </span>
+              )}
+              <span className="flex-1" />
+              <span className="font-mono text-[10px] tabular-nums text-faint">
+                {model.gib === null ? "— GiB" : `${fixed(model.gib, 1)} GiB`}
+              </span>
+              <span
+                className={`w-[7.5rem] text-right font-mono text-[10px] uppercase tracking-[0.12em] ${model.listed ? "text-ok" : "text-risk"}`}
+              >
+                {model.listed ? "resident" : "not loaded"}
+              </span>
+              {!model.listed && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void restore(model.id)}
+                  className="border border-copper px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+                >
+                  Load
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {down && (
         <ul className="mt-2 space-y-1 border-l border-risk pl-3">
@@ -550,7 +581,7 @@ function EmbedderPanel({
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
-          disabled={busy || proving}
+          disabled={busy}
           onClick={() => void prove()}
           className="border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
         >
@@ -562,17 +593,16 @@ function EmbedderPanel({
           onClick={() => void restore()}
           className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-40"
         >
-          {restoring ? "Loading…" : "Load the embedder"}
+          {restoring ? "Loading…" : "Load every embedder"}
         </button>
       </div>
 
       <p className="mt-2 text-[11px] leading-relaxed text-faint">
         {health.message ??
-          (auto
-            ? "Watched every read. It is never evicted to make room, and it is reloaded on its own if it drops out of the list."
-            : "Autopilot is off — it will not be reloaded without you.")}
+          `Kept resident always — not a preference and not part of the memory budget's eviction set. Residency is re-read every minute, and anything that drops out (including after a machine restart) is reloaded on its own${health.repairs ? ` · ${health.repairs} reload${health.repairs === 1 ? "" : "s"} this session` : ""}.`}
       </p>
     </section>
   );
 }
+
 
