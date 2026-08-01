@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { LANES } from "@/lib/canvas-types";
 import { useLocal } from "@/lib/local-bridge";
 import { toNum } from "@/lib/format";
-import { normalizeIds } from "@/lib/embedder";
+import { EMBEDDER_CHECK_INTERVAL_MS, normalizeIds } from "@/lib/embedder";
 
 /** Router alias → the bench role that backs it. Cloud lanes have no role. */
 export const LANE_ROLE: Record<string, string> = {
@@ -62,8 +62,8 @@ export function useLaneCapacity() {
   const query = useQuery({
     queryKey: ["lane-capacity"],
     enabled: local.available,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
+    staleTime: EMBEDDER_CHECK_INTERVAL_MS,
+    refetchInterval: EMBEDDER_CHECK_INTERVAL_MS,
     queryFn: () => local.get<ModelsData>("/api/models"),
   });
 

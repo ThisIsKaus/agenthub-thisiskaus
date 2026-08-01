@@ -518,8 +518,8 @@ function EmbedderPanel({
         </span>
         <span className="flex-1" />
         <span className="font-mono text-[10px] tabular-nums text-faint">
-          {health.residentCount}/{health.knownCount} resident · list read {stamp(health.checkedAt)} ·
-          probed {stamp(health.provedAt)}
+          {health.residentCount}/{health.knownCount} resident · checked {stamp(health.checkedAt)} ·
+          verified {stamp(health.provedAt)}
         </span>
       </div>
 
@@ -584,7 +584,7 @@ function EmbedderPanel({
           onClick={() => void prove()}
           className="border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
         >
-          {proving ? "Probing…" : "Probe retrieval"}
+          {proving ? "Verifying…" : "Verify now"}
         </button>
         <button
           type="button"
@@ -592,13 +592,13 @@ function EmbedderPanel({
           onClick={() => void restore()}
           className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-40"
         >
-          {restoring ? "Loading…" : "Load every embedder"}
+          {restoring ? "Loading…" : "Load embedder"}
         </button>
       </div>
 
       <p className="mt-2 text-[11px] leading-relaxed text-faint">
         {health.message ??
-          `Kept resident always — not a preference and not part of the memory budget's eviction set. Residency is re-read every minute, and anything that drops out (including after a machine restart) is reloaded on its own${health.repairs ? ` · ${health.repairs} reload${health.repairs === 1 ? "" : "s"} this session` : ""}.`}
+          `Pinned as a standing dependency and excluded from model eviction. AgentHub checks residency and proves retrieval on connection, after reconnect, and every six hours${health.repairs ? ` · ${health.repairs} reload${health.repairs === 1 ? "" : "s"} this session` : ""}.`}
       </p>
     </section>
   );
