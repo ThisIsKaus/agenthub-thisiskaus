@@ -240,5 +240,5 @@ export function useEmbedderGuard({ sources, ready, auto, refresh }: GuardOptions
   };
 
 
-  return { health, restore, prove, restoring };
+  return { health, restore, prove, restoring, proving };
 }
