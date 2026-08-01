@@ -7,6 +7,12 @@ import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { fixed } from "@/lib/format";
 import { useAutopilot } from "@/lib/model-autopilot";
 import {
+  EMBEDDER_COSTS,
+  useEmbedderGuard,
+  type EmbedderState,
+} from "@/lib/embedder";
+import type { Bench } from "@/lib/lane-capacity";
+import {
   describePlan,
   isEmbedder,
   residentLoad,
@@ -61,7 +67,6 @@ function ModelsPage() {
   const resident = capacity.resident;
   const bench = capacity.bench;
   const used = residentLoad(resident, bench);
-  const embedderResident = resident.some(isEmbedder);
   const pct = policy.budgetGib > 0 ? Math.min(100, (used / policy.budgetGib) * 100) : 0;
 
   async function act(action: string, model?: string, label?: string) {
@@ -101,6 +106,15 @@ function ModelsPage() {
           </button>
         </div>
       )}
+
+      <EmbedderPanel
+        resident={resident}
+        available={capacity.available}
+        bench={bench}
+        ready={!loading && !failed}
+        auto={policy.autopilot}
+        refresh={capacity.refresh}
+      />
 
       <Panel title="Autopilot">
         <div className="space-y-3">
@@ -292,21 +306,7 @@ function ModelsPage() {
         </div>
       </Panel>
 
-      {!loading && !failed && !embedderResident && (
-        <div className="border border-copper bg-panel px-3 py-2">
-          <p className="text-[13px] leading-relaxed text-copper">
-            The knowledge base cannot work without the embedding model.
-          </p>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => void act("standard", undefined, "Standard")}
-            className="mt-2 border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-50"
-          >
-            Restore it
-          </button>
-        </div>
-      )}
+
 
       <Panel title="Resident">
         {loading ? (
@@ -431,5 +431,112 @@ function ModelsPage() {
         Ready the Ask lane
       </button>
     </div>
+  );
+}
+
+const TONE: Record<EmbedderState, string> = {
+  resident: "border-rule",
+  missing: "border-risk",
+  restoring: "border-copper",
+  unknown: "border-rule",
+};
+
+const HEADLINE: Record<EmbedderState, string> = {
+  resident: "Retrieval is alive",
+  missing: "Retrieval is dead",
+  restoring: "Restoring retrieval",
+  unknown: "Retrieval unverified",
+};
+
+function stamp(value: Date | null) {
+  return value ? value.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
+}
+
+/**
+ * The embedder is the one dependency whose absence is silent: questions still
+ * answer, they just answer from nothing. So it gets its own standing panel —
+ * state, consequence, proof and a narrow repair — rather than a banner that
+ * only appears once the damage is done.
+ */
+function EmbedderPanel({
+  resident,
+  available,
+  bench,
+  ready,
+  auto,
+  refresh,
+}: {
+  resident: string[];
+  available: string[];
+  bench: Bench[];
+  ready: boolean;
+  auto: boolean;
+  refresh: () => Promise<unknown>;
+}) {
+  const { health, restore, prove, restoring } = useEmbedderGuard({
+    sources: { resident, available, bench },
+    ready,
+    auto,
+    refresh,
+  });
+  const down = health.state === "missing";
+
+  return (
+    <section className={`border ${TONE[health.state]} bg-panel px-3 py-3`}>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 className="font-serif text-[15px] text-paper">Embedder</h2>
+        <span
+          className={`font-mono text-[10px] uppercase tracking-[0.14em] ${
+            down ? "text-risk" : health.state === "resident" ? "text-ok" : "text-watch"
+          }`}
+        >
+          {HEADLINE[health.state]}
+        </span>
+        <span className="flex-1" />
+        <span className="font-mono text-[10px] tabular-nums text-faint">
+          read {stamp(health.checkedAt)} · proved {stamp(health.provedAt)}
+        </span>
+      </div>
+
+      <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">
+        {health.residentId ?? health.target ?? "no embedding model named on the machine"}
+      </p>
+
+      {down && (
+        <ul className="mt-2 space-y-1">
+          {EMBEDDER_COSTS.map((line) => (
+            <li key={line} className="text-[13px] leading-relaxed text-paper">
+              {line}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={restoring || health.state === "resident"}
+          onClick={() => void restore()}
+          className="border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+        >
+          {restoring ? "Loading…" : "Load the embedder"}
+        </button>
+        <button
+          type="button"
+          disabled={restoring}
+          onClick={() => void prove()}
+          className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-40"
+        >
+          Prove retrieval
+        </button>
+      </div>
+
+      <p className="mt-2 text-[11px] leading-relaxed text-faint">
+        {health.message ??
+          (auto
+            ? "Watched every read. It is never evicted to make room, and it is reloaded on its own if it disappears."
+            : "Autopilot is off — it will not be reloaded without you.")}
+      </p>
+    </section>
   );
 }
