@@ -45,7 +45,9 @@ ARCHITECTURAL = re.compile(
 # Tier 2 (27B) measured 263s and 390s and failed both times; tier 3 (35B) took 65s and
 # produced better output than tier 4. The bench predicted it: 24.8 t/s against 114.9.
 # Tier 3 is now the local entry point. Tier 2 remains reachable with --tier 2.
-MODE_FOR_TIER = {2: "coding"}   # tier 3 uses the standard set, already resident
+# Residency is tiered now: the core is pinned and the elastic tier is JIT with
+# auto-evict. Naming a model loads it and evicts the previous one — no switching.
+MODE_FOR_TIER = {}
 
 TIERS = {
     1: ("local-triage", "4B classifier"),
@@ -256,8 +258,6 @@ def extract_file(out):
 def run_tier(tier, intent, ctx, trace, branch):
     alias, label = TIERS[tier]
     if tier in MODE_FOR_TIER:
-        print(f"  loading the {MODE_FOR_TIER[tier]} resident set...")
-        sh(f"mode {MODE_FOR_TIER[tier]}", 300)
     skills = load_skills(ctx["skills"])
     files = "\n".join(ctx["files"]) or "(determine from the intent)"
     prior = ("\n\nA previous attempt failed. Do not repeat it.\n" + trace[-2000:]) if trace else ""
@@ -389,7 +389,6 @@ def main():
         else:
             sh(f"git checkout -q {base} && git branch -qD {branch}", 60)
             print(f"\nno tier produced a verified change · branch discarded")
-        sh("mode standard", 300)
         (RUNS / f"{rid}.json").write_text(json.dumps(record, indent=2))
         print(f"run -> {RUNS / (rid + '.json')}")
 

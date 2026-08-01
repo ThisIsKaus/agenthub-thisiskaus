@@ -145,6 +145,31 @@ def models():
                 if l.strip() and not l.startswith("IDENTIFIER")]
     rec(g, "models resident", len(resident) >= 2, ", ".join(resident) or "none",
         "mode standard")
+    out = sh(f"/usr/bin/python3 {H}/scripts/memory_state.py", 60)
+    try:
+        mem = json.loads(out)
+    except Exception:
+        mem = {}
+    b_ = mem.get("budget", {})
+    rec(g, "pinned core intact", mem.get("core_intact") is True,
+        ", ".join(r["id"] for r in mem.get("pinned", [])) or "none",
+        "residency pin")
+    rec(g, "memory pressure", mem.get("pressure") in ("green", "amber"),
+        str(mem.get("pressure")), "residency clear")
+    rec(g, "budget headroom", float(b_.get("headroom_gib") or 0) >= 2,
+        f"{b_.get('headroom_gib')} GiB free of {b_.get('envelope_gib')}",
+        "an elastic model may be pinned when it should be JIT")
+    rec(g, "compression not excessive", float(b_.get("compressed_gib") or 0) < 12,
+        f"{b_.get('compressed_gib')} GiB compressed",
+        "an idle large model costs more than an unloaded one", warn=True)
+
+    fo = safe(lambda: json.loads((H / "state" / "failover.json").read_text()), {})
+    untested = [k for k in ("1", "2", "3", "4", "5-S0", "5-S3") if k not in fo]
+    rec(g, "failover rungs tested", not untested,
+        f"untested: {', '.join(untested)}" if untested else "all rungs fired",
+        "cd ~/AgentHub/console && uv run python ~/AgentHub/build/failover.py --test <n>",
+        warn=bool(untested))
+
     rec(g, "embedder resident", any("embed" in r for r in resident),
         "present" if any("embed" in r for r in resident) else "MISSING - the KB cannot work",
         "mode standard  (every mode must load the embedder)")

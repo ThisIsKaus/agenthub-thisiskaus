@@ -1,0 +1,84 @@
+#!/bin/zsh
+# residency — tiered model residency.
+#
+# Pinned core is loaded with `lms load`, which carries no TTL and is never auto-evicted.
+# The elastic tier is never pre-loaded: naming a model in a request JIT-loads it, LM Studio's
+# auto-evict unloads the previous one, and idle TTL releases it. Overcommit becomes
+# structurally impossible rather than something a script has to remember.
+#
+#   residency pin        unload everything, then pin the core
+#   residency status     what is resident, by tier, with the budget
+#   residency clear      unload the elastic tier, keep the core
+#   residency warm <id>  pre-load an elastic model (optional, for a known-heavy session)
+#   residency verify     prove auto-evict actually works
+
+LMS=~/.lmstudio/bin/lms
+EMBED=text-embedding-nomic-embed-text-v1.5
+TRIAGE=qwen3.5-4b
+ELASTIC=(qwen3.6-35b-a3b qwen3.6-27b openai/gpt-oss-20b)
+
+case "${1:-status}" in
+
+  pin)
+    echo "unloading everything..."
+    $LMS unload --all >/dev/null 2>&1
+    echo "pinning core (no TTL, not evictable)"
+    $LMS load $EMBED  >/dev/null 2>&1 && echo "  ok  $EMBED"  || echo "  FAIL $EMBED"
+    $LMS load $TRIAGE >/dev/null 2>&1 && echo "  ok  $TRIAGE" || echo "  FAIL $TRIAGE"
+    echo
+    $0 status
+    ;;
+
+  status)
+    python3 ~/AgentHub/scripts/memory_state.py | python3 -c '
+import json,sys
+d=json.load(sys.stdin); b=d["budget"]
+dot={"green":"●","amber":"●","red":"●"}.get(d["pressure"],"○")
+print(f"pressure {dot} {d[\"pressure\"]}  ·  compressed {b[\"compressed_gib\"]} GiB  ·  free {b[\"free_gib\"]} GiB")
+print(f"wired limit: {b[\"wired_limit_mb\"] or b[\"source\"]}")
+print()
+print(f"PINNED   {b[\"pinned_gib\"]:>6} GiB   " + (", ".join(r["id"] for r in d["pinned"]) or "NONE — run: residency pin"))
+print(f"ELASTIC  {b[\"elastic_gib\"]:>6} GiB   " + (", ".join(r["id"] for r in d["elastic"]) or "none loaded (loads on demand)"))
+print(f"HEADROOM {b[\"headroom_gib\"]:>6} GiB   of a {b[\"envelope_gib\"]} GiB envelope")
+if d["unexpected"]: print("\nUNEXPECTED: " + ", ".join(r["id"] for r in d["unexpected"]))
+print(f"\n{d[\"advice\"]}")
+'
+    ;;
+
+  clear)
+    for m in $ELASTIC; do $LMS unload "$m" >/dev/null 2>&1 && echo "unloaded $m"; done
+    echo "core retained"
+    ;;
+
+  warm)
+    [[ -z "$2" ]] && { echo "usage: residency warm <model-id>"; exit 1 }
+    curl -s http://127.0.0.1:1234/v1/chat/completions -H "Content-Type: application/json" \
+      -d "{\"model\":\"$2\",\"max_tokens\":1,\"ttl\":1200,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}" \
+      >/dev/null && echo "warmed $2 (JIT, ttl 1200s)" || echo "failed to warm $2"
+    ;;
+
+  verify)
+    echo "proving auto-evict — loading two elastic models in sequence"
+    $0 clear >/dev/null 2>&1
+    echo "  requesting qwen3.6-35b-a3b..."
+    curl -s -m 300 http://127.0.0.1:1234/v1/chat/completions -H "Content-Type: application/json" \
+      -d '{"model":"qwen3.6-35b-a3b","max_tokens":1,"ttl":1200,"messages":[{"role":"user","content":"hi"}]}' >/dev/null
+    echo "  requesting qwen3.6-27b..."
+    OUT=$(curl -s -m 300 http://127.0.0.1:1234/v1/chat/completions -H "Content-Type: application/json" \
+      -d '{"model":"qwen3.6-27b","max_tokens":1,"ttl":1200,"messages":[{"role":"user","content":"hi"}]}')
+    if echo "$OUT" | grep -q "insufficient system resources"; then
+      echo "  FAIL — the second load was refused. Auto-Evict is OFF."
+      echo "  fix: LM Studio -> Developer -> Server Settings -> enable Auto-Evict"
+      exit 1
+    fi
+    RES=$($LMS ps | grep -v IDENTIFIER | awk 'NF{print $1}' | tr '\n' ' ')
+    echo "  resident now: $RES"
+    if echo "$RES" | grep -q "35b"; then
+      echo "  FAIL — the 35B is still resident. Auto-Evict is not evicting."
+      exit 1
+    fi
+    echo "  PASS — the 27B evicted the 35B, and the core survived"
+    ;;
+
+  *) echo "usage: residency pin|status|clear|warm <id>|verify" ;;
+esac
