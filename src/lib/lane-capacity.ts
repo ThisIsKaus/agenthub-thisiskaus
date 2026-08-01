@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { LANES } from "@/lib/canvas-types";
 import { useLocal } from "@/lib/local-bridge";
 import { toNum } from "@/lib/format";
+import { normalizeIds } from "@/lib/embedder";
 
 /** Router alias → the bench role that backs it. Cloud lanes have no role. */
 export const LANE_ROLE: Record<string, string> = {
@@ -26,7 +27,7 @@ export const LANE_ROLE: Record<string, string> = {
 };
 
 export type Bench = { role: string; id: string; tps: number; gib: number };
-type ModelsData = { resident?: string[]; available?: string[]; bench?: Bench[]; aliases?: string[] };
+type ModelsData = { resident?: unknown[]; available?: unknown[]; bench?: Bench[]; aliases?: string[] };
 
 export type LaneStatus = "resident" | "cold" | "cloud" | "unknown";
 
@@ -66,7 +67,7 @@ export function useLaneCapacity() {
     queryFn: () => local.get<ModelsData>("/api/models"),
   });
 
-  const resident = query.data?.resident ?? [];
+  const resident = normalizeIds(query.data?.resident);
   const bench = query.data?.bench ?? [];
 
   const lanes: LaneCapacity[] = LANES.map((lane) => {
@@ -115,7 +116,7 @@ export function useLaneCapacity() {
     critiqueLane,
     resident,
     bench,
-    available: query.data?.available ?? [],
+    available: normalizeIds(query.data?.available),
     aliases: query.data?.aliases ?? [],
     loading: query.isLoading,
     error: query.error as Error | null,
