@@ -45,7 +45,10 @@ export function isEmbedder(entry: unknown): boolean {
   return /embed/i.test(modelId(entry));
 }
 
-export type EmbedderState = "resident" | "missing" | "restoring" | "unknown";
+export type EmbedderState = "resident" | "answering" | "missing" | "restoring" | "unknown";
+
+/** A proof is only worth trusting for so long. */
+const PROOF_TTL_MS = 10 * 60_000;
 
 export type EmbedderHealth = {
   state: EmbedderState;
@@ -53,13 +56,18 @@ export type EmbedderHealth = {
   target: string | null;
   /** The id actually resident, when it is. */
   residentId: string | null;
+  /** Whether the machine's model list claims it is loaded. */
+  listed: boolean;
   /** Last time residency was read from the machine. */
   checkedAt: Date | null;
   /** Last time a live embedding round-trip proved it answers. */
   provedAt: Date | null;
+  /** Outcome of that round-trip: true = returned sources, false = returned none. */
+  proved: boolean | null;
   attempts: number;
   message: string | null;
 };
+
 
 type Sources = {
   resident: unknown;
