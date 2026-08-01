@@ -140,3 +140,16 @@ verification, and produced better structured output than the frontier tier. The 
 predicted this at 24.8 t/s against 114.9. Tier 2 stays reachable with --tier 2 and returns as
 the default only if evidence reverses. Local tiers write whole files; unified diffs require
 inventing line numbers, which small models do badly.
+
+## Model residency (v2.3, 1 Aug 2026)
+Residency is tiered, not mode-switched. The embedder and the 4B triage model are pinned with
+`lms load` — no TTL, never auto-evicted — because every scheduled job depends on them. Large
+models are never pre-loaded: naming one in a request JIT-loads it, auto-evict unloads the
+previous one, and idle TTL releases it. Worst case is 21.96 GiB against a ~26 GiB envelope,
+so overcommit is structurally impossible rather than something a script must remember.
+An idle large model is more expensive than an unloaded one: MLX allocates weights in Metal's
+shared storage mode, whose pages are pageable, so an idle model is compressed and every
+subsequent inference pays decompression. Measured 1 Aug: 24 duplicate model instances had
+accumulated, pushing compressed memory to 16.65 GiB with 1.17 GiB free. Clearing them
+returned it to 0.70 GiB compressed and 23.07 GiB headroom. `residency status` reports
+duplicates; `residency pin` clears them. Watch memory pressure, not free megabytes.
