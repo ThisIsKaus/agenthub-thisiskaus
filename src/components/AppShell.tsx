@@ -15,11 +15,12 @@ type Group = { label: string; to: string; subs: Sub[] };
 const GROUPS: Group[] = [
   { label: "Overview", to: "/overview", subs: [] },
   { label: "Canvas", to: "/canvas", subs: [] },
+  { label: "Ask", to: "/ask", subs: [] },
   { label: "Inbox", to: "/inbox", subs: [] },
   { label: "Skills", to: "/skills", subs: [] },
   {
     label: "Corpus",
-    to: "/files",
+    to: "/corpus",
     subs: [
       { to: "/files", label: "Files" },
       { to: "/knowledge", label: "Knowledge" },
@@ -28,7 +29,7 @@ const GROUPS: Group[] = [
   },
   {
     label: "Engine",
-    to: "/models",
+    to: "/engine",
     subs: [
       { to: "/models", label: "Models" },
       { to: "/model-scanner", label: "Scanner" },
@@ -37,10 +38,10 @@ const GROUPS: Group[] = [
   },
   {
     label: "Improve",
-    to: "/evals",
+    to: "/improve",
     subs: [
-      { to: "/evals", label: "Evals" },
       { to: "/proposals", label: "Proposals" },
+      { to: "/evals", label: "Evals" },
       { to: "/build", label: "Build" },
     ],
   },
