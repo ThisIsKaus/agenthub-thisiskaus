@@ -229,11 +229,18 @@ export function Omnibox() {
         </button>
       </div>
 
+      {local.available && intent === "capture" && (
+        <p className="font-mono text-[11px] text-faint">
+          Press ⌘3 to build this instead of recording it.
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-faint">
         {examples.map((example) => (
           <span key={example}>{example}</span>
         ))}
       </div>
+
 
       {status && (
         <p
