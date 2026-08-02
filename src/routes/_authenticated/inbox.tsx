@@ -413,6 +413,8 @@ function TriageLane() {
               );
             })}
           </ul>
+          </Disclosure>
+
         )}
       </Panel>
 
