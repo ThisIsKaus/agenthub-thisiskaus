@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
@@ -24,9 +25,11 @@ export const Route = createFileRoute("/_authenticated/proposals")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <ProposalsPage />
-    </LocalOnly>
+    <Page title="Proposals" subtitle="Changes the machine suggests to itself. Nothing lands without your decision." footer="Proposals · read and acted on over loopback">
+      <LocalOnly>
+        <ProposalsPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 

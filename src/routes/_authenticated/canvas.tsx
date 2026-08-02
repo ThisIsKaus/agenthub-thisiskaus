@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocalOnly } from "@/components/LocalOnly";
@@ -50,9 +51,11 @@ export const Route = createFileRoute("/_authenticated/canvas")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <CanvasPage />
-    </LocalOnly>
+    <Page title="Canvas" subtitle="A canvas is a project: think, ask the corpus, run the machine and ship from one document." footer="Canvas · drafts live on the machine under drafts/canvas">
+      <LocalOnly>
+        <CanvasPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 

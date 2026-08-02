@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton, formatStamp } from "@/components/data";
@@ -24,9 +25,11 @@ export const Route = createFileRoute("/_authenticated/build")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <BuildPage />
-    </LocalOnly>
+    <Page title="Build" subtitle="State an intent; the cascade implements it and verifies before you see it." footer="Build · cascade runs on the machine">
+      <LocalOnly>
+        <BuildPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 

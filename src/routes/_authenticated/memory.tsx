@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Figure, Skeleton } from "@/components/data";
@@ -20,9 +21,11 @@ export const Route = createFileRoute("/_authenticated/memory")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <MemoryPage />
-    </LocalOnly>
+    <Page title="Memory" subtitle="Everything asked and answered on the machine, searchable." footer="Memory · timeline read over loopback, never published">
+      <LocalOnly>
+        <MemoryPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 

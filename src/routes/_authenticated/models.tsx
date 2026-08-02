@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
@@ -35,9 +36,11 @@ export const Route = createFileRoute("/_authenticated/models")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <ModelsPage />
-    </LocalOnly>
+    <Page title="Models" subtitle="Tiered residency and the memory budget." footer="Models · residency read live from the machine">
+      <LocalOnly>
+        <ModelsPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 

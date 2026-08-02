@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
@@ -25,9 +26,11 @@ export const Route = createFileRoute("/_authenticated/health")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <HealthPage />
-    </LocalOnly>
+    <Page title="Health" subtitle="Self-test results, check by check, with the fix text for anything that failed." footer="Health · self-test read live from the machine">
+      <LocalOnly>
+        <HealthPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 

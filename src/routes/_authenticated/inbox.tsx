@@ -36,7 +36,11 @@ export const Route = createFileRoute("/_authenticated/inbox")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: InboxPage,
+  component: () => (
+    <Page title="Inbox" subtitle="One stream in, four exits out: dropped, filed as context, written up as a skill, or opened as a canvas." footer="Inbox · captures queue on the device and deliver when the machine polls">
+      <InboxPage />
+    </Page>
+  ),
 });
 
 type DigestItem = { flag?: string; src?: string; cls?: string; ent?: string; sen?: string; one?: string };

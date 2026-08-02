@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
@@ -32,7 +33,11 @@ export const Route = createFileRoute("/_authenticated/overview")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: OverviewPage,
+  component: () => (
+    <Page title="Overview" subtitle="Where the machine stands right now, and what changed since you last looked." footer="Overview · local readings when the machine answers, published state otherwise">
+      <OverviewPage />
+    </Page>
+  ),
 });
 
 type DigestItem = { flag?: string; src?: string; cls?: string; ent?: string; sen?: string; one?: string };
