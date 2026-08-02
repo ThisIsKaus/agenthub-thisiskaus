@@ -12,7 +12,8 @@
     "consumer": "src/lib/state.ts",
     "http": "GET /api/state",
     "requires": [
-      "services",
+      "lms",
+      "router",
       "spend",
       "factory",
       "digest"
