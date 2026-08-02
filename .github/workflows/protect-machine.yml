@@ -1,0 +1,29 @@
+name: Protect machine
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  no-deletions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 2 }
+      - name: Refuse deletions under machine/
+        run: |
+          # machine/ is maintained outside Lovable. Lovable's agent cannot edit Python or zsh
+          # and has no reason to remove any of it, so a deletion here is a mistake by
+          # definition — a stale editor snapshot, or a sync that did not know these files.
+          DELETED=$(git diff --diff-filter=D --name-only HEAD^ HEAD -- machine/ 2>/dev/null || true)
+          if [ -n "$DELETED" ]; then
+            echo "::error::Files were deleted under machine/, which is maintained outside Lovable:"
+            echo "$DELETED"
+            exit 1
+          fi
+          COUNT=$(git ls-files machine/ | wc -l)
+          echo "machine/ holds $COUNT tracked files"
+          if [ "$COUNT" -lt 60 ]; then
+            echo "::error::Only $COUNT files under machine/ — expected at least 60. Something removed a tree."
+            exit 1
+          fi

@@ -83,6 +83,23 @@ def foundation():
     rec(g, "scripts on PATH", onpath, os.environ.get("PATH", "")[:80],
         "echo 'export PATH=\"$HOME/AgentHub/scripts:$PATH\"' >> ~/.zshrc && exec zsh", warn=not onpath)
 
+    # Lovable and this machine both push to main. Git rejects a non-fast-forward, which is
+    # the protection working — but a stale editor snapshot could still commit a tree missing
+    # files it never knew about. Compare local against the remote and count what is there.
+    sh(f"git -C {H} fetch -q origin main", 90)
+    gone = sh(f"git -C {H} diff --diff-filter=D --name-only origin/main -- machine/ machine", 60)
+    remote_n = sh(f"git -C {H} ls-tree -r origin/main --name-only machine/ | wc -l", 60).strip()
+    try:
+        remote_n = int(remote_n)
+    except Exception:
+        remote_n = 0
+    rec(g, "machine/ intact on the remote", remote_n >= 60,
+        f"{remote_n} files tracked under machine/ on origin/main",
+        "files are missing from the remote — restore from restic before pushing anything")
+    rec(g, "no local deletions vs remote", not gone.strip(),
+        (gone.strip().splitlines()[0][:60] + " ...") if gone.strip() else "none",
+        "local is missing files the remote has")
+
     dirty = sh(f"git -C {H} status --porcelain")
     rec(g, "git tree clean", dirty == "", dirty[:120] or "clean",
         "git -C ~/AgentHub add -A && git commit -m wip && git push", warn=bool(dirty))
