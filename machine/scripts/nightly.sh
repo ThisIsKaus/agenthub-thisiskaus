@@ -23,6 +23,7 @@ if [[ -f "$D" ]]; then
   ~/AgentHub/scripts/factory status >> "$D"
   ~/AgentHub/scripts/notify.sh "Digest ready: $SUMMARY"
 fi
+/opt/homebrew/bin/uv run --project ~/AgentHub/console python ~/AgentHub/scripts/export_sessions.py --days 90
 ~/AgentHub/scripts/rotate.sh
 if [[ "$(date +%d)" == "01" ]]; then
   echo "monthly restore verification"

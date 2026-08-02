@@ -128,7 +128,18 @@ def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES, rerank
     ranked = sorted(fused.values(), key=lambda e: -e["score"])
     if rerank and len(ranked) > k:
         ranked = _rerank(query, ranked[:CANDIDATES], k)
-    ranked = ranked[:k]
+    # Cap chunks per file. Four passages from one document crowd out three other sources
+    # and tell you less than one passage each from four would.
+    seen, diverse = {}, []
+    for e in ranked:
+        f = Path(e["row"]["path"]).name
+        if seen.get(f, 0) >= 2:
+            continue
+        seen[f] = seen.get(f, 0) + 1
+        diverse.append(e)
+        if len(diverse) >= k:
+            break
+    ranked = diverse
     return [{
         "file": Path(e["row"]["path"]).name,
         "path": e["row"]["path"],
