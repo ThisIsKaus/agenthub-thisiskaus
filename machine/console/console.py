@@ -851,11 +851,21 @@ def skills():
         meta = str(fm.get("metadata", ""))
         tier = meta.split("tier:")[-1].strip().splitlines()[0] if "tier:" in meta else ""
         st = f.stat()
-        out.append({"name": sub.name, "path": str(f),
+        # The view models a lifecycle — proposed, active, watch, deprecated, archived — and
+        # nothing supplied it, so all five buckets read zero while 50 skills sat in the
+        # directory. Read it from metadata; anything linted and evaluated is active.
+        state = "active"
+        m = re.search(r"state:\s*(\w+)", meta)
+        if m and m.group(1) in ("proposed", "active", "watch", "deprecated", "archived"):
+            state = m.group(1)
+        out.append({"name": sub.name, "path": str(f), "state": state,
                     "description": fm.get("description", ""), "tier": tier,
                     "size": st.st_size,
                     "modified": dt.datetime.fromtimestamp(st.st_mtime).isoformat(timespec="minutes")})
-    return {"skills": out, "count": len(out)}
+    counts = {}
+    for r in out:
+        counts[r["state"]] = counts.get(r["state"], 0) + 1
+    return {"skills": out, "count": len(out), "counts": counts}
 
 if __name__ == "__main__":
     import uvicorn

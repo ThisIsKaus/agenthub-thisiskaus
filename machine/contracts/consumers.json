@@ -4,9 +4,10 @@
     "http": "GET /api/skills",
     "requires": [
       "skills",
-      "count"
+      "count",
+      "counts"
     ],
-    "assert": "d['count'] >= 40"
+    "assert": "d['count'] >= 40 and all(k in d['skills'][0] for k in ('name','description','state','tier')) and sum(d['counts'].values()) == d['count']"
   },
   "workspace-overview-state": {
     "consumer": "src/lib/state.ts",
@@ -119,5 +120,15 @@
     "consumer": "Lovable project knowledge",
     "file": "docs/brief.md",
     "assert": "'TWO PLANES' in text and len(text) < 10200"
+  },
+  "workspace-overview-header": {
+    "consumer": "src/components/AppShell.tsx :: status pills",
+    "http": "GET /api/state",
+    "requires": [
+      "lms",
+      "router",
+      "aliases"
+    ],
+    "assert": "d['lms'] is True and d['router'] is True"
   }
 }
