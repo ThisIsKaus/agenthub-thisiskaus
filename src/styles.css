@@ -106,9 +106,12 @@
     color-scheme: dark;
   }
 
-  table {
+  table,
+  .font-mono,
+  [class*="font-mono"] {
     font-variant-numeric: tabular-nums;
   }
+
 
   body {
     background-color: var(--color-background);
@@ -126,7 +129,7 @@
   }
 }
 
-/* The single page frame: 86vw with 7% clear each side, 92vw below 900px. */
+/* The single page frame: 86vw — 7% clear each side at every viewport. */
 @utility page-container {
   width: 86vw;
   max-width: 1240px;
@@ -152,7 +155,7 @@
 @media (max-width: 900px) {
   .page-container,
   .page-width {
-    width: 92vw;
+    width: 86vw;
     padding-block: 28px 40px;
     gap: 40px;
   }
