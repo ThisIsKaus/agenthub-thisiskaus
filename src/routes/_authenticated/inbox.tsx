@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Disclosure } from "@/components/Disclosure";
 import { Panel } from "@/components/AppShell";
 import { Page } from "@/components/Page";
 
@@ -332,6 +333,15 @@ function TriageLane() {
         ) : items.length === 0 ? (
           <Empty>Nothing was read overnight.</Empty>
         ) : (
+          <Disclosure
+            defaultOpen
+            summary={
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+                {items.length} read · {items.filter((item) => item.flag).length} flagged ·{" "}
+                {open} undecided
+              </span>
+            }
+          >
           <ul>
             {items.map((item, index) => {
               const flagged = Boolean(item.flag);
