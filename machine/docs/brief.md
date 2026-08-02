@@ -1,5 +1,5 @@
 # AgentHub — brief for Lovable
-_Generated from the live machine 2026-08-02T15:40. Do not edit._
+_Generated from the live machine 2026-08-03T07:39. Do not edit._
 
 ## What exists
 
@@ -90,6 +90,7 @@ by design; offer no edit control for them.
 | GET `/api/capabilities` | no parameters |
 | POST `/api/capture` | form: { text: string } |
 | GET `/api/cascade/stats` | no parameters |
+| POST `/api/classify` | form: { text: string } |
 | GET `/api/cost` | query: { days?: number } |
 | GET `/api/digest` | query: { date?: string } |
 | POST `/api/draft` | form: { title: string, body: string } |
@@ -123,31 +124,4 @@ by design; offer no edit control for them.
 POST `/api/run` with `key` returns `{job, label}`; poll GET `/api/job?id=` every 900ms until
 `running` is false. Keys: verify(T0), doctor(T0), intake(T1), ingest(T1), eval(T0), backup(T1), report(T0), repair(T1), summarise(T1), diagnose(T1).
 
-Key shapes: `Capabilities {ok, version, time, features[], machine}` ·
-`Job {key, out, running, code}` · `AskResult {answer, model, sources[{file, path, distance}]}` ·
-`TreeListing {root, parent, dirs[], files[{name, path, size, modified, editable}]}` ·
-`FileContent {path, name, raw, html, editable}` ·
-`KbStats {chunks, documents, sources[{file, path, chunks}]}` ·
-`Digest {date, items[{flag, src, cls, ent, sen, one}], dates[]}` ·
-`Models {resident[], available[], bench[{role, id, tps, gib}], aliases[]}` ·
-`Evals {results[{date, model, scores}], set_size, real_items}` ·
-`SelfTest {summary, rows[{group, name, state, detail}]}` ·
-`Memory {stats, events[{ts, kind, model, question, answer}]}`
-
-## Design system — matches the existing local console
-
-Colours: `#0B0B0D` ink `#141416` panel `#191919` panel-2 `#26262A` rule `#C8744A` copper `#ECEBE8` paper `#8E8E96` muted `#5E5E66` faint `#7FA88C` ok `#C9A227` watch `#B5544A` risk
-Type: Instrument Serif (headings only), Inter (body), Geist Mono (every number, timestamp,
-status pill). Dark editorial, not a SaaS landing page. Hairline 1px borders, never shadows.
-Radius 2px max. Copper for accents and active states only, never a large fill. No gradients,
-no glassmorphism. Mobile-first — used on a phone more than a laptop.
-
-## Repository
-
-You own `src/`, `supabase/`, root build config. **Never touch `machine/`** — Python, zsh and
-launchd maintained outside Lovable. Never force push, rebase or amend pushed commits.
-
-## Before writing code
-
-State: which direction connections flow on each plane, which sections wrap in LocalOnly, and
-whether POST endpoints take multipart form fields or JSON.
+Response shapes are in machine/docs/local-api-contract.md — read that for a field name rather than guessing at one.

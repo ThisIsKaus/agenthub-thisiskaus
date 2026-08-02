@@ -1,5 +1,5 @@
 # AgentHub local API — contract for Lovable
-_Generated from console.py by AST parse, 2026-08-02T15:40. Do not edit by hand._
+_Generated from console.py by AST parse, 2026-08-03T07:32. Do not edit by hand._
 
 ## How to call it
 
@@ -33,7 +33,7 @@ Every POST takes **multipart form fields**, not a JSON body. Sending JSON will
 return HTTP 422. A 403 means the path was outside the allowlist or an approval
 dialog was denied — surface it as a refusal, never as an error.
 
-## Endpoints (35)
+## Endpoints (36)
 
 | Method | Path | Parameters | Purpose |
 |---|---|---|---|
@@ -43,6 +43,7 @@ dialog was denied — surface it as a refusal, never as an error.
 | GET | `/api/capabilities` | no parameters | Probed by the unified console to decide whether the local plane is available. |
 | POST | `/api/capture` | form: { text: string } | capture |
 | GET | `/api/cascade/stats` | no parameters | cascade_stats |
+| POST | `/api/classify` | form: { text: string } | Route omnibox input to one of four intents. |
 | GET | `/api/cost` | query: { days?: number } | cost |
 | GET | `/api/digest` | query: { date?: string } | digest |
 | POST | `/api/draft` | form: { title: string, body: string } | draft |

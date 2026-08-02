@@ -139,35 +139,7 @@ by design; offer no edit control for them.
 POST `/api/run` with `key` returns `{{job, label}}`; poll GET `/api/job?id=` every 900ms until
 `running` is false. Keys: {', '.join(f"{c['key']}({c['tier']})" for c in cmds)}.
 
-Key shapes: `Capabilities {{ok, version, time, features[], machine}}` ·
-`Job {{key, out, running, code}}` · `AskResult {{answer, model, sources[{{file, path, distance}}]}}` ·
-`TreeListing {{root, parent, dirs[], files[{{name, path, size, modified, editable}}]}}` ·
-`FileContent {{path, name, raw, html, editable}}` ·
-`KbStats {{chunks, documents, sources[{{file, path, chunks}}]}}` ·
-`Digest {{date, items[{{flag, src, cls, ent, sen, one}}], dates[]}}` ·
-`Models {{resident[], available[], bench[{{role, id, tps, gib}}], aliases[]}}` ·
-`Evals {{results[{{date, model, scores}}], set_size, real_items}}` ·
-`SelfTest {{summary, rows[{{group, name, state, detail}}]}}` ·
-`Memory {{stats, events[{{ts, kind, model, question, answer}}]}}`
-
-## Design system — matches the existing local console
-
-Colours: {colours}
-Type: Instrument Serif (headings only), Inter (body), Geist Mono (every number, timestamp,
-status pill). Dark editorial, not a SaaS landing page. Hairline 1px borders, never shadows.
-Radius 2px max. Copper for accents and active states only, never a large fill. No gradients,
-no glassmorphism. Mobile-first — used on a phone more than a laptop.
-
-## Repository
-
-You own `src/`, `supabase/`, root build config. **Never touch `machine/`** — Python, zsh and
-launchd maintained outside Lovable. Never force push, rebase or amend pushed commits.
-
-## Before writing code
-
-State: which direction connections flow on each plane, which sections wrap in LocalOnly, and
-whether POST endpoints take multipart form fields or JSON.
-"""
+Response shapes are in machine/docs/local-api-contract.md — read that for a field name rather than guessing at one.\n"""
     return doc
 
 
