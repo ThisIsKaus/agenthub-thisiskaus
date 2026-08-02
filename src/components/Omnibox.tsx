@@ -17,6 +17,14 @@ export type Intent = "capture" | "ask" | "build" | "search";
 
 const INTENTS: Intent[] = ["capture", "ask", "build", "search"];
 
+/**
+ * Build is opt-in and never auto-selected. Capture and build are not separable
+ * from the text — "the cost page should show a weekly average" is both a thought
+ * to record and a change to make, and only the operator knows which. Build is the
+ * only intent that writes, so auto-selecting it started work nobody asked for.
+ */
+const CLASSIFIED: Intent[] = ["capture", "ask", "search"];
+
 const EXAMPLES: Record<Intent, string[]> = {
   capture: [
     "capture · Neelam wants the envelope report weekly, not monthly",
@@ -83,7 +91,7 @@ export function Omnibox() {
       try {
         const result = await local.post<{ intent?: string }>("/api/classify", { text: value });
         const next = String(result?.intent ?? "").toLowerCase();
-        if (ticket === seq.current && (INTENTS as string[]).includes(next)) {
+        if (ticket === seq.current && (CLASSIFIED as string[]).includes(next)) {
           setIntent(next as Intent);
         }
       } catch {
@@ -221,11 +229,18 @@ export function Omnibox() {
         </button>
       </div>
 
+      {local.available && intent === "capture" && (
+        <p className="font-mono text-[11px] text-faint">
+          Press ⌘3 to build this instead of recording it.
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-faint">
         {examples.map((example) => (
           <span key={example}>{example}</span>
         ))}
       </div>
+
 
       {status && (
         <p
