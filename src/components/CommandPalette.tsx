@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
+import { listSkills, type Skill } from "@/lib/skills-store";
 
 type Kind = "view" | "command" | "skill" | "file" | "session";
 
@@ -126,7 +127,7 @@ export function CommandPalette() {
       if (skillList.status === "fulfilled") {
         setSkills(
           skillList.value
-            .map((skill) => skill.name || skill.path)
+            .map((skill: Skill) => skill.name || skill.path)
             .filter(Boolean)
 
             .slice(0, 40),

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocal } from "@/lib/local-bridge";
 import { JOB_KEYS, type CanvasRef } from "@/lib/canvas-types";
+import { listSkills, type Skill } from "@/lib/skills-store";
 
 type SkillRow = { name: string; path: string; size?: number; modified?: string };
 type PromptRow = { name: string; path: string; kind?: string };
@@ -31,7 +32,7 @@ export function useReferenceCatalogue() {
     enabled,
     staleTime: STALE,
     queryFn: async () => ({
-      skills: (await listSkills(local)).map((skill) => ({
+      skills: (await listSkills(local)).map((skill: Skill) => ({
         name: skill.name,
         path: skill.path,
       })) as SkillRow[],
