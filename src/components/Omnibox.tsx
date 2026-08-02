@@ -126,10 +126,19 @@ export function Omnibox() {
           setText("");
           setOverridden(false);
         } else if (target === "ask") {
-          const result = await local.post<{ answer?: string; model?: string }>("/api/ask", {
-            q: body,
-          });
-          setAnswer({ text: result?.answer ?? "—", model: result?.model });
+          // Sources return in under a second; the answer streams beneath them.
+          const result = await askProgressive(
+            LOCAL_BASE,
+            local.post,
+            { q: body, model: "", k: 6 },
+            {
+              sources: (sources) =>
+                setAnswer((current) => ({ text: current?.text ?? "", sources })),
+              delta: (partial) =>
+                setAnswer((current) => ({ ...current, text: partial })),
+            },
+          );
+          setAnswer({ text: result.answer || "—", model: result.model, sources: result.sources });
         } else if (target === "build") {
           const started = await local.post<{ job: string }>("/api/build", { intent: body });
           if (started?.job) {
