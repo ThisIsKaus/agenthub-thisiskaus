@@ -91,7 +91,7 @@ export function Omnibox() {
       try {
         const result = await local.post<{ intent?: string }>("/api/classify", { text: value });
         const next = String(result?.intent ?? "").toLowerCase();
-        if (ticket === seq.current && (INTENTS as string[]).includes(next)) {
+        if (ticket === seq.current && (CLASSIFIED as string[]).includes(next)) {
           setIntent(next as Intent);
         }
       } catch {
