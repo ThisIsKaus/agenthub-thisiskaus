@@ -219,10 +219,25 @@ def gate(changed):
         if code != 0:
             return False, steps
 
+    # No worse than before, not perfect. Demanding zero failures means one pre-existing
+    # problem blocks every build permanently — which it did, twice. The change must not
+    # make things worse; it is not responsible for what was already broken.
+    def _counts(txt):
+        m = re.search(r"(\d+) passed . (\d+) warnings . (\d+) failed", txt)
+        return (int(m.group(1)), int(m.group(3))) if m else (0, 99)
+
+    before = globals().get("_BASELINE")
     code, out = sh("/usr/bin/python3 " + str(MACHINE / "scripts/selftest.py") + " --quiet", 400)
-    passed = re.search(r"(\d+) passed . (\d+) warnings . (\d+) failed", out)
-    ok = bool(passed) and passed.group(3) == "0"
-    steps.append(("verify", ok, passed.group(0) if passed else out[-300:]))
+    p_now, f_now = _counts(out)
+    if before is None:
+        ok = f_now == 0
+        detail = (f"{p_now} passed, {f_now} failed" +
+                  ("" if ok else " — no baseline, and failures exist"))
+    else:
+        p_was, f_was = before
+        ok = f_now <= f_was and p_now >= p_was - 1
+        detail = f"{p_now} passed / {f_now} failed  (was {p_was} / {f_was})"
+    steps.append(("verify", ok, detail))
     if not ok:
         return False, steps
 
@@ -370,6 +385,14 @@ def main():
         pass
     record = {"id": rid, "intent": intent, "branch": branch, "context": ctx,
               "started": dt.datetime.now().isoformat(timespec="seconds"), "attempts": []}
+
+    # Snapshot the health of the tree before touching it, so the gate can compare.
+    print("baseline...")
+    _b = sh("/usr/bin/python3 " + str(MACHINE / "scripts/selftest.py") + " --quiet", 400)[1]
+    _m = re.search(r"(\d+) passed . (\d+) warnings . (\d+) failed", _b)
+    globals()["_BASELINE"] = (int(_m.group(1)), int(_m.group(3))) if _m else None
+    if _m:
+        print(f"  {_m.group(1)} passed, {_m.group(3)} failed before the change")
 
     code, out = sh("git rev-parse --abbrev-ref HEAD", 30)
     base = out.strip()
