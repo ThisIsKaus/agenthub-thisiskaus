@@ -5,6 +5,7 @@ import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { CascadePanel } from "@/components/CascadePanel";
+import { Disclosure } from "@/components/Disclosure";
 import { useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 
@@ -84,7 +85,6 @@ function HealthPage() {
   const { runJob } = useJobDrawer();
   const [data, setData] = useState<SelfTest | null>(null);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -162,47 +162,53 @@ function HealthPage() {
         ) : rows.length === 0 ? (
           <Empty>No checks reported.</Empty>
         ) : (
-          <ul>
-            {rows.map((row, index) => {
-              const failedRow = isFailed(row.state);
-              const isOpen = expanded[index] ?? false;
-              return (
+          <Disclosure
+            summary={
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+                {rows.length} checks in {new Set(rows.map((row) => row.group ?? "—")).size} groups
+              </span>
+            }
+            defaultOpen={failed > 0}
+          >
+            <ul>
+              {rows.map((row, index) => (
                 <li key={`${row.group}-${row.name}-${index}`} className="border-b border-rule last:border-b-0">
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5">
-                    <span className="w-full shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint sm:w-28">
-                      {row.group ?? "—"}
-                    </span>
-                    <span className="min-w-0 flex-1 text-[13px] text-paper">{row.name ?? "—"}</span>
-                    <span
-                      className={`shrink-0 border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${stateTone(row.state)}`}
-                    >
-                      {row.state ?? "—"}
-                    </span>
-                    {row.detail && (
-                      <span className="w-full font-mono text-[11px] text-muted-foreground">
-                        {row.detail}
+                  <Disclosure
+                    tone="quiet"
+                    summary={
+                      <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className="w-full shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint sm:w-28">
+                          {row.group ?? "—"}
+                        </span>
+                        <span className="min-w-0 flex-1 text-[13px] text-paper">{row.name ?? "—"}</span>
+                        <span
+                          className={`shrink-0 border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${stateTone(row.state)}`}
+                        >
+                          {row.state ?? "—"}
+                        </span>
                       </span>
+                    }
+                    defaultOpen={isFailed(row.state)}
+                  >
+                    {row.detail && (
+                      <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+                        {row.detail}
+                      </p>
                     )}
-                    {failedRow && row.fix && (
-                      <button
-                        type="button"
-                        onClick={() => setExpanded((prev) => ({ ...prev, [index]: !isOpen }))}
-                        aria-expanded={isOpen}
-                        className="font-mono text-[10px] uppercase tracking-[0.12em] text-copper"
-                      >
-                        {isOpen ? "hide fix" : "show fix"}
-                      </button>
+                    {row.fix ? (
+                      <pre className="mt-2 whitespace-pre-wrap break-words border border-rule bg-panel2 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
+                        {row.fix}
+                      </pre>
+                    ) : (
+                      !row.detail && (
+                        <p className="font-mono text-[11px] text-faint">Nothing further recorded.</p>
+                      )
                     )}
-                  </div>
-                  {failedRow && row.fix && isOpen && (
-                    <pre className="mb-3 whitespace-pre-wrap break-words border border-rule bg-panel2 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
-                      {row.fix}
-                    </pre>
-                  )}
+                  </Disclosure>
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          </Disclosure>
         )}
       </Panel>
 
