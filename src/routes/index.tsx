@@ -101,6 +101,12 @@ function SignIn() {
             {message.text}
           </p>
         )}
+
+        <footer className="mt-8 border-t border-rule pt-4">
+          <p className="font-mono text-[11px] leading-relaxed text-faint">
+            Sign in · private instance, one address only
+          </p>
+        </footer>
       </div>
     </div>
   );
