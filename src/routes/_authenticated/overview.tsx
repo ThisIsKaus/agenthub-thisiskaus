@@ -440,48 +440,42 @@ function OverviewPage() {
         )}
       </section>
 
-      <NeedsYou
-        live={live}
-        items={localDigest?.items ?? []}
-        counts={{
-          items: Number(digest.items ?? 0),
-          flags: Number(digest.flags ?? 0),
-          tasks: Number(digest.tasks ?? 0),
-        }}
-        age={age}
-      />
-
-      <Panel title="Where work goes">
-        <div className="space-y-2">
-          <Lane
-            tone="ok"
-            name="Local"
-            detail={residentNames.slice(0, 3).join(", ") || "brain, coder, embeddings, all S3 work"}
-            cost="$0, unlimited"
+      <details className="border border-rule bg-panel">
+        <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.14em] text-faint hover:text-copper">
+          The whole board · {age ?? "routing map"}
+        </summary>
+        <div className="border-t border-rule px-5 py-6">
+          <BoardDiagram
+            zones={zones}
+            caption={
+              live
+                ? `Read from the machine at ${clockOf(state?.updated_at ?? new Date().toISOString())}`
+                : `Local figures need the machine · ${provenance}`
+            }
           />
-          <Lane
-            tone="ok"
-            name="Subscription"
-            detail="Claude Code, Claude app, ChatGPT review"
-            cost="$0 marginal"
-          />
-          <Lane
-            tone="copper"
-            name="Metered"
-            detail={`${cloudAliases ?? "—"} router aliases, scheduled and programmatic only`}
-            cost={`$${mtd.toFixed(2)} this month`}
-          />
+          <div className="mt-4 space-y-2">
+            <Lane
+              tone="ok"
+              name="Local"
+              detail={residentNames.slice(0, 3).join(", ") || "brain, coder, embeddings, all S3 work"}
+              cost="$0, unlimited"
+            />
+            <Lane
+              tone="ok"
+              name="Subscription"
+              detail="Claude Code, Claude app, ChatGPT review"
+              cost="$0 marginal"
+            />
+            <Lane
+              tone="copper"
+              name="Metered"
+              detail={`${cloudAliases ?? "—"} router aliases, scheduled and programmatic only`}
+              cost={`$${mtd.toFixed(2)} this month`}
+            />
+          </div>
         </div>
-      </Panel>
+      </details>
 
-      <HealthStrip
-        passed={passed}
-        warnings={warnings}
-        failed={failed}
-        at={health.at}
-        tone={healthTone}
-        live={live}
-      />
 
       <details className="border border-rule bg-panel">
         <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.14em] text-faint hover:text-copper">
