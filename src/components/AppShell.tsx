@@ -98,7 +98,8 @@ function PlanePill() {
 
 
 export function AppShell() {
-  const { data } = useHubState();
+  const hub = useHubStateValue();
+  const { data, provenance } = hub;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const online = useOnline();
