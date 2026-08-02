@@ -189,7 +189,7 @@ function ModelsPage() {
     enabled: local.available,
     staleTime: 5 * 60_000,
     retry: false,
-    queryFn: () => local.get<FailoverRung[]>("/api/failover").catch(() => [] as FailoverRung[]),
+    queryFn: () => local.get<unknown>("/api/failover").catch(() => null),
   });
 
 
