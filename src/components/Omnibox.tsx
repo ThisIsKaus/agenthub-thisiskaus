@@ -17,6 +17,14 @@ export type Intent = "capture" | "ask" | "build" | "search";
 
 const INTENTS: Intent[] = ["capture", "ask", "build", "search"];
 
+/**
+ * Build is opt-in and never auto-selected. Capture and build are not separable
+ * from the text — "the cost page should show a weekly average" is both a thought
+ * to record and a change to make, and only the operator knows which. Build is the
+ * only intent that writes, so auto-selecting it started work nobody asked for.
+ */
+const CLASSIFIED: Intent[] = ["capture", "ask", "search"];
+
 const EXAMPLES: Record<Intent, string[]> = {
   capture: [
     "capture · Neelam wants the envelope report weekly, not monthly",
