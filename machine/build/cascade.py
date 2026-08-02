@@ -74,9 +74,16 @@ def sh(cmd, timeout=600, cwd=REPO):
 def load_skills(names):
     out = []
     for n in names:
-        p = SKILLS / f"{n}.md"
+        # Skills are spec-format directories now: <name>/SKILL.md, not <name>.md. The flat
+        # form was silently missing after the conversion, so the cascade loaded no context
+        # at all — `if p.exists()` turned a structural break into a quiet no-op.
+        p = SKILLS / n / "SKILL.md"
+        if not p.exists():
+            p = SKILLS / f"{n}.md"
         if p.exists():
             out.append(p.read_text())
+        else:
+            print(f"  ! skill not found: {n}")
     return "\n\n---\n\n".join(out)
 
 

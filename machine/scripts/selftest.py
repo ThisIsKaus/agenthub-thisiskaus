@@ -491,6 +491,28 @@ def hygiene():
         sk = json.loads(out)
     except Exception:
         sk = {}
+    # Test what the consumers get, not what the directory holds. Both consumers broke
+    # silently when skills became directories: the endpoint listed *.md and found none, the
+    # cascade read <name>.md and loaded nothing. Structure changed; nothing checked.
+    api = sh("curl -sf -m 8 http://127.0.0.1:4100/api/skills", 20)
+    n_api = 0
+    try:
+        n_api = json.loads(api).get("count", 0)
+    except Exception:
+        pass
+    rec(g, "skills endpoint serves them", n_api >= 40, f"{n_api} returned by the API",
+        "the endpoint is not reading spec-format directories")
+
+    loaded = sh(f"cd {H}/console && /opt/homebrew/bin/uv run python -c "
+                f"\"import sys;sys.path.insert(0,'{H}/build');import cascade;"
+                f"print(len(cascade.load_skills(['agenthub-overview'])))\"", 90)
+    try:
+        n_load = int(loaded.strip().splitlines()[-1])
+    except Exception:
+        n_load = 0
+    rec(g, "cascade loads skill text", n_load > 200, f"{n_load} chars for one skill",
+        "the cascade is building with no project context")
+
     rec(g, "skills pass the spec", sk.get("failed") == 0,
         f"{len(sk.get('skills', []))} skills, {sk.get('failed', '?')} failed", "skills lint")
     rec(g, "discovery budget", (sk.get("discovery_tokens") or 0) <= (sk.get("budget") or 6000),
