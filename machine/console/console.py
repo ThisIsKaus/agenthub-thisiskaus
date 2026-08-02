@@ -382,10 +382,6 @@ def ask(q: str = Form(...), model: str = Form("local-brain"), k: int = Form(5)):
                             'distance': round(1 - _h['rrf'] * 60, 3),
                             'found_by': _h['found_by']})
             context += '\n--- ' + _h['file'] + '\n' + _h['text'][:1500] + '\n'
-        for _, r in rows.iterrows():
-            sources.append({"file": Path(r["path"]).name, "path": r["path"],
-                            "distance": round(float(r["_distance"]), 3)})
-            context += f"\n--- {Path(r['path']).name}\n{r['text'][:1500]}\n"
     except Exception as ex:
         sources.append({"file": f"retrieval unavailable: {type(ex).__name__}", "distance": 0})
 

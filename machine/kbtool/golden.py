@@ -26,18 +26,40 @@ SYSTEM = ("Write ONE question that this document uniquely answers. It must be sp
           "No preamble, no quotes, just the question.")
 
 
+SCHEMA = {"type": "json_schema", "json_schema": {"name": "q", "strict": True, "schema": {
+    "type": "object", "properties": {"question": {"type": "string"}},
+    "required": ["question"], "additionalProperties": False}}}
+
+REJECT = re.compile(r"(draft|refined|better|too broad|generic|option \d|version \d|"
+                    r"^\s*[*\-\d]\s|alternatively|or maybe|let me)", re.I)
+
+
+SCHEMA = {"type": "json_schema", "json_schema": {"name": "q", "strict": True, "schema": {
+    "type": "object", "properties": {"question": {"type": "string"}},
+    "required": ["question"], "additionalProperties": False}}}
+
+REJECT = re.compile(r"(draft|refined|better|too broad|generic|option \d|version \d|"
+                    r"^\s*[*\-\d]\s|alternatively|or maybe|let me)", re.I)
+
+
 def gen(text, name):
-    body = {"model": "local-triage", "temperature": 0, "max_tokens": 400,
+    """Constrained output. Unconstrained, the 4B emitted its deliberation instead of a
+    question — 'Draft 2: ...', 'Refined for owner asking: ...' — and the golden set became
+    an instrument that measured nothing. A schema is cheaper than discovering that twice."""
+    body = {"model": "local-triage", "temperature": 0, "max_tokens": 2000,
+            "response_format": SCHEMA,
             "messages": [{"role": "system", "content": SYSTEM},
                          {"role": "user", "content": f"File: {name}\n\n{text[:1800]}"}]}
     try:
         r = requests.post(ROUTER, json=body, timeout=180)
         m = r.json()["choices"][0]["message"]
-        q = ((m.get("content") or "").strip() or (m.get("reasoning_content") or "").strip())
-        q = q.split("\n")[-1].strip().strip('"').strip()
-        return q if 15 < len(q) < 200 and "?" in q else None
+        raw = (m.get("content") or "") or (m.get("reasoning_content") or "")
+        q = json.loads(re.search(r"\{.*\}", raw, re.S).group(0))["question"].strip()
     except Exception:
         return None
+    if not (20 < len(q) < 180) or "?" not in q or REJECT.search(q):
+        return None
+    return q
 
 
 def main():
