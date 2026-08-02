@@ -406,22 +406,6 @@ function OverviewPage() {
         )}
       </Panel>
 
-      <section aria-label="The whole board" className="border-t border-rule pt-6">
-        <SectionHead title="The whole board" note={age} />
-        <p className="mb-4 max-w-[74ch] text-sm leading-relaxed text-muted-foreground">
-          Four zones. The browser is hosted; everything that matters is not. The dashed boundary is
-          the security perimeter — nothing crosses it inbound, ever. Figures fill in from the machine
-          when this browser is on it, and read “—” when it cannot answer.
-        </p>
-        <BoardDiagram
-          zones={zones}
-          caption={
-            live
-              ? `Read from the machine at ${clockOf(state?.updated_at ?? new Date().toISOString())}`
-              : `Local figures need the machine · ${provenance}`
-          }
-        />
-      </section>
 
       <section aria-label="The board in numbers" className="border-t border-rule pt-6">
         <SectionHead title="The board in numbers" note="health · corpus · evals · cost · factory" />
