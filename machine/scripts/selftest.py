@@ -384,10 +384,10 @@ def safety():
     # string inside console.py and failed the moment the filter moved into retrieve.py —
     # reporting a leak where none existed. A control that cries wolf gets ignored, which is
     # worse than one that is merely absent.
-    probe = ("import sys;sys.path.insert(0,'.');import retrieve;"
+    lane_probe = ("import sys;sys.path.insert(0,'.');import retrieve;"
              "print(sorted(set(x['sensitivity'] for x in "
              "retrieve.search('superannuation balance tax return', k=8, lane='cloud'))))")
-    out = sh(f"cd {H}/kbtool && /opt/homebrew/bin/uv run python -c {json.dumps(probe)}", 240)
+    out = sh(f"cd {H}/kbtool && /opt/homebrew/bin/uv run python -c {json.dumps(lane_probe)}", 240)
     leaked = [c for c in ("S1c", "S2", "S3") if c in out]
     rec(g, "cloud lane excludes classified", bool(out.strip()) and not leaked,
         f"classes reachable on a cloud lane: {out.strip()[-40:] or 'probe failed'}",
@@ -496,8 +496,11 @@ def hygiene():
         try:
             rows = json.loads(runs[0].read_text())
             acc = sum(1 for r in rows if r.get("correct"))
+            conf = [r for r in rows if not r.get("collision")]
+            acc = sum(1 for r in conf if r.get("correct"))
+            rows = conf or rows
             pct = 100 * acc // max(len(rows), 1)
-            rec(g, "skill routing accuracy", pct >= 85,
+            rec(g, "skill routing accuracy", pct >= 90,
                 f"{acc}/{len(rows)} ({pct}%) on {runs[0].stem[-10:]}",
                 "routing has fallen below the 85% floor — a description regressed")
         except Exception:

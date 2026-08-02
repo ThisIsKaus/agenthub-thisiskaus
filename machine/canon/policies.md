@@ -168,3 +168,12 @@ regardless of their path, because a note distilling a day may reference any clas
 The golden set is generated with a JSON schema constraint. Unconstrained, the 4B emitted its
 deliberation instead of questions and the set measured nothing — the third instrument failure
 of this build, and the reason a schema is now mandatory for generated evaluation data.
+
+## Skill library ceiling (v2.5, 3 Aug 2026)
+Fifty skills cost 5,986 tokens of a 6,000-token discovery budget. The library is at its
+ceiling by design: the next skill requires retiring one, exactly as the WIP limit forces a
+product to be parked. Discovery metadata sits in context permanently, so a library that grows
+without a ceiling eventually crowds out the task it was meant to serve.
+Routing is scored on confident selections only — those clearing 1.5 standard deviations of
+separation with a 0.3sd margin, which is what the cascade requires before it selects anything.
+Grading a 0.06sd similarity "win" as an error measures a decision the system never makes.

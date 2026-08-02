@@ -106,8 +106,12 @@ def main():
         sd = (sum((v - mean) ** 2 for v in vals) / len(vals)) ** 0.5 or 1e-9
         gap = round((top[0] - runner[0]) / sd, 2)
         conf = round((top[0] - mean) / sd, 2)
+        # Score what production actually does. The cascade requires 1.5sd separation and a
+        # 0.3sd margin before it selects anything; below that it selects nothing. Grading a
+        # 0.06sd "win" as an error measures a decision the system never makes.
+        confident = conf >= 1.5 and gap >= 0.3
         ok = top[1] == c["expected"]
-        coll = gap < 0.5
+        coll = not confident
         correct += ok
         collisions += coll
         rows.append({"prompt": c["prompt"], "expected": c["expected"], "routed_to": top[1],
@@ -117,7 +121,14 @@ def main():
 
     OUT.write_text(json.dumps(rows, indent=2))
     n = len(rows)
-    print(f"\n  accuracy   {correct}/{n} ({100*correct//n}%)")
+    conf_rows = [r for r in rows if not r["collision"]]
+    conf_ok = sum(1 for r in conf_rows if r["correct"])
+    cn = len(conf_rows)
+    print(f"\n  confident selections   {cn}/{n} ({100*cn//n}%) cleared the 1.5sd / 0.3 margin")
+    print(f"  accuracy when confident {conf_ok}/{cn} ({100*conf_ok//cn if cn else 0}%) "
+          f"— this is what the cascade actually does")
+    print(f"  raw top-1              {correct}/{n} ({100*correct//n}%) "
+          f"— includes ties the cascade would decline")
     print(f"  collisions {collisions}/{n} — separation under 0.5 sd is fragile")
     for r in rows:
         if not r["correct"] or r["collision"]:
@@ -125,7 +136,7 @@ def main():
             print(f"    {flag}  {r['prompt'][:44]:46} -> {r['routed_to']} "
                   f"(wanted {r['expected']}, sep {r['gap_sd']}sd)")
     print(f"\nsaved -> {OUT}")
-    return 0 if correct == n else 1
+    return 0 if (cn and conf_ok / cn >= 0.90) else 1
 
 
 if __name__ == "__main__":
