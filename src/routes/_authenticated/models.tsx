@@ -118,14 +118,19 @@ const LADDER: { rung: number; name: string }[] = [
   { rung: 5, name: "all local down" },
 ];
 
+type LadderRow = {
+  rung: number;
+  name: string;
+  tested: string | null;
+  ok: boolean | null;
+  detail?: string;
+};
+
 /**
  * Accepts a list, a `{rungs: []}` envelope, or an object keyed by rung number,
  * and always returns five rows. A rung never tested says so rather than vanishing.
  */
-function normaliseLadder(raw: unknown): Required<Pick<FailoverRung, "name">> &
-  FailoverRung extends never
-  ? never
-  : { rung: number; name: string; tested: string | null; ok: boolean | null; detail?: string }[] {
+function normaliseLadder(raw: unknown): LadderRow[] {
   let rows: FailoverRung[] = [];
   if (Array.isArray(raw)) rows = raw as FailoverRung[];
   else if (raw && typeof raw === "object") {
