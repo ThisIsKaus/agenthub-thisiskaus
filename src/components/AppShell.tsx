@@ -121,9 +121,9 @@ export function AppShell() {
       <header className="sticky top-0 z-20 border-b border-rule bg-background/95 backdrop-blur">
         <div className="page-width">
           <div className="flex items-baseline justify-between gap-4 py-3">
-            <h1 className="font-serif text-2xl leading-none text-paper">
+            <span className="font-serif text-2xl leading-none text-paper">
               AgentHub
-            </h1>
+            </span>
             <div className="flex items-center gap-3">
               <CommandHint />
               <PlanePill />
