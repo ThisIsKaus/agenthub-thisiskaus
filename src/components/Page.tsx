@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
  * so no later change can invent its own layout.
  *
  *   container : 86vw (7% clear each side), max 1240px, centred — never full-bleed
- *               below 900px it becomes 92vw
+ *               the same 86vw applies at every breakpoint, mobile included
  *   title     : Instrument Serif 31px, sentence case
  *   subtitle  : secondary text, capped at 72ch
  *   children  : stacked with 56px between major sections
