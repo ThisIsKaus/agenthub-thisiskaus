@@ -244,6 +244,12 @@ def memory():
     dists = [float(m) for m in re.findall(r"dist ([\d.]+)", out)]
     gold = H / "evals" / "retrieval_golden.jsonl"
     n_gold = len([l for l in gold.read_text().splitlines() if l.strip()]) if gold.exists() else 0
+    out3 = sh(f"/usr/bin/python3 {H}/scripts/intent_eval.py 2>/dev/null | head -1", 120)
+    m3 = re.search(r"\((\d+)%\)", out3)
+    rec(g, "omnibox intent accuracy", bool(m3) and int(m3.group(1)) >= 95,
+        out3.strip()[-30:] or "not scored",
+        "below 95% the omnibox is friction — revert to separate inputs", warn=True)
+
     rec(g, "golden set sized", n_gold >= 80, f"{n_gold} questions",
         "cd ~/AgentHub/kbtool && uv run python golden.py --build 100")
     out = sh(f"cd {H}/kbtool && /opt/homebrew/bin/uv run python retrieve.py "
