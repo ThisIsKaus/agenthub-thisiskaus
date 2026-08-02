@@ -1,8 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Disclosure } from "@/components/Disclosure";
 import { Panel } from "@/components/AppShell";
-import { Empty, PageIntro, Skeleton } from "@/components/data";
+import { Page } from "@/components/Page";
+
+import { Empty, Skeleton } from "@/components/data";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { useOnline } from "@/hooks/use-online";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
@@ -36,7 +39,11 @@ export const Route = createFileRoute("/_authenticated/inbox")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: InboxPage,
+  component: () => (
+    <Page title="Inbox" subtitle="One stream in, four exits out: dropped, filed as context, written up as a skill, or opened as a canvas." footer="Inbox · captures queue on the device and deliver when the machine polls">
+      <InboxPage />
+    </Page>
+  ),
 });
 
 type DigestItem = { flag?: string; src?: string; cls?: string; ent?: string; sen?: string; one?: string };
@@ -57,13 +64,6 @@ const STATE_STYLE: Record<CaptureRow["state"], string> = {
 function InboxPage() {
   return (
     <div className="space-y-4">
-      <PageIntro title="Inbox">
-        One stream. A thought you type and a line the machine read overnight enter the same place,
-        and each leaves by exactly one of four exits: dropped, filed as context, written up as a
-        skill, or opened as a canvas. Nothing sits here undecided — an inbox that only accumulates
-        is a list, not a system. Capture works with the machine asleep; the overnight stream and
-        every exit read material that never leaves it.
-      </PageIntro>
       <CaptureLane />
       <TriageLane />
     </div>
@@ -333,6 +333,15 @@ function TriageLane() {
         ) : items.length === 0 ? (
           <Empty>Nothing was read overnight.</Empty>
         ) : (
+          <Disclosure
+            defaultOpen
+            summary={
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+                {items.length} read · {items.filter((item) => item.flag).length} flagged ·{" "}
+                {open} undecided
+              </span>
+            }
+          >
           <ul>
             {items.map((item, index) => {
               const flagged = Boolean(item.flag);
@@ -404,6 +413,8 @@ function TriageLane() {
               );
             })}
           </ul>
+          </Disclosure>
+
         )}
       </Panel>
 

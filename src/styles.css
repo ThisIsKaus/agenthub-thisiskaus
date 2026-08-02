@@ -66,7 +66,7 @@
   --rule: #26262a;
   --copper: #c8744a;
   --paper: #ecebe8;
-  --faint: #5e5e66;
+  --faint: #6e6e78;
   --ok: #7fa88c;
   --watch: #c9a227;
   --risk: #b5544a;
@@ -106,19 +106,65 @@
     color-scheme: dark;
   }
 
+  table,
+  svg text,
+  .font-mono,
+  [class*="font-mono"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-weight: 300;
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
+
 
   h1,
   h2,
   h3 {
     font-family: var(--font-serif);
     font-weight: 400;
+  }
+}
+
+/* The single page frame: 86vw — 7% clear each side at every viewport. */
+@utility page-container {
+  width: 86vw;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-block: 40px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+@utility page-width {
+  width: 86vw;
+  max-width: 1240px;
+  margin-inline: auto;
+}
+
+@utility page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+@media (max-width: 900px) {
+  .page-container,
+  .page-width {
+    width: 86vw;
+    padding-block: 28px 40px;
+    gap: 40px;
+  }
+  .page-stack {
+    gap: 40px;
   }
 }
 

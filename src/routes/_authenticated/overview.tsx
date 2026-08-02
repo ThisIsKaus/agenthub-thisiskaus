@@ -1,16 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { Page } from "@/components/Page";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
-import { Empty, FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
+import { FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
 import { MachineStatePanel } from "@/components/MachineStatePanel";
+import { DecisionStream } from "@/components/DecisionStream";
+import { Omnibox } from "@/components/Omnibox";
+
 import { AboutSystemBody } from "@/components/AboutSystemBody";
 import { BoardDiagram, type Zone } from "@/components/BoardDiagram";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
 import { asPercent, modelName, num, useBoardTelemetry } from "@/hooks/use-board-telemetry";
 import { changesSince, snapshotOf, useLastSeen } from "@/lib/since";
-import { useLocal, isRefusal } from "@/lib/local-bridge";
-import { useJobDrawer } from "@/lib/job-drawer";
+import { useLocal } from "@/lib/local-bridge";
 import { clockOf, derivePlane } from "@/lib/machine-state";
 
 export const Route = createFileRoute("/_authenticated/overview")({
@@ -32,7 +34,11 @@ export const Route = createFileRoute("/_authenticated/overview")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: OverviewPage,
+  component: () => (
+    <Page title="Overview" subtitle="Where the machine stands right now, and what changed since you last looked." footer="Overview · local readings when the machine answers, published state otherwise">
+      <OverviewPage />
+    </Page>
+  ),
 });
 
 type DigestItem = { flag?: string; src?: string; cls?: string; ent?: string; sen?: string; one?: string };
@@ -367,23 +373,14 @@ function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      <header className="border-b border-rule pb-6">
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-copper">
-          Solution map · {new Date().toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })} ·{" "}
-          {live ? "measured on this machine" : "last published figures"}
-        </p>
-        <h1 className="mt-4 font-serif text-[clamp(2.4rem,9vw,3.6rem)] font-normal leading-[0.98] tracking-[-0.02em] text-paper">
-          AgentHub
-          <br />
-          <em className="not-italic text-copper italic">end to end</em>
-        </h1>
-        <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground">
-          One browser, one chip, one corpus. A question travels from a hosted page to a model running
-          on Apple silicon and back again — without a single byte leaving the machine.
-        </p>
-      </header>
+      <Omnibox />
 
       <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
+
+      <DecisionStream />
+
+
+
 
       <Panel title="Since you last looked">
         {!state ? (
@@ -413,22 +410,6 @@ function OverviewPage() {
         )}
       </Panel>
 
-      <section aria-label="The whole board" className="border-t border-rule pt-6">
-        <SectionHead title="The whole board" note={age} />
-        <p className="mb-4 max-w-[74ch] text-sm leading-relaxed text-muted-foreground">
-          Four zones. The browser is hosted; everything that matters is not. The dashed boundary is
-          the security perimeter — nothing crosses it inbound, ever. Figures fill in from the machine
-          when this browser is on it, and read “—” when it cannot answer.
-        </p>
-        <BoardDiagram
-          zones={zones}
-          caption={
-            live
-              ? `Read from the machine at ${clockOf(state?.updated_at ?? new Date().toISOString())}`
-              : `Local figures need the machine · ${provenance}`
-          }
-        />
-      </section>
 
       <section aria-label="The board in numbers" className="border-t border-rule pt-6">
         <SectionHead title="The board in numbers" note="health · corpus · evals · cost · factory" />
@@ -447,48 +428,42 @@ function OverviewPage() {
         )}
       </section>
 
-      <NeedsYou
-        live={live}
-        items={localDigest?.items ?? []}
-        counts={{
-          items: Number(digest.items ?? 0),
-          flags: Number(digest.flags ?? 0),
-          tasks: Number(digest.tasks ?? 0),
-        }}
-        age={age}
-      />
-
-      <Panel title="Where work goes">
-        <div className="space-y-2">
-          <Lane
-            tone="ok"
-            name="Local"
-            detail={residentNames.slice(0, 3).join(", ") || "brain, coder, embeddings, all S3 work"}
-            cost="$0, unlimited"
+      <details className="border border-rule bg-panel">
+        <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.14em] text-faint hover:text-copper">
+          The whole board · {age ?? "routing map"}
+        </summary>
+        <div className="border-t border-rule px-5 py-6">
+          <BoardDiagram
+            zones={zones}
+            caption={
+              live
+                ? `Read from the machine at ${clockOf(state?.updated_at ?? new Date().toISOString())}`
+                : `Local figures need the machine · ${provenance}`
+            }
           />
-          <Lane
-            tone="ok"
-            name="Subscription"
-            detail="Claude Code, Claude app, ChatGPT review"
-            cost="$0 marginal"
-          />
-          <Lane
-            tone="copper"
-            name="Metered"
-            detail={`${cloudAliases ?? "—"} router aliases, scheduled and programmatic only`}
-            cost={`$${mtd.toFixed(2)} this month`}
-          />
+          <div className="mt-4 space-y-2">
+            <Lane
+              tone="ok"
+              name="Local"
+              detail={residentNames.slice(0, 3).join(", ") || "brain, coder, embeddings, all S3 work"}
+              cost="$0, unlimited"
+            />
+            <Lane
+              tone="ok"
+              name="Subscription"
+              detail="Claude Code, Claude app, ChatGPT review"
+              cost="$0 marginal"
+            />
+            <Lane
+              tone="copper"
+              name="Metered"
+              detail={`${cloudAliases ?? "—"} router aliases, scheduled and programmatic only`}
+              cost={`$${mtd.toFixed(2)} this month`}
+            />
+          </div>
         </div>
-      </Panel>
+      </details>
 
-      <HealthStrip
-        passed={passed}
-        warnings={warnings}
-        failed={failed}
-        at={health.at}
-        tone={healthTone}
-        live={live}
-      />
 
       <details className="border border-rule bg-panel">
         <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.14em] text-faint hover:text-copper">
@@ -529,139 +504,3 @@ function Lane({
   );
 }
 
-function NeedsYou({
-  live,
-  items,
-  counts,
-  age,
-}: {
-  live: boolean;
-  items: DigestItem[];
-  counts: { items: number; flags: number; tasks: number };
-  age: string | null;
-}) {
-  if (!live) {
-    return (
-      <Panel title="Needs you">
-        <p className="font-mono text-[12px] leading-relaxed text-paper">
-          {counts.items} triaged · {counts.flags} flagged · {counts.tasks} need you
-        </p>
-        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-          Item detail requires the machine. {age ? `Counts ${age}.` : ""}
-        </p>
-      </Panel>
-    );
-  }
-
-  const flagged = items.filter((item) => item.flag);
-
-  return (
-    <Panel title="Needs you">
-      {flagged.length === 0 ? (
-        <Empty>Nothing flagged today.</Empty>
-      ) : (
-        <ul>
-          {flagged.map((item, index) => (
-            <DigestRow key={`${item.src ?? "item"}-${index}`} item={item} />
-          ))}
-        </ul>
-      )}
-    </Panel>
-  );
-}
-
-const RESTRICTED = new Set(["S1c", "S2", "S3"]);
-
-function DigestRow({ item }: { item: DigestItem }) {
-  const local = useLocal();
-  const [note, setNote] = useState<string | null>(null);
-  const restricted = RESTRICTED.has(item.sen ?? "");
-
-  const correct = useCallback(async () => {
-    setNote("awaiting approval on the machine…");
-    try {
-      await local.post("/api/eval/correct", {
-        text: item.one ?? "",
-        cls: item.cls ?? "",
-        entity: item.ent ?? "",
-        sensitivity: item.sen ?? "",
-      });
-      setNote("correction recorded");
-    } catch (error) {
-      setNote(
-        isRefusal(error)
-          ? (error.message || "denied at the approval dialog")
-          : "the machine did not accept that correction",
-      );
-    }
-  }, [item, local]);
-
-  return (
-    <li className="border-t border-rule py-2.5 first:border-t-0">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-copper">
-          {item.sen ?? "S0"}
-        </span>
-        <span className="text-[13px] leading-relaxed text-paper">
-          {restricted ? `${item.cls ?? "item"} — classification only` : (item.one ?? item.cls ?? "item")}
-        </span>
-        <button
-          type="button"
-          onClick={() => void correct()}
-          className="ml-auto border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
-        >
-          Correct
-        </button>
-      </div>
-      {note && <p className="mt-1 font-mono text-[10px] text-faint">{note}</p>}
-    </li>
-  );
-}
-
-function HealthStrip({
-  passed,
-  warnings,
-  failed,
-  at,
-  tone,
-  live,
-}: {
-  passed: number;
-  warnings: number;
-  failed: number;
-  at: string | null | undefined;
-  tone: "ok" | "watch" | "risk";
-  live: boolean;
-}) {
-  const { runJob } = useJobDrawer();
-  const [running, setRunning] = useState(false);
-
-  const run = useCallback(() => {
-    setRunning(true);
-    void runJob("verify", "self-test", () => setRunning(false));
-  }, [runJob]);
-
-  const toneClass = tone === "risk" ? "text-risk" : tone === "watch" ? "text-watch" : "text-ok";
-
-  return (
-    <footer className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-rule pt-3">
-      <p className={`font-mono text-[11px] tabular-nums ${toneClass}`}>
-        {passed} checks passed · {warnings} warnings · {failed} failed
-        <span className="text-faint"> · {formatStamp(at)}</span>
-      </p>
-      {live && (
-        <button
-          type="button"
-          onClick={run}
-          disabled={running}
-          className="border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
-        >
-          {running ? "Running…" : "Run self-test"}
-        </button>
-      )}
-      {running && (
-        <span className="font-mono text-[10px] text-faint">streaming in the Jobs drawer…</span>
-      )}
-    </footer>
-  );
-}

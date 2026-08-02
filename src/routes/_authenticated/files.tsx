@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
@@ -24,9 +25,11 @@ export const Route = createFileRoute("/_authenticated/files")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <FilesPage />
-    </LocalOnly>
+    <Page title="Files" subtitle="Browse the allowlisted roots on the machine. Executable files are read-only by design." footer="Files · read over loopback, never copied to the cloud">
+      <LocalOnly>
+        <FilesPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 

@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocalOnly } from "@/components/LocalOnly";
-import { PageIntro } from "@/components/data";
 import { CanvasBlockCard } from "@/components/canvas/CanvasBlockCard";
 import { useReferenceCatalogue } from "@/lib/canvas-refs";
 import { useLocal } from "@/lib/local-bridge";
@@ -50,9 +50,11 @@ export const Route = createFileRoute("/_authenticated/canvas")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <CanvasPage />
-    </LocalOnly>
+    <Page title="Canvas" subtitle="A canvas is a project: think, ask the corpus, run the machine and ship from one document." footer="Canvas · drafts live on the machine under drafts/canvas">
+      <LocalOnly>
+        <CanvasPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 
@@ -492,12 +494,6 @@ function CanvasPage() {
 
   return (
     <div className="space-y-4" data-testid="canvas-page">
-      <PageIntro title="Canvas">
-        A canvas is a project. Thinking and shipping happen in the same document: ask the corpus,
-        run a machine job, keep notes, reference files, skills and tools by name, and move the
-        stage from idea to shipped as the work earns it — there is no second place to look. A
-        hand-over block is the single way anything leaves the machine, and only when you press it.
-      </PageIntro>
       <ProjectBar doc={doc} onChange={patchDoc} skills={skillNames} />
       <HarnessBoard doc={doc} />
 

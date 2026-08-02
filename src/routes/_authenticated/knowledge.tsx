@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Figure, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
+import { Disclosure } from "@/components/Disclosure";
 
 export const Route = createFileRoute("/_authenticated/knowledge")({
   head: () => ({
@@ -24,9 +26,11 @@ export const Route = createFileRoute("/_authenticated/knowledge")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <KnowledgePage />
-    </LocalOnly>
+    <Page title="Knowledge" subtitle="What the corpus holds and where each chunk came from." footer="Knowledge · corpus counts read live from the machine">
+      <LocalOnly>
+        <KnowledgePage />
+      </LocalOnly>
+    </Page>
   ),
 });
 
@@ -88,7 +92,14 @@ function KnowledgePage() {
         <Figure label="Documents" value={loading ? "—" : (stats?.documents?.toLocaleString() ?? "—")} />
       </div>
 
-      <Panel title="Sources">
+      <Panel title="Detail">
+        <Disclosure
+          summary={
+            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+              Sources by chunk count · {sources.length} indexed
+            </span>
+          }
+        >
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 6 }).map((_, index) => (
@@ -119,6 +130,7 @@ function KnowledgePage() {
             ))}
           </ul>
         )}
+        </Disclosure>
       </Panel>
 
       <Panel title="Ingest">

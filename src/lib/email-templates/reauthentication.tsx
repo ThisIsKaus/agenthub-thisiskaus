@@ -50,7 +50,7 @@ const h1 = {
 }
 const text = {
   fontSize: '14px',
-  color: '#5E5E66',
+  color: '#6E6E78',
   lineHeight: '1.6',
   margin: '0 0 24px',
 }

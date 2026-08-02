@@ -5,7 +5,7 @@ export type Tone = "paper" | "muted" | "faint" | "ok" | "copper" | "risk" | "wat
 export const HEX: Record<Tone, string> = {
   paper: "#ECEBE8",
   muted: "#8E8E96",
-  faint: "#5E5E66",
+  faint: "#6E6E78",
   ok: "#7FA88C",
   copper: "#C8744A",
   risk: "#B5544A",
@@ -168,7 +168,7 @@ export function BoardDiagram({ zones, caption }: { zones: Zone[]; caption: React
               <path d="M1 1L9 5L1 9" fill="none" stroke="#C8744A" strokeWidth="1.4" strokeLinecap="round" />
             </marker>
             <marker id="bd-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-              <path d="M1 1L9 5L1 9" fill="none" stroke="#5E5E66" strokeWidth="1.4" strokeLinecap="round" />
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#6E6E78" strokeWidth="1.4" strokeLinecap="round" />
             </marker>
           </defs>
 
@@ -193,14 +193,14 @@ export function BoardDiagram({ zones, caption }: { zones: Zone[]; caption: React
           <text x={300} y={176} fill="#C8744A" fontFamily="Geist Mono,monospace" fontSize={10.5}>
             loopback
           </text>
-          <Arrow d="M624 186 L684 186" colour="#5E5E66" marker="bd-f" />
-          <Arrow d="M813 288 L813 336" colour="#5E5E66" marker="bd-f" />
-          <Arrow d="M684 430 L626 430" colour="#5E5E66" marker="bd-f" />
-          <Arrow d="M352 430 L294 430" colour="#5E5E66" marker="bd-f" />
+          <Arrow d="M624 186 L684 186" colour="#6E6E78" marker="bd-f" />
+          <Arrow d="M813 288 L813 336" colour="#6E6E78" marker="bd-f" />
+          <Arrow d="M684 430 L626 430" colour="#6E6E78" marker="bd-f" />
+          <Arrow d="M352 430 L294 430" colour="#6E6E78" marker="bd-f" />
           <Arrow d="M940 200 L958 200" colour="#C8744A" marker="bd-c" dashed />
-          <Arrow d="M940 398 L958 398" colour="#5E5E66" marker="bd-f" dashed />
+          <Arrow d="M940 398 L958 398" colour="#6E6E78" marker="bd-f" dashed />
 
-          <text x={42} y={580} fill="#5E5E66" fontFamily="Geist Mono,monospace" fontSize={10.5}>
+          <text x={42} y={580} fill="#6E6E78" fontFamily="Geist Mono,monospace" fontSize={10.5}>
             Every arrow crossing the perimeter points outward. There is no inbound path, and no port to find.
           </text>
         </svg>

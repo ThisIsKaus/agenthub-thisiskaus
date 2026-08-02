@@ -121,12 +121,87 @@ export function serialiseSkill(skill: Skill): string {
 
 type SkillRow = { name?: string; path: string; modified?: string };
 
+type TreeListing = {
+  root?: string;
+  dirs?: ({ name?: string; path?: string } | string)[];
+  files?: ({ name?: string; path?: string } | string)[];
+};
+
+const asPath = (item: { path?: string; name?: string } | string) =>
+  typeof item === "string" ? item : (item.path ?? item.name ?? "");
+
+/**
+ * Not every machine build serves /api/skills. When it is absent the files are
+ * still there, so walk the tree for a skills folder rather than showing an
+ * empty list and calling it the truth.
+ */
+async function discoverSkillFiles(local: Local): Promise<SkillRow[]> {
+  const candidates = new Set<string>([
+    "skills",
+    "AgentHub/skills",
+    "drafts/skills",
+    "prompts/skills",
+  ]);
+  try {
+    const roots = await local.get<{ roots?: ({ path?: string; name?: string } | string)[] }>(
+      "/api/roots",
+    );
+    for (const root of roots.roots ?? []) {
+      const path = asPath(root);
+      if (!path) continue;
+      if (/skill/i.test(path)) candidates.add(path);
+      candidates.add(`${path.replace(/\/$/, "")}/skills`);
+    }
+  } catch {
+    // No roots endpoint — the fixed candidates below still stand a chance.
+  }
+
+  const found: SkillRow[] = [];
+  for (const dir of candidates) {
+    let listing: TreeListing;
+    try {
+      listing = await local.get<TreeListing>("/api/tree", { path: dir });
+    } catch {
+      continue;
+    }
+    const here = (listing.files ?? []).map(asPath).filter((p) => p.endsWith(".md"));
+    found.push(...here.map((path) => ({ path })));
+    // One level down: skills/<name>/SKILL.md is the Anthropic shape.
+    for (const sub of listing.dirs ?? []) {
+      const subPath = asPath(sub);
+      if (!subPath || /versions?$/i.test(subPath)) continue;
+      try {
+        const inner = await local.get<TreeListing>("/api/tree", { path: subPath });
+        found.push(
+          ...(inner.files ?? [])
+            .map(asPath)
+            .filter((p) => p.endsWith(".md"))
+            .map((path) => ({ path })),
+        );
+      } catch {
+        // Unreadable folder: skip it, keep what we have.
+      }
+    }
+    if (found.length) break;
+  }
+  return found;
+}
+
 export async function listSkills(local: Local): Promise<Skill[]> {
-  const listing = await local.get<{ skills?: (SkillRow | string)[] }>("/api/skills");
-  const rows = (listing.skills ?? []).map((item) =>
-    typeof item === "string" ? { path: item } : item,
+  let rows: SkillRow[] = [];
+  try {
+    const listing = await local.get<{ skills?: (SkillRow | string)[] }>("/api/skills");
+    rows = (listing.skills ?? []).map((item) =>
+      typeof item === "string" ? { path: item } : item,
+    );
+  } catch {
+    rows = [];
+  }
+  if (!rows.length) rows = await discoverSkillFiles(local);
+
+  const files = rows.filter(
+    (row) => row.path?.endsWith(".md") && !row.path.includes("/versions/"),
   );
-  const files = rows.filter((row) => row.path.endsWith(".md") && !row.path.includes("/versions/"));
   const loaded = await Promise.all(
     files.map(async (row) => {
       try {
@@ -141,6 +216,7 @@ export async function listSkills(local: Local): Promise<Skill[]> {
     .filter((skill): skill is Skill => skill !== null)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
+
 
 function versionDir(path: string) {
   const dir = path.slice(0, path.lastIndexOf("/"));

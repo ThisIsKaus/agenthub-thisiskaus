@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton, formatStamp } from "@/components/data";
@@ -24,9 +25,11 @@ export const Route = createFileRoute("/_authenticated/build")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <BuildPage />
-    </LocalOnly>
+    <Page title="Build" subtitle="State an intent; the cascade implements it and verifies before you see it." footer="Build · cascade runs on the machine">
+      <LocalOnly>
+        <BuildPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 
@@ -182,13 +185,6 @@ function BuildPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="font-serif text-3xl leading-none text-paper">Build</h1>
-        <p className="mt-2 max-w-[72ch] text-[13px] leading-relaxed text-muted-foreground">
-          State an intent; the cascade implements it.
-        </p>
-      </header>
-
       <Panel title="Intent">
         <ul className="space-y-1">
           {CASCADE_LINES.map((line) => (

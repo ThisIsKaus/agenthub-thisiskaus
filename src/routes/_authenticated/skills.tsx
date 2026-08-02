@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
-import { Empty, PageIntro, Skeleton, formatStamp } from "@/components/data";
+import { Empty, Skeleton, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import {
@@ -47,9 +48,11 @@ export const Route = createFileRoute("/_authenticated/skills")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <SkillsPage />
-    </LocalOnly>
+    <Page title="Skills" subtitle="Short instruction files the cascade loads only when a task needs them, mined, versioned and retired on a loop." footer="Skills · files read and written on the machine">
+      <LocalOnly>
+        <SkillsPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 
@@ -141,13 +144,6 @@ function SkillsPage() {
 
   return (
     <div className="space-y-4">
-      <PageIntro title="Skills">
-        A skill is one short instruction file that the cascade loads only when a task needs it —
-        a monolithic prompt decays as the work changes and crowds out the task itself. This page
-        runs the loop around them: mine candidates from what the machine already saw, review each
-        one, version every edit, and retire the ones that stop earning their place. Skill files
-        live on the machine and are read over loopback.
-      </PageIntro>
 
       <LoopBoard counts={counts} />
 

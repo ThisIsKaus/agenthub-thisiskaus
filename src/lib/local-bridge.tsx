@@ -9,7 +9,9 @@ import {
   type ReactNode,
 } from "react";
 
-const BASE = "http://127.0.0.1:4100";
+export const LOCAL_BASE = "http://127.0.0.1:4100";
+const BASE = LOCAL_BASE;
+
 const PROBE_TIMEOUT = 1500;
 const PROBE_INTERVAL = 60_000;
 
@@ -67,6 +69,48 @@ async function throwForStatus(response: Response): Promise<never> {
   throw new LocalError(text, response.status);
 }
 
+/**
+ * An HTTPS page reaching 127.0.0.1 crosses an address-space boundary, and
+ * Chromium refuses the request unless the caller names the space it is aiming
+ * at. 127.0.0.1 sits in `loopback`; the older `private` keyword now resolves to
+ * `local`, which Chromium rejects with "target IP address space of `local` yet
+ * the resource is in address space `loopback`". So try `loopback` first, fall
+ * back through the older spellings, and remember whichever the browser accepts.
+ */
+const ADDRESS_SPACES = ["loopback", "local", "private", null] as const;
+let acceptedSpace: (typeof ADDRESS_SPACES)[number] | undefined;
+
+function withSpace(init: RequestInit, space: string | null): RequestInit {
+  const base: RequestInit = { ...init, credentials: "omit" };
+  return space ? ({ ...base, targetAddressSpace: space } as RequestInit) : base;
+}
+
+export async function loopbackFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  if (acceptedSpace !== undefined) return fetch(url, withSpace(init, acceptedSpace));
+
+  let lastError: unknown;
+  for (const space of ADDRESS_SPACES) {
+    try {
+      const response = await fetch(url, withSpace(init, space));
+      acceptedSpace = space;
+      return response;
+    } catch (error) {
+      lastError = error;
+      // A body stream can only be sent once; retrying a POST with a consumed
+      // FormData is safe because FormData is re-readable, unlike a stream.
+      if (init.signal?.aborted) throw error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("loopback unreachable");
+}
+
+/** Kept for callers that only need the init object. */
+export function loopbackInit(init: RequestInit = {}): RequestInit {
+  return withSpace(init, acceptedSpace ?? "loopback");
+}
+
+
+
 async function localGet<T = unknown>(
   path: string,
   query?: Record<string, string | number | undefined>,
@@ -77,7 +121,7 @@ async function localGet<T = unknown>(
       if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
     }
   }
-  const response = await fetch(url.toString(), { credentials: "omit" });
+  const response = await loopbackFetch(url.toString());
   if (!response.ok) await throwForStatus(response);
   return (await response.json()) as T;
 }
@@ -92,9 +136,8 @@ async function localPost<T = unknown>(
     if (value === undefined || value === null) continue;
     body.append(key, value instanceof Blob ? value : String(value));
   }
-  const response = await fetch(new URL(path, BASE).toString(), {
+  const response = await loopbackFetch(new URL(path, BASE).toString(), {
     method: "POST",
-    credentials: "omit",
     body,
   });
   if (!response.ok) await throwForStatus(response);
@@ -130,8 +173,7 @@ export function LocalBridgeProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT);
     try {
-      const response = await fetch(`${BASE}/api/capabilities`, {
-        credentials: "omit",
+      const response = await loopbackFetch(`${BASE}/api/capabilities`, {
         signal: controller.signal,
       });
       if (!response.ok) throw new Error(String(response.status));
