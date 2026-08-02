@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
@@ -32,7 +33,11 @@ export const Route = createFileRoute("/_authenticated/overview")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: OverviewPage,
+  component: () => (
+    <Page title="Overview" subtitle="Where the machine stands right now, and what changed since you last looked." footer="Overview · local readings when the machine answers, published state otherwise">
+      <OverviewPage />
+    </Page>
+  ),
 });
 
 type DigestItem = { flag?: string; src?: string; cls?: string; ent?: string; sen?: string; one?: string };
@@ -367,22 +372,6 @@ function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      <header className="border-b border-rule pb-6">
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-copper">
-          Solution map · {new Date().toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })} ·{" "}
-          {live ? "measured on this machine" : "last published figures"}
-        </p>
-        <h1 className="mt-4 font-serif text-[clamp(2.4rem,9vw,3.6rem)] font-normal leading-[0.98] tracking-[-0.02em] text-paper">
-          AgentHub
-          <br />
-          <em className="not-italic text-copper italic">end to end</em>
-        </h1>
-        <p className="mt-4 max-w-[62ch] text-[15px] leading-relaxed text-muted-foreground">
-          One browser, one chip, one corpus. A question travels from a hosted page to a model running
-          on Apple silicon and back again — without a single byte leaving the machine.
-        </p>
-      </header>
-
       <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
 
       <Panel title="Since you last looked">
@@ -644,7 +633,7 @@ function HealthStrip({
   const toneClass = tone === "risk" ? "text-risk" : tone === "watch" ? "text-watch" : "text-ok";
 
   return (
-    <footer className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-rule pt-3">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-rule pt-3">
       <p className={`font-mono text-[11px] tabular-nums ${toneClass}`}>
         {passed} checks passed · {warnings} warnings · {failed} failed
         <span className="text-faint"> · {formatStamp(at)}</span>
@@ -662,6 +651,6 @@ function HealthStrip({
       {running && (
         <span className="font-mono text-[10px] text-faint">streaming in the Jobs drawer…</span>
       )}
-    </footer>
+    </div>
   );
 }

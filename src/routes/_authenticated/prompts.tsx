@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
@@ -18,9 +19,11 @@ export const Route = createFileRoute("/_authenticated/prompts")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <PromptsPage />
-    </LocalOnly>
+    <Page title="Prompts" subtitle="The instruction files behind triage and the cascade. A change is unverified until it is re-scored." footer="Prompts · edited on the machine, versioned on save">
+      <LocalOnly>
+        <PromptsPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 

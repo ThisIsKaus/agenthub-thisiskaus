@@ -30,7 +30,7 @@ export function JobDrawer() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-rule bg-panel">
-      <div className="mx-auto w-full max-w-[1100px] px-4">
+      <div className="page-width">
         <button
           type="button"
           onClick={() => setOpen(!open)}

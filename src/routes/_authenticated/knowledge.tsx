@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Figure, Skeleton } from "@/components/data";
@@ -24,9 +25,11 @@ export const Route = createFileRoute("/_authenticated/knowledge")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <KnowledgePage />
-    </LocalOnly>
+    <Page title="Knowledge" subtitle="What the corpus holds and where each chunk came from." footer="Knowledge · corpus counts read live from the machine">
+      <LocalOnly>
+        <KnowledgePage />
+      </LocalOnly>
+    </Page>
   ),
 });
 

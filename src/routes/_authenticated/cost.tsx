@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
 import { Empty, Figure, FigureSkeleton, Row, Skeleton, formatStamp } from "@/components/data";
@@ -23,7 +24,11 @@ export const Route = createFileRoute("/_authenticated/cost")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: CostPage,
+  component: () => (
+    <Page title="Cost" subtitle="Metered spend only — local inference and prepaid subscriptions carry the daily load at zero marginal cost." footer="Cost · published figures from the machine">
+      <CostPage />
+    </Page>
+  ),
 });
 
 type Model = string | { id?: string; name?: string; alias?: string; tps?: number };

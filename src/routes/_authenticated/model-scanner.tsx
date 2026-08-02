@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page } from "@/components/Page";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
@@ -27,9 +28,11 @@ export const Route = createFileRoute("/_authenticated/model-scanner")({
     ],
   }),
   component: () => (
-    <LocalOnly>
-      <ScannerPage />
-    </LocalOnly>
+    <Page title="Scanner" subtitle="Measure a candidate model against the lane it would serve before anything is promoted." footer="Scanner · benchmarks run on the machine">
+      <LocalOnly>
+        <ScannerPage />
+      </LocalOnly>
+    </Page>
   ),
 });
 
