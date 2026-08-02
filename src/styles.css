@@ -106,6 +106,10 @@
     color-scheme: dark;
   }
 
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -119,6 +123,34 @@
   h3 {
     font-family: var(--font-serif);
     font-weight: 400;
+  }
+}
+
+/* The single page frame: 86vw with 7% clear each side, 92vw below 900px. */
+@utility page-container {
+  width: 86vw;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-block: 40px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+@utility page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+@media (max-width: 900px) {
+  .page-container {
+    width: 92vw;
+    padding-block: 28px 40px;
+    gap: 40px;
+  }
+  .page-stack {
+    gap: 40px;
   }
 }
 
