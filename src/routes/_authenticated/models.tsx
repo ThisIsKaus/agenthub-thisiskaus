@@ -135,12 +135,16 @@ function ModelsPage() {
     queryFn: () => local.get<ModelsData>("/api/models"),
   });
 
+  // Not every machine build exposes the ladder. A missing endpoint is an
+  // absence, not a fault: ask once, keep quiet, and render the empty state.
   const failover = useQuery({
     queryKey: ["failover"],
     enabled: local.available,
-    staleTime: 60_000,
-    queryFn: () => local.get<FailoverRung[]>("/api/failover"),
+    staleTime: 5 * 60_000,
+    retry: false,
+    queryFn: () => local.get<FailoverRung[]>("/api/failover").catch(() => [] as FailoverRung[]),
   });
+
 
   const loading = models.isLoading;
   const failed = !loading && models.error !== null;
