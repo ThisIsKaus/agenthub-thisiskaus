@@ -237,9 +237,12 @@ def memory():
     out = sh(f"{H}/scripts/kb 'autonomy tiers and what requires approval'", timeout=120)
     hits = out.count("--- ")
     rec(g, "KB retrieval", hits >= 1, f"{hits} results", "ingest documents, then retry")
-    rec(g, "KB ranks correctly", "policies.md" in out.split("\n")[0] if out else False,
-        out.split("\n")[0][:90] if out else "no output",
-        "the top hit for a policy question should be policies.md")
+    # Sessions and digests are in the index now, so a conversation about a policy can
+    # legitimately outrank the policy file. Assert relevance, not a specific filename.
+    top = out.split("\n")[0] if out else ""
+    rec(g, "KB ranks relevantly", any(k in out[:400].lower() for k in
+                                      ("policies", "canon", "autonomy", "approval")),
+        top[:90] or "no output", "retrieval returned nothing about the query subject")
 
     dists = [float(m) for m in re.findall(r"dist ([\d.]+)", out)]
     gold = H / "evals" / "retrieval_golden.jsonl"
@@ -377,12 +380,18 @@ def safety():
     # Test the path a user actually takes, not just the mechanism underneath it.
     code, body = http("http://127.0.0.1:4100/api/ask", None, timeout=8)
     src = (H / "console" / "console.py").read_text() if (H / "console" / "console.py").exists() else ""
-    m = re.search(r"def ask\(.*?\n(?=@app)", src, re.S)
-    ask_body = m.group(0) if m else ""
-    rec(g, "ask path filters cloud lanes",
-        "sensitivity NOT IN" in ask_body and 'model.startswith("cloud-")' in ask_body,
-        "present" if "sensitivity NOT IN" in ask_body else "MISSING — S3 could reach a metered lane",
-        "restore the lane filter inside the ask endpoint, not only in lane_test.py")
+    # Test the behaviour, not the implementation. This check previously matched a literal
+    # string inside console.py and failed the moment the filter moved into retrieve.py —
+    # reporting a leak where none existed. A control that cries wolf gets ignored, which is
+    # worse than one that is merely absent.
+    probe = ("import sys;sys.path.insert(0,'.');import retrieve;"
+             "print(sorted(set(x['sensitivity'] for x in "
+             "retrieve.search('superannuation balance tax return', k=8, lane='cloud'))))")
+    out = sh(f"cd {H}/kbtool && /opt/homebrew/bin/uv run python -c {json.dumps(probe)}", 240)
+    leaked = [c for c in ("S1c", "S2", "S3") if c in out]
+    rec(g, "cloud lane excludes classified", bool(out.strip()) and not leaked,
+        f"classes reachable on a cloud lane: {out.strip()[-40:] or 'probe failed'}",
+        "S1c, S2 or S3 reached a cloud lane — this is the control that must never fail")
 
     s, ep = probe(f"{HOME}/.ssh/id_ed25519")
     rec(g, "console path allowlist", s == 403, f"HTTP {s} via {ep} (403 expected)",

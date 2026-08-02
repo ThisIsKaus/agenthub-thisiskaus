@@ -12,7 +12,17 @@ expensive error, because it starts work.
 """
 import json, sys
 from pathlib import Path
-import requests
+import urllib.request as _u
+
+
+def post(url, field, value):
+    """No dependency. This runs from selftest under a bare python3, where requests is absent."""
+    b_ = ("--x\r\nContent-Disposition: form-data; name=\"" + field + "\"\r\n\r\n"
+          + value + "\r\n--x--\r\n").encode()
+    rq = _u.Request(url, data=b_,
+                    headers={"Content-Type": "multipart/form-data; boundary=x"})
+    with _u.urlopen(rq, timeout=30) as r:
+        return json.loads(r.read().decode())
 
 SET = Path.home() / "AgentHub" / "evals" / "intent_set.jsonl"
 rows = [json.loads(l) for l in SET.read_text().splitlines() if l.strip()]
@@ -20,8 +30,7 @@ ok = 0
 severe = []
 for r in rows:
     try:
-        got = requests.post("http://127.0.0.1:4100/api/classify",
-                            files={"text": (None, r["text"])}, timeout=30).json()["intent"]
+        got = post("http://127.0.0.1:4100/api/classify", "text", r["text"])["intent"]
     except Exception as e:
         got = f"error:{type(e).__name__}"
     hit = got == r["intent"]
