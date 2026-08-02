@@ -55,11 +55,11 @@ async function tryStream(
 
   let response: Response;
   try {
-    response = await fetch(`${base}/api/ask/stream`, {
-      method: "POST",
-      body,
-      credentials: "omit",
-    });
+    response = await fetch(
+      `${base}/api/ask/stream`,
+      loopbackInit({ method: "POST", body }),
+    );
+
   } catch {
     return null;
   }
