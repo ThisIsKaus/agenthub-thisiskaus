@@ -15,6 +15,7 @@ import { Route as AuthenticatedAskRouteImport } from './routes/_authenticated/as
 import { Route as AuthenticatedBuildRouteImport } from './routes/_authenticated/build'
 import { Route as AuthenticatedCanvasRouteImport } from './routes/_authenticated/canvas'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
+import { Route as AuthenticatedCorpusRouteImport } from './routes/_authenticated/corpus'
 import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
 import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
 import { Route as AuthenticatedEvalsRouteImport } from './routes/_authenticated/evals'
@@ -61,6 +62,11 @@ const AuthenticatedCanvasRoute = AuthenticatedCanvasRouteImport.update({
 const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
   id: '/capture',
   path: '/capture',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCorpusRoute = AuthenticatedCorpusRouteImport.update({
+  id: '/corpus',
+  path: '/corpus',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCostRoute = AuthenticatedCostRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/build': typeof AuthenticatedBuildRoute
   '/canvas': typeof AuthenticatedCanvasRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/corpus': typeof AuthenticatedCorpusRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
   '/evals': typeof AuthenticatedEvalsRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/build': typeof AuthenticatedBuildRoute
   '/canvas': typeof AuthenticatedCanvasRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/corpus': typeof AuthenticatedCorpusRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
   '/evals': typeof AuthenticatedEvalsRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/_authenticated/build': typeof AuthenticatedBuildRoute
   '/_authenticated/canvas': typeof AuthenticatedCanvasRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
+  '/_authenticated/corpus': typeof AuthenticatedCorpusRoute
   '/_authenticated/cost': typeof AuthenticatedCostRoute
   '/_authenticated/digest': typeof AuthenticatedDigestRoute
   '/_authenticated/evals': typeof AuthenticatedEvalsRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/build'
     | '/canvas'
     | '/capture'
+    | '/corpus'
     | '/cost'
     | '/digest'
     | '/evals'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/build'
     | '/canvas'
     | '/capture'
+    | '/corpus'
     | '/cost'
     | '/digest'
     | '/evals'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/_authenticated/build'
     | '/_authenticated/canvas'
     | '/_authenticated/capture'
+    | '/_authenticated/corpus'
     | '/_authenticated/cost'
     | '/_authenticated/digest'
     | '/_authenticated/evals'
@@ -360,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/capture'
       fullPath: '/capture'
       preLoaderRoute: typeof AuthenticatedCaptureRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/corpus': {
+      id: '/_authenticated/corpus'
+      path: '/corpus'
+      fullPath: '/corpus'
+      preLoaderRoute: typeof AuthenticatedCorpusRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/cost': {
@@ -496,6 +515,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuildRoute: typeof AuthenticatedBuildRoute
   AuthenticatedCanvasRoute: typeof AuthenticatedCanvasRoute
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
+  AuthenticatedCorpusRoute: typeof AuthenticatedCorpusRoute
   AuthenticatedCostRoute: typeof AuthenticatedCostRoute
   AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
   AuthenticatedEvalsRoute: typeof AuthenticatedEvalsRoute
@@ -519,6 +539,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBuildRoute: AuthenticatedBuildRoute,
   AuthenticatedCanvasRoute: AuthenticatedCanvasRoute,
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
+  AuthenticatedCorpusRoute: AuthenticatedCorpusRoute,
   AuthenticatedCostRoute: AuthenticatedCostRoute,
   AuthenticatedDigestRoute: AuthenticatedDigestRoute,
   AuthenticatedEvalsRoute: AuthenticatedEvalsRoute,
@@ -549,3 +570,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
