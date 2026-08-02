@@ -118,16 +118,17 @@ export function CommandPalette() {
     let cancelled = false;
     void (async () => {
       const [skillList, tree, memory] = await Promise.allSettled([
-        local.get<{ skills?: ({ path?: string; name?: string } | string)[] }>("/api/skills"),
+        listSkills(local),
         local.get<{ files?: { name?: string; path?: string }[] }>("/api/tree"),
         local.get<{ events?: { question?: string }[] }>("/api/memory", { n: 20 }),
       ]);
       if (cancelled) return;
       if (skillList.status === "fulfilled") {
         setSkills(
-          (skillList.value.skills ?? [])
-            .map((item) => (typeof item === "string" ? item : (item.name ?? item.path ?? "")))
+          skillList.value
+            .map((skill) => skill.name || skill.path)
             .filter(Boolean)
+
             .slice(0, 40),
         );
       }

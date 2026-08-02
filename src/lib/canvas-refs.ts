@@ -30,8 +30,14 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "skills"],
     enabled,
     staleTime: STALE,
-    queryFn: () => local.get<{ skills?: SkillRow[] }>("/api/skills"),
+    queryFn: async () => ({
+      skills: (await listSkills(local)).map((skill) => ({
+        name: skill.name,
+        path: skill.path,
+      })) as SkillRow[],
+    }),
   });
+
 
   const prompts = useQuery({
     queryKey: ["canvas", "refs", "prompts"],
