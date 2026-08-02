@@ -94,7 +94,7 @@ async function localGet<T = unknown>(
       if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
     }
   }
-  const response = await fetch(url.toString(), { credentials: "omit" });
+  const response = await fetch(url.toString(), loopbackInit());
   if (!response.ok) await throwForStatus(response);
   return (await response.json()) as T;
 }
@@ -109,11 +109,10 @@ async function localPost<T = unknown>(
     if (value === undefined || value === null) continue;
     body.append(key, value instanceof Blob ? value : String(value));
   }
-  const response = await fetch(new URL(path, BASE).toString(), {
-    method: "POST",
-    credentials: "omit",
-    body,
-  });
+  const response = await fetch(
+    new URL(path, BASE).toString(),
+    loopbackInit({ method: "POST", body }),
+  );
   if (!response.ok) await throwForStatus(response);
   return (await response.json()) as T;
 }
@@ -147,10 +146,10 @@ export function LocalBridgeProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT);
     try {
-      const response = await fetch(`${BASE}/api/capabilities`, {
-        credentials: "omit",
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `${BASE}/api/capabilities`,
+        loopbackInit({ signal: controller.signal }),
+      );
       if (!response.ok) throw new Error(String(response.status));
       const data = (await response.json()) as {
         ok?: boolean;
