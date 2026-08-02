@@ -7,6 +7,7 @@ import { LocalOnly } from "@/components/LocalOnly";
 import { useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { toNum } from "@/lib/format";
+import { Disclosure } from "@/components/Disclosure";
 
 export const Route = createFileRoute("/_authenticated/evals")({
   head: () => ({
@@ -88,6 +89,7 @@ function EvalsPage() {
   }
 
   const results = data?.results ?? [];
+  const latest = results[0];
   const anyBelow = results.some((row) => isBelowFull(row.scores?.injection));
 
   return (
@@ -101,7 +103,33 @@ function EvalsPage() {
         />
       </div>
 
-      <Panel title="Results">
+      <Panel title="Current scores">
+        {loading ? (
+          <Skeleton className="h-6 w-72" />
+        ) : !latest ? (
+          <Empty>No scoring runs on record.</Empty>
+        ) : (
+          <p className="font-mono text-[15px] tabular-nums text-paper">
+            class {pct(latest.scores?.class ?? latest.scores?.cls)} · entity {pct(latest.scores?.entity)}{" "}
+            · sensitivity {pct(latest.scores?.sensitivity)} ·{" "}
+            <span className={isBelowFull(latest.scores?.injection) ? "text-risk" : "text-ok"}>
+              injection {pct(latest.scores?.injection)}
+            </span>
+          </p>
+        )}
+        {latest?.date && (
+          <p className="mt-1 font-mono text-[10px] text-faint">scored {latest.date}</p>
+        )}
+      </Panel>
+
+      <Panel title="Detail">
+        <Disclosure
+          summary={
+            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+              Run history · {results.length} runs
+            </span>
+          }
+        >
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, index) => (
@@ -162,6 +190,7 @@ function EvalsPage() {
             )}
           </div>
         )}
+        </Disclosure>
       </Panel>
 
       <Panel title="Score">
