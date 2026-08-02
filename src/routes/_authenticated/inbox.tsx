@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
-import { Empty, PageIntro, Skeleton } from "@/components/data";
+import { Empty, Skeleton } from "@/components/data";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { useOnline } from "@/hooks/use-online";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
@@ -61,13 +61,6 @@ const STATE_STYLE: Record<CaptureRow["state"], string> = {
 function InboxPage() {
   return (
     <div className="space-y-4">
-      <PageIntro title="Inbox">
-        One stream. A thought you type and a line the machine read overnight enter the same place,
-        and each leaves by exactly one of four exits: dropped, filed as context, written up as a
-        skill, or opened as a canvas. Nothing sits here undecided — an inbox that only accumulates
-        is a list, not a system. Capture works with the machine asleep; the overnight stream and
-        every exit read material that never leaves it.
-      </PageIntro>
       <CaptureLane />
       <TriageLane />
     </div>

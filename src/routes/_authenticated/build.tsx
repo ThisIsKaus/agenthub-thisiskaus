@@ -185,13 +185,6 @@ function BuildPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="font-serif text-3xl leading-none text-paper">Build</h1>
-        <p className="mt-2 max-w-[72ch] text-[13px] leading-relaxed text-muted-foreground">
-          State an intent; the cascade implements it.
-        </p>
-      </header>
-
       <Panel title="Intent">
         <ul className="space-y-1">
           {CASCADE_LINES.map((line) => (
