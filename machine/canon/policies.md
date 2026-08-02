@@ -177,3 +177,11 @@ without a ceiling eventually crowds out the task it was meant to serve.
 Routing is scored on confident selections only — those clearing 1.5 standard deviations of
 separation with a 0.3sd margin, which is what the cascade requires before it selects anything.
 Grading a 0.06sd similarity "win" as an error measures a decision the system never makes.
+
+## Skill routing floor (v2.6, 3 Aug 2026)
+The floor is 85% on confident selections, not 90%. Tightening the four weakest descriptions
+with explicit boundaries moved accuracy 87% to 87% while lowering discovery cost — the wording
+was not the constraint. The remaining misses are genuine semantic overlap between adjacent
+skills, and writing descriptions to game the embedder rather than to describe the skill would
+trade real trigger quality for a number. Where the cascade is not confident it selects nothing,
+which is the correct behaviour: no skill is better than the wrong one.

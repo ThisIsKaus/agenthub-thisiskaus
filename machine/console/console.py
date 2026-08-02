@@ -441,24 +441,37 @@ confidence is 0-1. alternatives lists any other intents genuinely plausible, mos
 
 @app.post("/api/classify")
 def classify(text: str = Form(...)):
-    body = {"model": "local-triage", "temperature": 0, "max_tokens": 600,
+    """Route omnibox input to one of four intents.
+
+    The 4B is a thinking model: schema-constrained output arrives in reasoning_content, not
+    content, so reading content alone yields an empty string and a JSONDecodeError. Every
+    other caller in this file already handles that; this one did not.
+    """
+    body = {"model": "local-triage", "temperature": 0, "max_tokens": 900,
             "response_format": CLASSIFY_SCHEMA,
             "messages": [{"role": "system", "content": CLASSIFY_SYSTEM},
                          {"role": "user", "content": text}]}
     try:
-        r = requests.post(f"{ROUTER}/chat/completions", json=body, timeout=60)
+        r = requests.post(f"{ROUTER}/chat/completions", json=body, timeout=90)
         if r.status_code >= 400:
             raise HTTPException(502, f"router {r.status_code}: {r.text[:200]}")
-        raw = (r.json()["choices"][0]["message"].get("content") or "").strip()
-        data = json.loads(raw)
+        m = r.json()["choices"][0]["message"]
+        raw = ((m.get("content") or "").strip() or (m.get("reasoning_content") or "").strip())
+        found = re.search(r"\{.*\}", raw, re.S)
+        data = json.loads(found.group(0)) if found else {}
     except HTTPException:
         raise
     except Exception as ex:
-        raise HTTPException(500, f"{type(ex).__name__}: {ex}")
-    return {"intent": data.get("intent", "ask"),
+        # Ambiguity resolves to ask, which reads and never writes. A classifier that fails
+        # closed toward the safe intent is better than one that errors and blocks the input.
+        return {"intent": "ask", "confidence": 0.0, "alternatives": [],
+                "note": f"classification unavailable ({type(ex).__name__})"}
+    intent = data.get("intent", "ask")
+    if intent not in ("capture", "ask", "build", "search"):
+        intent = "ask"
+    return {"intent": intent,
             "confidence": data.get("confidence", 0),
             "alternatives": data.get("alternatives", [])}
-
 
 # ---------------------------------------------------------------- models
 

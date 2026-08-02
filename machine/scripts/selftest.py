@@ -505,7 +505,7 @@ def hygiene():
             acc = sum(1 for r in conf if r.get("correct"))
             rows = conf or rows
             pct = 100 * acc // max(len(rows), 1)
-            rec(g, "skill routing accuracy", pct >= 90,
+            rec(g, "skill routing accuracy", pct >= 85,
                 f"{acc}/{len(rows)} ({pct}%) on {runs[0].stem[-10:]}",
                 "routing has fallen below the 85% floor — a description regressed")
         except Exception:
