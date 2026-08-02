@@ -109,6 +109,48 @@ function runKeyFor(rung: number, name: string) {
   return direct ?? RUNG_DEFAULT_KEY[rung] ?? "diagnose";
 }
 
+/** The five rungs exist on the machine whether or not the API names them. */
+const LADDER: { rung: number; name: string }[] = [
+  { rung: 1, name: "model unavailable" },
+  { rung: 2, name: "serving layer down" },
+  { rung: 3, name: "router down" },
+  { rung: 4, name: "memory pressure critical" },
+  { rung: 5, name: "all local down" },
+];
+
+/**
+ * Accepts a list, a `{rungs: []}` envelope, or an object keyed by rung number,
+ * and always returns five rows. A rung never tested says so rather than vanishing.
+ */
+function normaliseLadder(raw: unknown): Required<Pick<FailoverRung, "name">> &
+  FailoverRung extends never
+  ? never
+  : { rung: number; name: string; tested: string | null; ok: boolean | null; detail?: string }[] {
+  let rows: FailoverRung[] = [];
+  if (Array.isArray(raw)) rows = raw as FailoverRung[];
+  else if (raw && typeof raw === "object") {
+    const envelope = raw as { rungs?: unknown };
+    if (Array.isArray(envelope.rungs)) rows = envelope.rungs as FailoverRung[];
+    else {
+      rows = Object.entries(raw as Record<string, FailoverRung>).map(([key, value]) => ({
+        rung: value?.rung ?? Number(String(key).replace(/[^0-9]/g, "")),
+        ...value,
+      }));
+    }
+  }
+
+  return LADDER.map((base) => {
+    const match = rows.find((row) => n(row.rung, -1) === base.rung);
+    return {
+      rung: base.rung,
+      name: match?.name?.trim() || base.name,
+      tested: match?.tested ?? null,
+      ok: match?.ok ?? null,
+      detail: match?.detail,
+    };
+  });
+}
+
 const PRESSURE_DOT: Record<string, string> = {
   green: "bg-ok",
   amber: "bg-watch",
