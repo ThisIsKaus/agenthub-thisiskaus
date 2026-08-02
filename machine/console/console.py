@@ -430,13 +430,17 @@ CLASSIFY_SCHEMA = {"type": "json_schema", "json_schema": {"name": "classify", "s
         "alternatives": {"type": "array", "items": {"type": "string", "enum": ["capture", "ask", "build", "search"]}}},
     "required": ["intent", "confidence", "alternatives"]}}}
 
-CLASSIFY_SYSTEM = """Classify the intent behind one piece of text.
-capture = it records a thought for later, with nothing to look up or change.
-ask = it is a question about existing material.
-build = it describes a change to make.
-search = a bare term with no verb.
-If ambiguous, resolve to ask.
-confidence is 0-1. alternatives lists any other intents genuinely plausible, most plausible first."""
+CLASSIFY_SYSTEM = (
+    "Classify the input into exactly one of three intents.\n"
+    "capture — records a thought, a decision, a fact, an observation or an idea for later. "
+    "Anything that states something rather than requesting something. Includes ideas about "
+    "changes to make, because recording is safe and acting is not.\n"
+    "ask — a question about material that already exists. Usually contains what, why, how, "
+    "when, which, or a question mark.\n"
+    "search — a bare term, name or phrase with no verb and no question. Two or three words "
+    "naming a thing, not asking about it.\n"
+    "If the input could be a question or a search, choose ask. If it could be a thought or "
+    "an instruction, choose capture. Both defaults read or record; neither acts.")
 
 
 @app.post("/api/classify")
@@ -466,9 +470,14 @@ def classify(text: str = Form(...)):
         # closed toward the safe intent is better than one that errors and blocks the input.
         return {"intent": "ask", "confidence": 0.0, "alternatives": [],
                 "note": f"classification unavailable ({type(ex).__name__})"}
+    # Build is never auto-selected. Capture and build are not separable from the text —
+    # "the cost page should show a weekly average" is both a thought to record and a change
+    # to make, and only the operator knows which. Build is the sole intent that writes, so it
+    # is opt-in via the chip or a keystroke. Measured 3 Aug: auto-classification produced
+    # three false builds in twenty, and a false build starts work you did not ask for.
     intent = data.get("intent", "ask")
-    if intent not in ("capture", "ask", "build", "search"):
-        intent = "ask"
+    if intent not in ("capture", "ask", "search"):
+        intent = "capture" if intent == "build" else "ask"
     return {"intent": intent,
             "confidence": data.get("confidence", 0),
             "alternatives": data.get("alternatives", [])}

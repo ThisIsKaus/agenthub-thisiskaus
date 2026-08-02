@@ -37,6 +37,7 @@ for r in rows:
     ok += hit
     if not hit:
         # build is the only intent that writes; a false build is the costly direction
+        # build is not returnable by design; if one ever appears the guard has broken
         sev = "SEVERE" if got == "build" else "mild"
         severe.append((sev, r["text"], r["intent"], got))
 n = len(rows)
