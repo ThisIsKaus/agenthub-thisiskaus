@@ -121,6 +121,7 @@ export function AppShell() {
   }
 
   return (
+    <HubStateContext.Provider value={hub}>
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b border-rule bg-background/95 backdrop-blur">
         <div className="page-width">
