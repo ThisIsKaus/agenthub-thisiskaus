@@ -8,7 +8,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { isRefusal, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
+import { askProgressive, type AskSource } from "@/lib/ask-stream";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { insertCaptureJob, queueCapture, type PendingCapture } from "@/lib/capture-queue";
 
@@ -62,7 +63,7 @@ export function Omnibox() {
   const [classifying, setClassifying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
-  const [answer, setAnswer] = useState<{ text: string; model?: string } | null>(null);
+  const [answer, setAnswer] = useState<{ text: string; model?: string; sources?: AskSource[] } | null>(null);
   const examples = useMemo(pickExamples, []);
   const field = useRef<HTMLInputElement>(null);
   const seq = useRef(0);
