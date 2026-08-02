@@ -486,8 +486,6 @@ function ModelsPage() {
       <Panel title="Failover ladder">
         {failover.isLoading ? (
           <Skeleton className="h-12 w-full" />
-        ) : !failover.data || failover.data.length === 0 ? (
-          <Empty>The machine did not report a ladder.</Empty>
         ) : (
           <table className="w-full text-left">
             <thead>
@@ -500,8 +498,8 @@ function ModelsPage() {
               </tr>
             </thead>
             <tbody>
-              {failover.data.map((row, index) => {
-                const rung = n(row.rung, index + 1);
+              {normaliseLadder(failover.data).map((row) => {
+                const rung = row.rung;
                 const key = runKeyFor(rung, row.name ?? "");
                 return (
                   <tr key={`${rung}-${row.name}`} className="border-b border-rule align-top last:border-b-0">
