@@ -1,0 +1,88 @@
+{
+  "workspace-skills": {
+    "consumer": "src/routes/_authenticated/skills.tsx",
+    "http": "GET /api/skills",
+    "requires": ["skills", "count"],
+    "assert": "len(d['skills']) >= 40"
+  },
+  "workspace-overview-state": {
+    "consumer": "src/lib/state.ts",
+    "http": "GET /api/state",
+    "requires": ["corpus", "spend", "factory", "health"],
+    "assert": "d['corpus']['chunks'] > 1000"
+  },
+  "workspace-capabilities": {
+    "consumer": "src/lib/local-bridge.tsx",
+    "http": "GET /api/capabilities",
+    "requires": ["version", "features", "machine"],
+    "assert": "d['version'] >= 2 and len(d['features']) >= 10"
+  },
+  "workspace-models": {
+    "consumer": "src/routes/_authenticated/models.tsx",
+    "http": "GET /api/models",
+    "requires": ["resident", "bench", "aliases"],
+    "assert": "len(d['bench']) >= 3"
+  },
+  "workspace-proposals": {
+    "consumer": "src/routes/_authenticated/proposals.tsx",
+    "http": "GET /api/proposals",
+    "requires": ["proposals"],
+    "assert": "isinstance(d['proposals'], list)"
+  },
+  "workspace-selftest": {
+    "consumer": "src/routes/_authenticated/health.tsx",
+    "http": "GET /api/selftest",
+    "requires": ["summary", "rows"],
+    "assert": "len(d['rows']) >= 50"
+  },
+  "workspace-digest": {
+    "consumer": "src/routes/_authenticated/digest.tsx",
+    "http": "GET /api/digest",
+    "requires": ["date", "items"],
+    "assert": "isinstance(d['items'], list)"
+  },
+  "workspace-cost": {
+    "consumer": "src/routes/_authenticated/cost.tsx",
+    "http": "GET /api/cost",
+    "requires": ["total", "by_model"],
+    "assert": "'requests' in d"
+  },
+  "workspace-omnibox": {
+    "consumer": "src/components/Omnibox.tsx",
+    "http": "POST /api/classify",
+    "form": {"text": "what did I decide about residency"},
+    "requires": ["intent"],
+    "assert": "d['intent'] in ('capture','ask','search')"
+  },
+  "workspace-kb": {
+    "consumer": "src/routes/_authenticated/knowledge.tsx",
+    "http": "GET /api/kb",
+    "requires": ["chunks", "documents"],
+    "assert": "d['chunks'] > 1000"
+  },
+  "cascade-skill-loader": {
+    "consumer": "machine/build/cascade.py :: load_skills",
+    "file": "skills/agenthub-overview/SKILL.md",
+    "assert": "len(text) > 200"
+  },
+  "cascade-rules": {
+    "consumer": "machine/build/cascade.py :: load_skills",
+    "file": "skills/agenthub-cascade-rules/SKILL.md",
+    "assert": "'selftest' in text"
+  },
+  "retrieval-golden": {
+    "consumer": "machine/kbtool/golden_eval.py",
+    "file": "evals/retrieval_golden.jsonl",
+    "assert": "text.count(chr(10)) >= 80"
+  },
+  "triage-golden": {
+    "consumer": "machine/scripts/eval",
+    "file": "evals/triage_set.jsonl",
+    "assert": "text.count(chr(10)) >= 15"
+  },
+  "brief-generated": {
+    "consumer": "Lovable project knowledge",
+    "file": "docs/brief.md",
+    "assert": "'TWO PLANES' in text and len(text) < 10200"
+  }
+}

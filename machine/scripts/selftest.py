@@ -535,6 +535,20 @@ def hygiene():
     else:
         rec(g, "skill routing scored", False, "never run", "skills route", warn=True)
 
+    out = sh(f"/usr/bin/python3 {H}/scripts/contract_check.py --json", 180)
+    try:
+        ct = json.loads(out)
+    except Exception:
+        ct = {}
+    fails = ct.get("failures", [])
+    rec(g, "consumer contracts", not fails,
+        f"{ct.get('passed','?')}/{ct.get('total','?')} satisfied"
+        + (f" — broken: {', '.join(f['name'] for f in fails[:3])}" if fails else ""),
+        "a consumer declares something the provider no longer supplies")
+    rec(g, "contract coverage", (ct.get("coverage") or 0) >= 90,
+        f"{ct.get('coverage', 0)}% of declared expectations exercised",
+        "declare the consumers that are not yet covered", warn=True)
+
     docs = list((H / "docs").glob("*.md")) if (H / "docs").is_dir() else []
     rec(g, "build docs present", len(docs) >= 8, f"{len(docs)} documents",
         "the rebuild path is untested until the docs live in the repo")
