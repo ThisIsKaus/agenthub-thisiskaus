@@ -7,7 +7,9 @@ import {
   SourceList,
   stamp,
 } from "@/components/canvas/RunHistory";
-import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { isRefusal, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
+import { askProgressive } from "@/lib/ask-stream";
+
 import { assertAnswer, isLaneFault, LaneFault, useLaneCapacity } from "@/lib/lane-capacity";
 import { useAutopilot } from "@/lib/model-autopilot";
 import { useJobDrawer } from "@/lib/job-drawer";
