@@ -422,6 +422,44 @@ def capture(text: str = Form(...)):
     return {"saved": str(p), "name": p.name}
 
 
+CLASSIFY_SCHEMA = {"type": "json_schema", "json_schema": {"name": "classify", "strict": True, "schema": {
+    "type": "object",
+    "properties": {
+        "intent": {"type": "string", "enum": ["capture", "ask", "build", "search"]},
+        "confidence": {"type": "number"},
+        "alternatives": {"type": "array", "items": {"type": "string", "enum": ["capture", "ask", "build", "search"]}}},
+    "required": ["intent", "confidence", "alternatives"]}}}
+
+CLASSIFY_SYSTEM = """Classify the intent behind one piece of text.
+capture = it records a thought for later, with nothing to look up or change.
+ask = it is a question about existing material.
+build = it describes a change to make.
+search = a bare term with no verb.
+If ambiguous, resolve to ask.
+confidence is 0-1. alternatives lists any other intents genuinely plausible, most plausible first."""
+
+
+@app.post("/api/classify")
+def classify(text: str = Form(...)):
+    body = {"model": "local-triage", "temperature": 0, "max_tokens": 600,
+            "response_format": CLASSIFY_SCHEMA,
+            "messages": [{"role": "system", "content": CLASSIFY_SYSTEM},
+                         {"role": "user", "content": text}]}
+    try:
+        r = requests.post(f"{ROUTER}/chat/completions", json=body, timeout=60)
+        if r.status_code >= 400:
+            raise HTTPException(502, f"router {r.status_code}: {r.text[:200]}")
+        raw = (r.json()["choices"][0]["message"].get("content") or "").strip()
+        data = json.loads(raw)
+    except HTTPException:
+        raise
+    except Exception as ex:
+        raise HTTPException(500, f"{type(ex).__name__}: {ex}")
+    return {"intent": data.get("intent", "ask"),
+            "confidence": data.get("confidence", 0),
+            "alternatives": data.get("alternatives", [])}
+
+
 # ---------------------------------------------------------------- models
 
 @app.get("/api/models")
