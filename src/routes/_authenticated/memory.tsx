@@ -7,6 +7,10 @@ import { LocalOnly } from "@/components/LocalOnly";
 import { useLocal } from "@/lib/local-bridge";
 
 export const Route = createFileRoute("/_authenticated/memory")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" && search.q ? search.q : undefined,
+  }),
+
   head: () => ({
     meta: [
       { title: "Memory — AgentHub" },
