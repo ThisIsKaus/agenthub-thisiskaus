@@ -248,6 +248,20 @@ def memory():
         "cd ~/AgentHub/kbtool && uv run python golden.py --build 100")
     out = sh(f"cd {H}/kbtool && /opt/homebrew/bin/uv run python retrieve.py "
              f"'Division 293 election FY21-22' 2>/dev/null | head -2", 180)
+    out2 = sh(f"cd {H}/kbtool && /opt/homebrew/bin/uv run python - <<'EOF'\n"
+              "import json,sys;sys.path.insert(0,'.')\n"
+              "import retrieve\n"
+              "from pathlib import Path\n"
+              "rows=[json.loads(l) for l in (Path.home()/'AgentHub/evals/retrieval_golden.jsonl')"
+              ".read_text().splitlines() if l.strip()]\n"
+              "ans=[r for r in rows if r['answerable']][:25]\n"
+              "h=sum(1 for r in ans if r['source'] in [x['file'] for x in retrieve.search(r['q'],k=5)])\n"
+              "print(f'{h}/{len(ans)}')\nEOF", 300)
+    m2 = re.search(r"(\d+)/(\d+)", out2)
+    ok2 = bool(m2) and int(m2.group(1)) / max(int(m2.group(2)), 1) >= 0.80
+    rec(g, "retrieval recall floor", ok2, (m2.group(0) if m2 else out2[-60:]) + " on a 25-question sample",
+        "recall has fallen below 80% — a retrieval change regressed")
+
     rec(g, "hybrid retrieval live", "bm25" in out.lower(),
         "bm25 path active" if "bm25" in out.lower() else "dense only — FTS index missing",
         "the full-text index did not build; identifiers will not be found")

@@ -153,3 +153,18 @@ subsequent inference pays decompression. Measured 1 Aug: 24 duplicate model inst
 accumulated, pushing compressed memory to 16.65 GiB with 1.17 GiB free. Clearing them
 returned it to 0.70 GiB compressed and 23.07 GiB headroom. `residency status` reports
 duplicates; `residency pin` clears them. Watch memory pressure, not free megabytes.
+
+## Retrieval architecture (v2.4, 2 Aug 2026)
+Retrieval is hybrid: dense embeddings for meaning, BM25 for identifiers, fused with Reciprocal
+Rank Fusion on rank rather than score — raw cosine on this embedder has a high floor and no
+comparable scale. Measured on a 95-question golden set drawn from the corpus as it actually is:
+recall@5 rose 76% to 90% and MRR 0.645 to 0.781. The gain concentrated exactly where the
+research predicted, in the financial and identity documents that are 73% of the corpus: S3 rose
+70% to 87%, S1p 83% to 96%.
+Reranking with the local 4B was measured and rejected: identical recall and MRR at 667 times
+the latency. It stays in the code, disabled, with the measurement recorded.
+Derived material inherits sensitivity. Memory notes, digests and exported sessions classify S3
+regardless of their path, because a note distilling a day may reference any class.
+The golden set is generated with a JSON schema constraint. Unconstrained, the 4B emitted its
+deliberation instead of questions and the set measured nothing — the third instrument failure
+of this build, and the reason a schema is now mandatory for generated evaluation data.

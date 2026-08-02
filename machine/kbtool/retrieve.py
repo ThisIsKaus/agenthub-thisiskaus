@@ -52,7 +52,44 @@ def terms(q):
     return " ".join(keep) or q
 
 
-def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES):
+# MEASURED AND REJECTED, 2 Aug 2026. Reranking the top 50 with the 4B produced identical
+# recall (36/40) and identical MRR (0.708) at 66.7s per query against 0.1s — 667x slower for
+# no gain. The fused ranking is already precise enough that a second pass has nothing to fix.
+# Kept for a future model with a real cross-encoder; do not enable without re-measuring.
+RERANK_SYS = ("Score how well the passage answers the question, 0 to 10. A passage that "
+              "contains the exact figure, name or identifier asked for scores high. A passage "
+              "on the same topic without the answer scores low. Reply with the number only.")
+
+
+def _rerank(query, cands, k):
+    """A precision layer over the shortlist, not the index. The fused ranking is already
+    good; this reorders the top candidates by whether they actually contain the answer."""
+    import concurrent.futures as cf
+
+    def score(e):
+        body = {"model": "local-triage", "temperature": 0, "max_tokens": 300,
+                "messages": [{"role": "system", "content": RERANK_SYS},
+                             {"role": "user",
+                              "content": f"Question: {query}\n\nPassage:\n{e['row']['text'][:1200]}"}]}
+        try:
+            r = requests.post("http://127.0.0.1:4000/v1/chat/completions",
+                              json=body, timeout=90)
+            m = r.json()["choices"][0]["message"]
+            raw = (m.get("content") or "") or (m.get("reasoning_content") or "")
+            n = re.search(r"\b(10|\d)\b", raw)
+            return float(n.group(1)) if n else 0.0
+        except Exception:
+            return 0.0
+
+    with cf.ThreadPoolExecutor(max_workers=6) as ex:
+        scores = list(ex.map(score, cands))
+    for e, sc in zip(cands, scores):
+        e["rerank"] = sc
+    # Fused rank breaks ties, so a reranker that scores everything equally is a no-op
+    return sorted(cands, key=lambda e: (-e.get("rerank", 0), -e["score"]))
+
+
+def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES, rerank=False):
     tbl = lancedb.connect(str(DB)).open_table(TABLE)
     ensure_fts(tbl)
 
@@ -88,7 +125,10 @@ def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES):
 
     if not fused:
         return []
-    ranked = sorted(fused.values(), key=lambda e: -e["score"])[:k]
+    ranked = sorted(fused.values(), key=lambda e: -e["score"])
+    if rerank and len(ranked) > k:
+        ranked = _rerank(query, ranked[:CANDIDATES], k)
+    ranked = ranked[:k]
     return [{
         "file": Path(e["row"]["path"]).name,
         "path": e["row"]["path"],
@@ -97,6 +137,7 @@ def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES):
         "source": e["row"].get("source", "corpus"),
         "rrf": round(e["score"], 5),
         "found_by": "+".join(sorted(set(e["found_by"]))),
+        "rerank": e.get("rerank"),
     } for e in ranked]
 
 

@@ -30,7 +30,9 @@ EMBED_MODEL = "local-embed"
 CHUNK, OVERLAP, BATCH = 1600, 200, 32
 EXTS = {".md", ".txt", ".pdf", ".docx", ".xlsx", ".pptx", ".csv", ".html", ".htm"}
 
-SOURCES = [H / "canon", H / "inbox", H / "docs", H / "drafts"]
+SOURCES = [H / "canon", H / "inbox", H / "docs", H / "drafts", H / "digests"]
+# docs/ already carries memory notes and exported sessions; digests join them so a
+# question, an answer and the day it arrived are all findable from one query.
 EXTRA = H / "kbtool" / "sources.json"
 
 # --------------------------------------------------------------------- blocks
@@ -118,6 +120,11 @@ def excluded(path: Path) -> bool:
 
 def classify(path: Path, default="S0") -> str:
     s = str(path)
+    # Derived material inherits the sensitivity of what it derives from. A memory note
+    # distils a day that may have included S3 questions; a digest carries email subjects
+    # across every class. Neither may reach a cloud lane on the strength of its own path.
+    if "/docs/memory/" in s or "/digests/" in s or "/sessions/" in s:
+        return "S3"
     if S1C.search(s):
         return "S1c"
     if PRODUCT.search(s):
