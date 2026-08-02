@@ -11,7 +11,7 @@ import {
   SKILL_STATES,
   STATE_TONE,
   draftSkill,
-  listSkills,
+  fetchSkills,
   listVersions,
   mineCandidates,
   readVersion,
@@ -109,18 +109,20 @@ function SkillsPage() {
   const skills = useQuery({
     queryKey: ["skills", "list"],
     enabled: local.available,
-    queryFn: () => listSkills(local),
+    queryFn: () => fetchSkills(local),
   });
 
-  const list = useMemo(() => skills.data ?? [], [skills.data]);
+  const list = useMemo(() => skills.data?.skills ?? [], [skills.data]);
   const root = skillsRoot(list) ?? "skills";
 
   const counts = useMemo(() => {
     const out = {} as Record<SkillState, number>;
     for (const state of SKILL_STATES) out[state] = 0;
-    for (const skill of list) out[skill.state] = (out[skill.state] ?? 0) + 1;
+    for (const [state, n] of Object.entries(skills.data?.counts ?? {})) {
+      out[state as SkillState] = Number(n) || 0;
+    }
     return out;
-  }, [list]);
+  }, [skills.data]);
 
   // An item sent here from the inbox opens as a draft, already seeded.
   useEffect(() => {
@@ -162,6 +164,9 @@ function SkillsPage() {
               }`}
             >
               {option}
+              {option !== "all" && (
+                <span className="ml-1 tabular-nums text-faint">{counts[option] ?? 0}</span>
+              )}
             </button>
           ))}
           <button
@@ -201,7 +206,7 @@ function SkillsPage() {
                   className="block w-full px-4 py-3 text-left hover:bg-panel2"
                 >
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="font-mono text-[12px] text-paper">{skill.name}</span>
+                    <span className="text-[14px] text-paper">{skill.name}</span>
                     <span
                       className={`border border-rule px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${STATE_TONE[skill.state]}`}
                     >
@@ -215,8 +220,8 @@ function SkillsPage() {
                     </span>
                   </div>
                   {skill.description && (
-                    <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-                      {skill.description}
+                    <p className="mt-1 max-w-[72ch] text-[12.5px] leading-relaxed text-faint">
+                      {skill.description.split("\n")[0]}
                     </p>
                   )}
                   {skill.triggers.length > 0 && (

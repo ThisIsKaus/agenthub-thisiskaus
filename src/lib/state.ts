@@ -30,6 +30,30 @@ export const stateQueryOptions = queryOptions({
   },
 });
 
+/**
+ * The machine reports services as booleans; the published row as strings.
+ * One vocabulary: "up", "down", or nothing at all.
+ */
+export function normaliseService(value: unknown): "up" | "down" | undefined {
+  if (value === true) return "up";
+  if (value === false) return "down";
+  const text = String(value ?? "").trim().toLowerCase();
+  if (!text || text === "unknown" || text === "—") return undefined;
+  if (["up", "ok", "true", "running", "serving", "yes", "on"].includes(text)) return "up";
+  if (["down", "false", "stopped", "off", "no", "error"].includes(text)) return "down";
+  return undefined;
+}
+
+/** What the serving pill should read: never "unknown" while the machine answers. */
+export function servingLabel(services: { lms?: unknown; router?: unknown } | undefined) {
+  const lms = normaliseService(services?.lms);
+  const router = normaliseService(services?.router);
+  if (lms === "up" && router !== "down") return "up";
+  if (lms === "up" || router === "up") return "degraded";
+  if (lms === "down" || router === "down") return "down";
+  return "—";
+}
+
 type LocalGet = <T = unknown>(
   path: string,
   query?: Record<string, string | number | undefined>,
@@ -89,8 +113,14 @@ export function localStateQueryOptions(get: LocalGet, enabled: boolean) {
       const resident = models?.resident ?? [];
       const modelList = resident.length ? resident : (base.models ?? []);
 
+      const loose = base as Record<string, unknown>;
       const services = {
         ...(base.services ?? {}),
+        lms:
+          normaliseService(base.services?.lms) ??
+          normaliseService(loose.lms) ??
+          (resident.length ? "up" : undefined),
+        router: normaliseService(base.services?.router) ?? normaliseService(loose.router),
         aliases: base.services?.aliases ?? models?.aliases?.length,
       };
 
