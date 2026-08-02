@@ -12,7 +12,10 @@
  * way, it simply sees sources and answer arrive together.
  */
 
+import { loopbackInit } from "./local-bridge";
+
 export type AskSource = { file?: string; path?: string; distance?: number };
+
 
 export type AskStreamResult = {
   answer: string;
@@ -55,11 +58,11 @@ async function tryStream(
 
   let response: Response;
   try {
-    response = await fetch(`${base}/api/ask/stream`, {
-      method: "POST",
-      body,
-      credentials: "omit",
-    });
+    response = await fetch(
+      `${base}/api/ask/stream`,
+      loopbackInit({ method: "POST", body }),
+    );
+
   } catch {
     return null;
   }

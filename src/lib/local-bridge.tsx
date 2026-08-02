@@ -69,6 +69,21 @@ async function throwForStatus(response: Response): Promise<never> {
   throw new LocalError(text, response.status);
 }
 
+/**
+ * An HTTPS page reaching 127.0.0.1 crosses into the loopback address space.
+ * Chromium refuses that request — "Permission was denied for this request to
+ * access the loopback address space" — unless the caller declares the target
+ * explicitly, which turns the call into a Private Network Access preflight the
+ * machine already answers. The option is Chromium-only, so it is widened onto
+ * RequestInit rather than assumed.
+ */
+export function loopbackInit(init: RequestInit = {}): RequestInit {
+  return { ...init, credentials: "omit", targetAddressSpace: "private" } as RequestInit & {
+    targetAddressSpace: string;
+  };
+}
+
+
 async function localGet<T = unknown>(
   path: string,
   query?: Record<string, string | number | undefined>,
@@ -79,7 +94,7 @@ async function localGet<T = unknown>(
       if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
     }
   }
-  const response = await fetch(url.toString(), { credentials: "omit" });
+  const response = await fetch(url.toString(), loopbackInit());
   if (!response.ok) await throwForStatus(response);
   return (await response.json()) as T;
 }
@@ -94,11 +109,10 @@ async function localPost<T = unknown>(
     if (value === undefined || value === null) continue;
     body.append(key, value instanceof Blob ? value : String(value));
   }
-  const response = await fetch(new URL(path, BASE).toString(), {
-    method: "POST",
-    credentials: "omit",
-    body,
-  });
+  const response = await fetch(
+    new URL(path, BASE).toString(),
+    loopbackInit({ method: "POST", body }),
+  );
   if (!response.ok) await throwForStatus(response);
   return (await response.json()) as T;
 }
@@ -132,10 +146,10 @@ export function LocalBridgeProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT);
     try {
-      const response = await fetch(`${BASE}/api/capabilities`, {
-        credentials: "omit",
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `${BASE}/api/capabilities`,
+        loopbackInit({ signal: controller.signal }),
+      );
       if (!response.ok) throw new Error(String(response.status));
       const data = (await response.json()) as {
         ok?: boolean;
