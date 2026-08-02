@@ -190,7 +190,7 @@ export function Omnibox() {
           disabled={busy}
           placeholder="Capture a thought, ask a question, or describe a change"
           aria-label="Capture a thought, ask a question, or describe a change"
-          className="h-full min-w-0 flex-1 bg-transparent px-4 font-serif text-[17px] text-paper outline-none placeholder:text-tertiary"
+          className="h-full min-w-0 flex-1 bg-transparent px-4 font-serif text-[17px] text-paper outline-none placeholder:text-faint"
         />
         <button
           type="button"
@@ -204,14 +204,14 @@ export function Omnibox() {
           className={`mr-2 shrink-0 whitespace-nowrap border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
             local.available
               ? "border-copper text-copper hover:bg-copper/10"
-              : "cursor-default border-rule text-tertiary"
+              : "cursor-default border-rule text-faint"
           }`}
         >
           {chipLabel}
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-tertiary">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-faint">
         {examples.map((example) => (
           <span key={example}>{example}</span>
         ))}
@@ -220,7 +220,7 @@ export function Omnibox() {
       {status && (
         <p
           className={`font-mono text-[11px] ${
-            status.tone === "risk" ? "text-risk" : status.tone === "copper" ? "text-copper" : "text-tertiary"
+            status.tone === "risk" ? "text-risk" : status.tone === "copper" ? "text-copper" : "text-faint"
           }`}
         >
           {status.text}
@@ -231,7 +231,7 @@ export function Omnibox() {
         <div className="border border-rule bg-panel p-4">
           <p className="whitespace-pre-wrap text-[14px] leading-[1.7] text-paper">{answer.text}</p>
           {answer.model && (
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-tertiary">
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
               {answer.model}
             </p>
           )}
