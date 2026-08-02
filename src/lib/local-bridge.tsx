@@ -9,7 +9,9 @@ import {
   type ReactNode,
 } from "react";
 
-const BASE = "http://127.0.0.1:4100";
+export const LOCAL_BASE = "http://127.0.0.1:4100";
+const BASE = LOCAL_BASE;
+
 const PROBE_TIMEOUT = 1500;
 const PROBE_INTERVAL = 60_000;
 
