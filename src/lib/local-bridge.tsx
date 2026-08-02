@@ -69,6 +69,21 @@ async function throwForStatus(response: Response): Promise<never> {
   throw new LocalError(text, response.status);
 }
 
+/**
+ * An HTTPS page reaching 127.0.0.1 crosses into the loopback address space.
+ * Chromium refuses that request — "Permission was denied for this request to
+ * access the loopback address space" — unless the caller declares the target
+ * explicitly, which turns the call into a Private Network Access preflight the
+ * machine already answers. The option is Chromium-only, so it is widened onto
+ * RequestInit rather than assumed.
+ */
+export function loopbackInit(init: RequestInit = {}): RequestInit {
+  return { ...init, credentials: "omit", targetAddressSpace: "private" } as RequestInit & {
+    targetAddressSpace: string;
+  };
+}
+
+
 async function localGet<T = unknown>(
   path: string,
   query?: Record<string, string | number | undefined>,
