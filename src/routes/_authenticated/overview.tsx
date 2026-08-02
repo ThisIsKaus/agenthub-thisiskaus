@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
 import { FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
@@ -12,7 +11,6 @@ import { useRealtimeState } from "@/hooks/use-realtime-state";
 import { asPercent, modelName, num, useBoardTelemetry } from "@/hooks/use-board-telemetry";
 import { changesSince, snapshotOf, useLastSeen } from "@/lib/since";
 import { useLocal } from "@/lib/local-bridge";
-import { useJobDrawer } from "@/lib/job-drawer";
 import { clockOf, derivePlane } from "@/lib/machine-state";
 
 export const Route = createFileRoute("/_authenticated/overview")({
