@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocal } from "@/lib/local-bridge";
@@ -62,11 +62,19 @@ function fillGaps(live: StateRow, published: StateRow | null | undefined): State
   };
 }
 
+export type HubState = {
+  data: StateRow | null;
+  source: HubSource;
+  asOf: string | null;
+  provenance: string;
+  isPending: boolean;
+};
+
 /**
  * PRECEDENCE: the machine answers for itself when the loopback bridge is up;
  * otherwise the published row, always labelled with how old it is.
  */
-export function useHubState() {
+export function useHubStateValue(): HubState {
   const local = useLocal();
   const published = useQuery(stateQueryOptions);
   const localState = useQuery(localStateQueryOptions(local.get, local.available));
@@ -84,4 +92,16 @@ export function useHubState() {
       isPending: isLocal ? false : published.isPending && localState.isPending,
     };
   }, [local.available, localState.data, localState.isPending, published.data, published.isPending]);
+}
+
+/**
+ * One read for the whole shell. The header and every route consume the same
+ * object, so two routes can never report different figures for one machine.
+ */
+export const HubStateContext = createContext<HubState | null>(null);
+
+export function useHubState(): HubState {
+  const shared = useContext(HubStateContext);
+  const own = useHubStateValue();
+  return shared ?? own;
 }

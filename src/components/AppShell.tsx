@@ -1,6 +1,6 @@
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { useHubState } from "@/hooks/use-realtime-state";
+import { HubStateContext, useHubStateValue } from "@/hooks/use-realtime-state";
 import { useOnline } from "@/hooks/use-online";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocal } from "@/lib/local-bridge";
@@ -15,11 +15,12 @@ type Group = { label: string; to: string; subs: Sub[] };
 const GROUPS: Group[] = [
   { label: "Overview", to: "/overview", subs: [] },
   { label: "Canvas", to: "/canvas", subs: [] },
+  { label: "Ask", to: "/ask", subs: [] },
   { label: "Inbox", to: "/inbox", subs: [] },
   { label: "Skills", to: "/skills", subs: [] },
   {
     label: "Corpus",
-    to: "/files",
+    to: "/corpus",
     subs: [
       { to: "/files", label: "Files" },
       { to: "/knowledge", label: "Knowledge" },
@@ -28,7 +29,7 @@ const GROUPS: Group[] = [
   },
   {
     label: "Engine",
-    to: "/models",
+    to: "/engine",
     subs: [
       { to: "/models", label: "Models" },
       { to: "/model-scanner", label: "Scanner" },
@@ -37,10 +38,10 @@ const GROUPS: Group[] = [
   },
   {
     label: "Improve",
-    to: "/evals",
+    to: "/improve",
     subs: [
-      { to: "/evals", label: "Evals" },
       { to: "/proposals", label: "Proposals" },
+      { to: "/evals", label: "Evals" },
       { to: "/build", label: "Build" },
     ],
   },
@@ -97,7 +98,8 @@ function PlanePill() {
 
 
 export function AppShell() {
-  const { data } = useHubState();
+  const hub = useHubStateValue();
+  const { data, provenance } = hub;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const online = useOnline();
@@ -119,6 +121,7 @@ export function AppShell() {
   }
 
   return (
+    <HubStateContext.Provider value={hub}>
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b border-rule bg-background/95 backdrop-blur">
         <div className="page-width">
@@ -148,6 +151,7 @@ export function AppShell() {
             <PlanePill />
             <Pill label="mtd" value={`$${fixed(spend.mtd, 2, "0.00")}`} />
             <Pill label="wip" value={`${factory.wip ?? 0}/${factory.limit ?? 2}`} />
+            <Pill label="source" value={provenance} className="text-faint" />
           </div>
 
           <nav className="flex gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -193,6 +197,7 @@ export function AppShell() {
       <JobDrawer />
       <CommandPalette />
     </div>
+    </HubStateContext.Provider>
   );
 }
 

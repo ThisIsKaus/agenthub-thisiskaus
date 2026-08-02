@@ -15,12 +15,15 @@ import { Route as AuthenticatedAskRouteImport } from './routes/_authenticated/as
 import { Route as AuthenticatedBuildRouteImport } from './routes/_authenticated/build'
 import { Route as AuthenticatedCanvasRouteImport } from './routes/_authenticated/canvas'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
+import { Route as AuthenticatedCorpusRouteImport } from './routes/_authenticated/corpus'
 import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
 import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
+import { Route as AuthenticatedEngineRouteImport } from './routes/_authenticated/engine'
 import { Route as AuthenticatedEvalsRouteImport } from './routes/_authenticated/evals'
 import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
 import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
+import { Route as AuthenticatedImproveRouteImport } from './routes/_authenticated/improve'
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedMemoryRouteImport } from './routes/_authenticated/memory'
@@ -63,6 +66,11 @@ const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
   path: '/capture',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCorpusRoute = AuthenticatedCorpusRouteImport.update({
+  id: '/corpus',
+  path: '/corpus',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCostRoute = AuthenticatedCostRouteImport.update({
   id: '/cost',
   path: '/cost',
@@ -71,6 +79,11 @@ const AuthenticatedCostRoute = AuthenticatedCostRouteImport.update({
 const AuthenticatedDigestRoute = AuthenticatedDigestRouteImport.update({
   id: '/digest',
   path: '/digest',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEngineRoute = AuthenticatedEngineRouteImport.update({
+  id: '/engine',
+  path: '/engine',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEvalsRoute = AuthenticatedEvalsRouteImport.update({
@@ -91,6 +104,11 @@ const AuthenticatedFilesRoute = AuthenticatedFilesRouteImport.update({
 const AuthenticatedHealthRoute = AuthenticatedHealthRouteImport.update({
   id: '/health',
   path: '/health',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImproveRoute = AuthenticatedImproveRouteImport.update({
+  id: '/improve',
+  path: '/improve',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
@@ -161,12 +179,15 @@ export interface FileRoutesByFullPath {
   '/build': typeof AuthenticatedBuildRoute
   '/canvas': typeof AuthenticatedCanvasRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/corpus': typeof AuthenticatedCorpusRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
+  '/engine': typeof AuthenticatedEngineRoute
   '/evals': typeof AuthenticatedEvalsRoute
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/health': typeof AuthenticatedHealthRoute
+  '/improve': typeof AuthenticatedImproveRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
@@ -186,12 +207,15 @@ export interface FileRoutesByTo {
   '/build': typeof AuthenticatedBuildRoute
   '/canvas': typeof AuthenticatedCanvasRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/corpus': typeof AuthenticatedCorpusRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
+  '/engine': typeof AuthenticatedEngineRoute
   '/evals': typeof AuthenticatedEvalsRoute
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/health': typeof AuthenticatedHealthRoute
+  '/improve': typeof AuthenticatedImproveRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
@@ -213,12 +237,15 @@ export interface FileRoutesById {
   '/_authenticated/build': typeof AuthenticatedBuildRoute
   '/_authenticated/canvas': typeof AuthenticatedCanvasRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
+  '/_authenticated/corpus': typeof AuthenticatedCorpusRoute
   '/_authenticated/cost': typeof AuthenticatedCostRoute
   '/_authenticated/digest': typeof AuthenticatedDigestRoute
+  '/_authenticated/engine': typeof AuthenticatedEngineRoute
   '/_authenticated/evals': typeof AuthenticatedEvalsRoute
   '/_authenticated/factory': typeof AuthenticatedFactoryRoute
   '/_authenticated/files': typeof AuthenticatedFilesRoute
   '/_authenticated/health': typeof AuthenticatedHealthRoute
+  '/_authenticated/improve': typeof AuthenticatedImproveRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/memory': typeof AuthenticatedMemoryRoute
@@ -240,12 +267,15 @@ export interface FileRouteTypes {
     | '/build'
     | '/canvas'
     | '/capture'
+    | '/corpus'
     | '/cost'
     | '/digest'
+    | '/engine'
     | '/evals'
     | '/factory'
     | '/files'
     | '/health'
+    | '/improve'
     | '/inbox'
     | '/knowledge'
     | '/memory'
@@ -265,12 +295,15 @@ export interface FileRouteTypes {
     | '/build'
     | '/canvas'
     | '/capture'
+    | '/corpus'
     | '/cost'
     | '/digest'
+    | '/engine'
     | '/evals'
     | '/factory'
     | '/files'
     | '/health'
+    | '/improve'
     | '/inbox'
     | '/knowledge'
     | '/memory'
@@ -291,12 +324,15 @@ export interface FileRouteTypes {
     | '/_authenticated/build'
     | '/_authenticated/canvas'
     | '/_authenticated/capture'
+    | '/_authenticated/corpus'
     | '/_authenticated/cost'
     | '/_authenticated/digest'
+    | '/_authenticated/engine'
     | '/_authenticated/evals'
     | '/_authenticated/factory'
     | '/_authenticated/files'
     | '/_authenticated/health'
+    | '/_authenticated/improve'
     | '/_authenticated/inbox'
     | '/_authenticated/knowledge'
     | '/_authenticated/memory'
@@ -362,6 +398,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCaptureRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/corpus': {
+      id: '/_authenticated/corpus'
+      path: '/corpus'
+      fullPath: '/corpus'
+      preLoaderRoute: typeof AuthenticatedCorpusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/cost': {
       id: '/_authenticated/cost'
       path: '/cost'
@@ -374,6 +417,13 @@ declare module '@tanstack/react-router' {
       path: '/digest'
       fullPath: '/digest'
       preLoaderRoute: typeof AuthenticatedDigestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/engine': {
+      id: '/_authenticated/engine'
+      path: '/engine'
+      fullPath: '/engine'
+      preLoaderRoute: typeof AuthenticatedEngineRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/evals': {
@@ -402,6 +452,13 @@ declare module '@tanstack/react-router' {
       path: '/health'
       fullPath: '/health'
       preLoaderRoute: typeof AuthenticatedHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/improve': {
+      id: '/_authenticated/improve'
+      path: '/improve'
+      fullPath: '/improve'
+      preLoaderRoute: typeof AuthenticatedImproveRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/inbox': {
@@ -496,12 +553,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuildRoute: typeof AuthenticatedBuildRoute
   AuthenticatedCanvasRoute: typeof AuthenticatedCanvasRoute
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
+  AuthenticatedCorpusRoute: typeof AuthenticatedCorpusRoute
   AuthenticatedCostRoute: typeof AuthenticatedCostRoute
   AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
+  AuthenticatedEngineRoute: typeof AuthenticatedEngineRoute
   AuthenticatedEvalsRoute: typeof AuthenticatedEvalsRoute
   AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
   AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
   AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
+  AuthenticatedImproveRoute: typeof AuthenticatedImproveRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedMemoryRoute: typeof AuthenticatedMemoryRoute
@@ -519,12 +579,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBuildRoute: AuthenticatedBuildRoute,
   AuthenticatedCanvasRoute: AuthenticatedCanvasRoute,
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
+  AuthenticatedCorpusRoute: AuthenticatedCorpusRoute,
   AuthenticatedCostRoute: AuthenticatedCostRoute,
   AuthenticatedDigestRoute: AuthenticatedDigestRoute,
+  AuthenticatedEngineRoute: AuthenticatedEngineRoute,
   AuthenticatedEvalsRoute: AuthenticatedEvalsRoute,
   AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
   AuthenticatedFilesRoute: AuthenticatedFilesRoute,
   AuthenticatedHealthRoute: AuthenticatedHealthRoute,
+  AuthenticatedImproveRoute: AuthenticatedImproveRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedMemoryRoute: AuthenticatedMemoryRoute,

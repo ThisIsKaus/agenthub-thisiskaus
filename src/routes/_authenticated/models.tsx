@@ -109,6 +109,53 @@ function runKeyFor(rung: number, name: string) {
   return direct ?? RUNG_DEFAULT_KEY[rung] ?? "diagnose";
 }
 
+/** The five rungs exist on the machine whether or not the API names them. */
+const LADDER: { rung: number; name: string }[] = [
+  { rung: 1, name: "model unavailable" },
+  { rung: 2, name: "serving layer down" },
+  { rung: 3, name: "router down" },
+  { rung: 4, name: "memory pressure critical" },
+  { rung: 5, name: "all local down" },
+];
+
+type LadderRow = {
+  rung: number;
+  name: string;
+  tested: string | null;
+  ok: boolean | null;
+  detail?: string;
+};
+
+/**
+ * Accepts a list, a `{rungs: []}` envelope, or an object keyed by rung number,
+ * and always returns five rows. A rung never tested says so rather than vanishing.
+ */
+function normaliseLadder(raw: unknown): LadderRow[] {
+  let rows: FailoverRung[] = [];
+  if (Array.isArray(raw)) rows = raw as FailoverRung[];
+  else if (raw && typeof raw === "object") {
+    const envelope = raw as { rungs?: unknown };
+    if (Array.isArray(envelope.rungs)) rows = envelope.rungs as FailoverRung[];
+    else {
+      rows = Object.entries(raw as Record<string, FailoverRung>).map(([key, value]) => ({
+        rung: value?.rung ?? Number(String(key).replace(/[^0-9]/g, "")),
+        ...value,
+      }));
+    }
+  }
+
+  return LADDER.map((base) => {
+    const match = rows.find((row) => n(row.rung, -1) === base.rung);
+    return {
+      rung: base.rung,
+      name: match?.name?.trim() || base.name,
+      tested: match?.tested ?? null,
+      ok: match?.ok ?? null,
+      detail: match?.detail,
+    };
+  });
+}
+
 const PRESSURE_DOT: Record<string, string> = {
   green: "bg-ok",
   amber: "bg-watch",
@@ -142,7 +189,7 @@ function ModelsPage() {
     enabled: local.available,
     staleTime: 5 * 60_000,
     retry: false,
-    queryFn: () => local.get<FailoverRung[]>("/api/failover").catch(() => [] as FailoverRung[]),
+    queryFn: () => local.get<unknown>("/api/failover").catch(() => null),
   });
 
 
@@ -439,8 +486,6 @@ function ModelsPage() {
       <Panel title="Failover ladder">
         {failover.isLoading ? (
           <Skeleton className="h-12 w-full" />
-        ) : !failover.data || failover.data.length === 0 ? (
-          <Empty>The machine did not report a ladder.</Empty>
         ) : (
           <table className="w-full text-left">
             <thead>
@@ -453,8 +498,8 @@ function ModelsPage() {
               </tr>
             </thead>
             <tbody>
-              {failover.data.map((row, index) => {
-                const rung = n(row.rung, index + 1);
+              {normaliseLadder(failover.data).map((row) => {
+                const rung = row.rung;
                 const key = runKeyFor(rung, row.name ?? "");
                 return (
                   <tr key={`${rung}-${row.name}`} className="border-b border-rule align-top last:border-b-0">
