@@ -118,8 +118,10 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-weight: 300;
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
+
 
   h1,
   h2,
