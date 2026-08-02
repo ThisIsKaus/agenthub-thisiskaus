@@ -374,6 +374,10 @@ function OverviewPage() {
     <div className="space-y-6">
       <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
 
+      <DecisionStream />
+
+
+
       <Panel title="Since you last looked">
         {!state ? (
           <div className="space-y-2">
