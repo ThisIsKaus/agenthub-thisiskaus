@@ -119,7 +119,38 @@ export function serialiseSkill(skill: Skill): string {
   return `${front}${skill.body.trimStart()}\n`;
 }
 
-type SkillRow = { name?: string; path: string; modified?: string };
+type SkillRow = {
+  name?: string;
+  path: string;
+  modified?: string;
+  description?: string;
+  /** The endpoint now carries the lifecycle state; it wins over frontmatter. */
+  state?: string;
+  tier?: string;
+  size?: number;
+};
+
+export type SkillCounts = Record<SkillState, number>;
+
+function emptyCounts(): SkillCounts {
+  const out = {} as SkillCounts;
+  for (const state of SKILL_STATES) out[state] = 0;
+  return out;
+}
+
+/** The list endpoint is the authority for state and description. */
+function applyRow(skill: Skill, row: SkillRow): Skill {
+  const state =
+    row.state && (SKILL_STATES as readonly string[]).includes(row.state)
+      ? (row.state as SkillState)
+      : skill.state;
+  return {
+    ...skill,
+    state,
+    name: skill.name || row.name || skill.name,
+    description: row.description?.trim() || skill.description,
+  };
+}
 
 type TreeListing = {
   root?: string;
@@ -188,12 +219,31 @@ async function discoverSkillFiles(local: Local): Promise<SkillRow[]> {
 }
 
 export async function listSkills(local: Local): Promise<Skill[]> {
+  return (await fetchSkills(local)).skills;
+}
+
+/**
+ * The list and its lifecycle counts. Counts come from the endpoint when it
+ * supplies them, so a bucket never reads 0 while the directory holds fifty.
+ */
+export async function fetchSkills(
+  local: Local,
+): Promise<{ skills: Skill[]; counts: SkillCounts }> {
   let rows: SkillRow[] = [];
+  let published: SkillCounts | null = null;
   try {
-    const listing = await local.get<{ skills?: (SkillRow | string)[] }>("/api/skills");
+    const listing = await local.get<{
+      skills?: (SkillRow | string)[];
+      counts?: Record<string, number>;
+    }>("/api/skills");
     rows = (listing.skills ?? []).map((item) =>
       typeof item === "string" ? { path: item } : item,
     );
+    if (listing.counts) {
+      const counts = emptyCounts();
+      for (const state of SKILL_STATES) counts[state] = Number(listing.counts[state]) || 0;
+      published = counts;
+    }
   } catch {
     rows = [];
   }
@@ -206,15 +256,20 @@ export async function listSkills(local: Local): Promise<Skill[]> {
     files.map(async (row) => {
       try {
         const file = await local.get<{ raw?: string }>("/api/file", { path: row.path });
-        return parseSkill(file.raw ?? "", row.path);
+        return applyRow(parseSkill(file.raw ?? "", row.path), row);
       } catch {
-        return null;
+        // The file would not open; the row still describes a real skill.
+        return applyRow(parseSkill("", row.path), row);
       }
     }),
   );
-  return loaded
+  const skills = loaded
     .filter((skill): skill is Skill => skill !== null)
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  const counts = published ?? emptyCounts();
+  if (!published) for (const skill of skills) counts[skill.state] = (counts[skill.state] ?? 0) + 1;
+  return { skills, counts };
 }
 
 
