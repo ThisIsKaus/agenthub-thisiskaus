@@ -173,6 +173,11 @@ def models():
         "cd ~/AgentHub/console && uv run python ~/AgentHub/build/failover.py --test <n>",
         warn=bool(untested))
 
+    dupes = [r for r in (mem.get("unexpected") or []) if ":" in r.get("id", "")]
+    rec(g, "no duplicate instances", not dupes,
+        f"{len(dupes)} duplicate model instance(s)" if dupes else "clean",
+        "residency reap — duplicates hold weights and starve the elastic tier")
+
     rec(g, "embedder resident", any("embed" in r for r in resident),
         "present" if any("embed" in r for r in resident) else "MISSING - the KB cannot work",
         "mode standard  (every mode must load the embedder)")

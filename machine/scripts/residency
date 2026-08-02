@@ -33,6 +33,19 @@ case "${1:-status}" in
     python3 ~/AgentHub/scripts/residency_status.py
     ;;
 
+  reap)
+    # LM Studio spawns a new instance per load rather than reusing one. They accumulate,
+    # hold weights, and starve the elastic tier — the 35B cannot fit beside eleven copies
+    # of the embedder. Observed twice; now reaped automatically before every nightly.
+    DUPES=$($LMS ps | awk 'NF && $1 ~ /:[0-9]+$/ {print $1}')
+    if [[ -n "$DUPES" ]]; then
+      echo "$DUPES" | while read -r m; do $LMS unload "$m" >/dev/null 2>&1; done
+      echo "reaped $(echo "$DUPES" | wc -l | tr -d ' ') duplicate instance(s)"
+    else
+      echo "no duplicates"
+    fi
+    ;;
+
   clear)
     for m in $ELASTIC; do $LMS unload "$m" >/dev/null 2>&1 && echo "unloaded $m"; done
     echo "core retained"

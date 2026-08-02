@@ -474,7 +474,10 @@ def models():
         resident.append({"id": parts[0], "size": parts[3] + " " + parts[4] if len(parts) > 4 else ""})
     try:
         r = requests.get(f"{LMS}/models", timeout=6)
-        available = [m["id"] for m in r.json()["data"]]
+        _j = r.json()
+        _m = _j["choices"][0]["message"]
+        raw = (_m.get("content") or "") or (_m.get("reasoning_content") or "")
+        _o = json.loads(re.search(r"\{.*\}", raw, re.S).group(0))
     except Exception:
         pass
     try:
