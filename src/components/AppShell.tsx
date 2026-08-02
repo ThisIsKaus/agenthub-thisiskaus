@@ -5,6 +5,7 @@ import { useOnline } from "@/hooks/use-online";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocal } from "@/lib/local-bridge";
 import { JobDrawer } from "@/components/JobDrawer";
+import { CommandHint, CommandPalette } from "@/components/CommandPalette";
 import { fixed } from "@/lib/format";
 
 type Sub = { to: string; label: string };
@@ -124,6 +125,7 @@ export function AppShell() {
               AgentHub
             </h1>
             <div className="flex items-center gap-3">
+              <CommandHint />
               <PlanePill />
               {!online && (
                 <span className="border border-watch/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-watch">
@@ -187,6 +189,7 @@ export function AppShell() {
       </main>
 
       <JobDrawer />
+      <CommandPalette />
     </div>
   );
 }
