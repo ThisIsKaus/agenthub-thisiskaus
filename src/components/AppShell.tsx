@@ -197,6 +197,7 @@ export function AppShell() {
       <JobDrawer />
       <CommandPalette />
     </div>
+    </HubStateContext.Provider>
   );
 }
 
