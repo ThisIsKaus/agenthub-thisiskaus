@@ -6,6 +6,7 @@ import { Empty, Figure, FigureSkeleton, Row, Skeleton, formatStamp } from "@/com
 import { stateQueryOptions } from "@/lib/state";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
 import { count, fixed, toNum } from "@/lib/format";
+import { Disclosure } from "@/components/Disclosure";
 
 export const Route = createFileRoute("/_authenticated/cost")({
   head: () => ({
@@ -117,38 +118,14 @@ function CostPage() {
         </p>
       </Panel>
 
-      <Panel title="Last 30 days">
-        {isPending ? (
-          <div className="space-y-2">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-4 w-full" />
-            ))}
-          </div>
-        ) : days.length > 0 ? (
-          <ul className="space-y-1.5">
-            {days.map((day) => (
-              <li key={day.date} className="flex items-center gap-3">
-                <span className="w-14 shrink-0 font-mono text-[10px] tabular-nums text-faint">
-                  {dayLabel(day.date)}
-                </span>
-                <span className="h-2 flex-1 bg-panel2">
-                  <span
-                    className="block h-2 bg-copper"
-                    style={{ width: peak > 0 ? `${Math.max((day.amount / peak) * 100, day.amount > 0 ? 2 : 0)}%` : "0%" }}
-                  />
-                </span>
-                <span className="w-16 shrink-0 text-right font-mono text-[10px] tabular-nums text-paper">
-                  ${fixed(day.amount, 2)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Empty>The machine has not published a daily breakdown.</Empty>
-        )}
-      </Panel>
-
-      <Panel title="Local models">
+      <Panel title="Detail">
+        <Disclosure
+          summary={
+            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+              By model
+            </span>
+          }
+        >
         {isPending ? (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, index) => (
@@ -175,6 +152,40 @@ function CostPage() {
         <p className="mt-4 font-mono text-[10px] leading-relaxed text-faint">
           Work on the local lane costs nothing and never leaves the machine.
         </p>
+
+        <div className="mt-4 border-t border-rule">
+          <Disclosure
+            summary={
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+                Day by day · last {days.length || 30} days
+              </span>
+            }
+          >
+            {days.length > 0 ? (
+              <ul className="space-y-1.5">
+                {days.map((day) => (
+                  <li key={day.date} className="flex items-center gap-3">
+                    <span className="w-14 shrink-0 font-mono text-[10px] tabular-nums text-faint">
+                      {dayLabel(day.date)}
+                    </span>
+                    <span className="h-2 flex-1 bg-panel2">
+                      <span
+                        className="block h-2 bg-copper"
+                        style={{ width: peak > 0 ? `${Math.max((day.amount / peak) * 100, day.amount > 0 ? 2 : 0)}%` : "0%" }}
+                      />
+                    </span>
+                    <span className="w-16 shrink-0 text-right font-mono text-[10px] tabular-nums text-paper">
+                      ${fixed(day.amount, 2)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Empty>The machine has not published a daily breakdown.</Empty>
+            )}
+          </Disclosure>
+        </div>
+        </Disclosure>
       </Panel>
     </div>
   );
