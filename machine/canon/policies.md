@@ -185,3 +185,17 @@ was not the constraint. The remaining misses are genuine semantic overlap betwee
 skills, and writing descriptions to game the embedder rather than to describe the skill would
 trade real trigger quality for a number. Where the cascade is not confident it selects nothing,
 which is the correct behaviour: no skill is better than the wrong one.
+
+## Consumer contracts (v2.7, 3 Aug 2026)
+Contracts are consumer-driven: each consumer declares the endpoints and fields it needs, and
+the machine asserts every declaration. A provider-driven contract describes what the API
+offers and cannot detect that an offer nobody can consume has gone stale — which is how the
+skills library broke. The structure changed from flat files to spec directories, both
+consumers silently returned nothing, and 108 checks reported healthy for a week because an
+empty array is a valid response and `if p.exists()` is a valid no-op.
+A declaration must be written against an observed response, never from memory. Two of the
+first fifteen asserted fields the provider never had, which is the same instrument failure in
+the opposite direction: a check that cries wolf gets ignored, and an ignored check is worse
+than an absent one.
+Defensive fallbacks that swallow a missing dependency are deferred failure with the evidence
+removed. A missing input is loud.

@@ -2,63 +2,97 @@
   "workspace-skills": {
     "consumer": "src/routes/_authenticated/skills.tsx",
     "http": "GET /api/skills",
-    "requires": ["skills", "count"],
-    "assert": "len(d['skills']) >= 40"
+    "requires": [
+      "skills",
+      "count"
+    ],
+    "assert": "d['count'] >= 40"
   },
   "workspace-overview-state": {
     "consumer": "src/lib/state.ts",
     "http": "GET /api/state",
-    "requires": ["corpus", "spend", "factory", "health"],
-    "assert": "d['corpus']['chunks'] > 1000"
+    "requires": [
+      "services",
+      "spend",
+      "factory",
+      "digest"
+    ],
+    "assert": "d['spend']['mtd'] >= 0 and 'wip' in d['factory']"
   },
   "workspace-capabilities": {
     "consumer": "src/lib/local-bridge.tsx",
     "http": "GET /api/capabilities",
-    "requires": ["version", "features", "machine"],
+    "requires": [
+      "version",
+      "features",
+      "machine"
+    ],
     "assert": "d['version'] >= 2 and len(d['features']) >= 10"
   },
   "workspace-models": {
     "consumer": "src/routes/_authenticated/models.tsx",
     "http": "GET /api/models",
-    "requires": ["resident", "bench", "aliases"],
+    "requires": [
+      "resident",
+      "bench",
+      "aliases"
+    ],
     "assert": "len(d['bench']) >= 3"
   },
   "workspace-proposals": {
     "consumer": "src/routes/_authenticated/proposals.tsx",
     "http": "GET /api/proposals",
-    "requires": ["proposals"],
+    "requires": [
+      "proposals"
+    ],
     "assert": "isinstance(d['proposals'], list)"
   },
   "workspace-selftest": {
     "consumer": "src/routes/_authenticated/health.tsx",
     "http": "GET /api/selftest",
-    "requires": ["summary", "rows"],
+    "requires": [
+      "summary",
+      "rows"
+    ],
     "assert": "len(d['rows']) >= 50"
   },
   "workspace-digest": {
     "consumer": "src/routes/_authenticated/digest.tsx",
     "http": "GET /api/digest",
-    "requires": ["date", "items"],
+    "requires": [
+      "date",
+      "items"
+    ],
     "assert": "isinstance(d['items'], list)"
   },
   "workspace-cost": {
     "consumer": "src/routes/_authenticated/cost.tsx",
     "http": "GET /api/cost",
-    "requires": ["total", "by_model"],
+    "requires": [
+      "total",
+      "by_model"
+    ],
     "assert": "'requests' in d"
   },
   "workspace-omnibox": {
     "consumer": "src/components/Omnibox.tsx",
     "http": "POST /api/classify",
-    "form": {"text": "what did I decide about residency"},
-    "requires": ["intent"],
+    "form": {
+      "text": "what did I decide about residency"
+    },
+    "requires": [
+      "intent"
+    ],
     "assert": "d['intent'] in ('capture','ask','search')"
   },
   "workspace-kb": {
     "consumer": "src/routes/_authenticated/knowledge.tsx",
     "http": "GET /api/kb",
-    "requires": ["chunks", "documents"],
-    "assert": "d['chunks'] > 1000"
+    "requires": [
+      "chunks",
+      "files"
+    ],
+    "assert": "d['chunks'] > 1000 and d['files'] > 100"
   },
   "cascade-skill-loader": {
     "consumer": "machine/build/cascade.py :: load_skills",

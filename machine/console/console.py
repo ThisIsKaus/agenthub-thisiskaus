@@ -828,15 +828,34 @@ def cascade_stats():
 
 
 @app.get("/api/skills")
-def skills_list():
+def skills():
+    """Agent Skills are directories — <name>/SKILL.md — not flat files. This listed *.md and
+    returned an empty array for a week after the conversion, and nothing noticed: an empty
+    array is a valid response. Return the description too; it is the trigger, so it is the
+    field worth editing."""
     d = H / "skills"
-    items = []
-    for p in sorted(d.glob("*.md")) if d.exists() else []:
-        st = p.stat()
-        items.append({"name": p.name, "path": str(p), "size": st.st_size,
-                      "modified": dt.datetime.fromtimestamp(st.st_mtime).isoformat(timespec="minutes")})
-    return {"skills": items}
-
+    if not d.exists():
+        return {"skills": [], "count": 0, "error": "skills directory missing"}
+    sys.path.insert(0, str(H / "scripts"))
+    try:
+        from skills_lint import frontmatter
+    except Exception:
+        frontmatter = None
+    out = []
+    for sub in sorted(x for x in d.iterdir() if x.is_dir() and not x.name.startswith(".")):
+        f = sub / "SKILL.md"
+        if not f.exists():
+            continue
+        raw = f.read_text(errors="ignore")
+        fm = (frontmatter(raw)[0] if frontmatter else {}) or {}
+        meta = str(fm.get("metadata", ""))
+        tier = meta.split("tier:")[-1].strip().splitlines()[0] if "tier:" in meta else ""
+        st = f.stat()
+        out.append({"name": sub.name, "path": str(f),
+                    "description": fm.get("description", ""), "tier": tier,
+                    "size": st.st_size,
+                    "modified": dt.datetime.fromtimestamp(st.st_mtime).isoformat(timespec="minutes")})
+    return {"skills": out, "count": len(out)}
 
 if __name__ == "__main__":
     import uvicorn
