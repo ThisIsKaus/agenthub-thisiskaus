@@ -8,7 +8,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { isRefusal, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
+import { askProgressive, type AskSource } from "@/lib/ask-stream";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { insertCaptureJob, queueCapture, type PendingCapture } from "@/lib/capture-queue";
 
@@ -62,7 +63,7 @@ export function Omnibox() {
   const [classifying, setClassifying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
-  const [answer, setAnswer] = useState<{ text: string; model?: string } | null>(null);
+  const [answer, setAnswer] = useState<{ text: string; model?: string; sources?: AskSource[] } | null>(null);
   const examples = useMemo(pickExamples, []);
   const field = useRef<HTMLInputElement>(null);
   const seq = useRef(0);
@@ -126,10 +127,19 @@ export function Omnibox() {
           setText("");
           setOverridden(false);
         } else if (target === "ask") {
-          const result = await local.post<{ answer?: string; model?: string }>("/api/ask", {
-            q: body,
-          });
-          setAnswer({ text: result?.answer ?? "—", model: result?.model });
+          // Sources return in under a second; the answer streams beneath them.
+          const result = await askProgressive(
+            LOCAL_BASE,
+            local.post,
+            { q: body, model: "", k: 6 },
+            {
+              sources: (sources) =>
+                setAnswer((current) => ({ text: current?.text ?? "", sources })),
+              delta: (partial) =>
+                setAnswer((current) => ({ ...current, text: partial })),
+            },
+          );
+          setAnswer({ text: result.answer || "—", model: result.model, sources: result.sources });
         } else if (target === "build") {
           const started = await local.post<{ job: string }>("/api/build", { intent: body });
           if (started?.job) {
@@ -229,7 +239,31 @@ export function Omnibox() {
 
       {answer && (
         <div className="border border-rule bg-panel p-4">
-          <p className="whitespace-pre-wrap text-[14px] leading-[1.7] text-paper">{answer.text}</p>
+          {(answer.sources?.length ?? 0) > 0 && (
+            <ul className="mb-3 space-y-1 border-b border-rule pb-3">
+              {answer.sources?.map((source, index) => (
+                <li key={index} className="flex items-baseline gap-2 font-mono text-[10px]">
+                  <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                    {source.file ?? "source"}
+                  </span>
+                  <span
+                    className={`tabular-nums ${
+                      (source.distance ?? 1) < 0.5
+                        ? "text-ok"
+                        : (source.distance ?? 1) > 0.7
+                          ? "text-watch"
+                          : "text-faint"
+                    }`}
+                  >
+                    {typeof source.distance === "number" ? source.distance.toFixed(3) : "—"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="whitespace-pre-wrap text-[14px] leading-[1.7] text-paper">
+            {answer.text || "writing…"}
+          </p>
           {answer.model && (
             <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
               {answer.model}
@@ -237,6 +271,7 @@ export function Omnibox() {
           )}
         </div>
       )}
+
     </section>
   );
 }

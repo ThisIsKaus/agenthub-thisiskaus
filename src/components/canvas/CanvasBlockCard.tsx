@@ -7,7 +7,9 @@ import {
   SourceList,
   stamp,
 } from "@/components/canvas/RunHistory";
-import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { isRefusal, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
+import { askProgressive } from "@/lib/ask-stream";
+
 import { assertAnswer, isLaneFault, LaneFault, useLaneCapacity } from "@/lib/lane-capacity";
 import { useAutopilot } from "@/lib/model-autopilot";
 import { useJobDrawer } from "@/lib/job-drawer";
@@ -271,7 +273,33 @@ export function CanvasBlockCard({
     startRun(run);
     const started = Date.now();
     try {
-      const data = await ask(prompt, block.model, block.k);
+      // Sources land first and render immediately; the answer fills in beneath
+      // them while the lane writes.
+      const lane = capacity.byId(block.model);
+      if (lane?.status === "cold") {
+        const readied = await autopilot.ensureLane(block.model);
+        if (!readied.ok) throw new LaneFault(readied.message, "capacity");
+      }
+      const data = await askProgressive(
+        LOCAL_BASE,
+        local.post,
+        { q: prompt, model: block.model, k: block.k },
+        {
+          sources: (sources) => {
+            setStatus("sources in · writing the answer…");
+            patchRun(run.id, {
+              output: { type: "answer", answer: "", sources },
+              provenance: { ...run.provenance, retrieval: sources },
+            });
+          },
+          delta: (answer) => {
+            patchRun(run.id, {
+              output: { type: "answer", answer, sources: [] },
+            });
+          },
+        },
+      );
+      assertAnswer(data.answer, lane?.label ?? block.model);
       finishRun(run.id, {
         type: "answer",
         answer: data.answer ?? "",
