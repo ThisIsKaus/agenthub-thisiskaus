@@ -151,6 +151,7 @@ export function AppShell() {
             <PlanePill />
             <Pill label="mtd" value={`$${fixed(spend.mtd, 2, "0.00")}`} />
             <Pill label="wip" value={`${factory.wip ?? 0}/${factory.limit ?? 2}`} />
+            <Pill label="source" value={provenance} className="text-faint" />
           </div>
 
           <nav className="flex gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
