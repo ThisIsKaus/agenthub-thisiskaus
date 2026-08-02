@@ -106,17 +106,24 @@
     color-scheme: dark;
   }
 
-  table {
+  table,
+  svg text,
+  .font-mono,
+  [class*="font-mono"] {
     font-variant-numeric: tabular-nums;
   }
+
+
 
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-weight: 300;
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
+
 
   h1,
   h2,
@@ -126,7 +133,7 @@
   }
 }
 
-/* The single page frame: 86vw with 7% clear each side, 92vw below 900px. */
+/* The single page frame: 86vw — 7% clear each side at every viewport. */
 @utility page-container {
   width: 86vw;
   max-width: 1240px;
@@ -152,7 +159,7 @@
 @media (max-width: 900px) {
   .page-container,
   .page-width {
-    width: 92vw;
+    width: 86vw;
     padding-block: 28px 40px;
     gap: 40px;
   }
