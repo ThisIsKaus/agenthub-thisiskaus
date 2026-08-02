@@ -7,6 +7,10 @@ import { LocalOnly } from "@/components/LocalOnly";
 import { useLocal } from "@/lib/local-bridge";
 
 export const Route = createFileRoute("/_authenticated/memory")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" && search.q ? search.q : undefined,
+  }),
+
   head: () => ({
     meta: [
       { title: "Memory — AgentHub" },
@@ -61,10 +65,11 @@ function sourceLabel(source: string | { file?: string; path?: string }) {
 
 function MemoryPage() {
   const local = useLocal();
-  const [query, setQuery] = useState("");
+  const { q: seed } = Route.useSearch();
+  const [query, setQuery] = useState(seed ?? "");
   const [data, setData] = useState<MemoryData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState<"recent" | "search">("recent");
+  const [mode, setMode] = useState<"recent" | "search">(seed ? "search" : "recent");
 
   const load = useCallback(
     async (q?: string) => {
@@ -81,8 +86,9 @@ function MemoryPage() {
   );
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load(seed);
+  }, [load, seed]);
+
 
   const events = data?.events ?? [];
   const interactions = data?.stats?.interactions ?? data?.stats?.events;

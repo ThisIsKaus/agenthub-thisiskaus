@@ -5,6 +5,8 @@ import { Panel } from "@/components/AppShell";
 import { FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
 import { MachineStatePanel } from "@/components/MachineStatePanel";
 import { DecisionStream } from "@/components/DecisionStream";
+import { Omnibox } from "@/components/Omnibox";
+
 import { AboutSystemBody } from "@/components/AboutSystemBody";
 import { BoardDiagram, type Zone } from "@/components/BoardDiagram";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
@@ -371,9 +373,12 @@ function OverviewPage() {
 
   return (
     <div className="space-y-6">
+      <Omnibox />
+
       <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
 
       <DecisionStream />
+
 
 
 
