@@ -7,6 +7,7 @@ import { useLocal } from "@/lib/local-bridge";
 import { JobDrawer } from "@/components/JobDrawer";
 import { CommandHint, CommandPalette } from "@/components/CommandPalette";
 import { fixed } from "@/lib/format";
+import { servingLabel } from "@/lib/state";
 
 type Sub = { to: string; label: string };
 type Group = { label: string; to: string; subs: Sub[] };
@@ -106,6 +107,7 @@ export function AppShell() {
     GROUPS.find((group) => group.to === pathname || group.subs.some((sub) => sub.to === pathname)) ?? null;
 
   const services = data?.services ?? {};
+  const serving = servingLabel(services);
   const spend = data?.spend ?? {};
   const factory = data?.factory ?? {};
 
@@ -142,7 +144,7 @@ export function AppShell() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Pill label="serving" value={String(services.lms ?? "—")} className={tone(services.lms)} />
+            <Pill label="serving" value={serving} className={tone(serving)} />
             <PlanePill />
             <Pill label="mtd" value={`$${fixed(spend.mtd, 2, "0.00")}`} />
             <Pill label="wip" value={`${factory.wip ?? 0}/${factory.limit ?? 2}`} />
