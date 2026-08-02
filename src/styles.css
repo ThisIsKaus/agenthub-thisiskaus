@@ -107,10 +107,12 @@
   }
 
   table,
+  svg text,
   .font-mono,
   [class*="font-mono"] {
     font-variant-numeric: tabular-nums;
   }
+
 
 
   body {
