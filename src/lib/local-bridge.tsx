@@ -101,7 +101,9 @@ export async function loopbackFetch(url: string, init: RequestInit = {}): Promis
       if (init.signal?.aborted) throw error;
     }
   }
-  throw lastError instanceof Error ? lastError : new Error("loopback unreachable");
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("local plane not available from this browser");
 }
 
 /** Kept for callers that only need the init object. */
