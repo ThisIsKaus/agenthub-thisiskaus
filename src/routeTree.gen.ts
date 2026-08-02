@@ -23,6 +23,7 @@ import { Route as AuthenticatedEvalsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
 import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
+import { Route as AuthenticatedImproveRouteImport } from './routes/_authenticated/improve'
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedMemoryRouteImport } from './routes/_authenticated/memory'
@@ -105,6 +106,11 @@ const AuthenticatedHealthRoute = AuthenticatedHealthRouteImport.update({
   path: '/health',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedImproveRoute = AuthenticatedImproveRouteImport.update({
+  id: '/improve',
+  path: '/improve',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/health': typeof AuthenticatedHealthRoute
+  '/improve': typeof AuthenticatedImproveRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
   '/health': typeof AuthenticatedHealthRoute
+  '/improve': typeof AuthenticatedImproveRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/memory': typeof AuthenticatedMemoryRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/factory': typeof AuthenticatedFactoryRoute
   '/_authenticated/files': typeof AuthenticatedFilesRoute
   '/_authenticated/health': typeof AuthenticatedHealthRoute
+  '/_authenticated/improve': typeof AuthenticatedImproveRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/memory': typeof AuthenticatedMemoryRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/factory'
     | '/files'
     | '/health'
+    | '/improve'
     | '/inbox'
     | '/knowledge'
     | '/memory'
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/factory'
     | '/files'
     | '/health'
+    | '/improve'
     | '/inbox'
     | '/knowledge'
     | '/memory'
@@ -321,6 +332,7 @@ export interface FileRouteTypes {
     | '/_authenticated/factory'
     | '/_authenticated/files'
     | '/_authenticated/health'
+    | '/_authenticated/improve'
     | '/_authenticated/inbox'
     | '/_authenticated/knowledge'
     | '/_authenticated/memory'
@@ -442,6 +454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/improve': {
+      id: '/_authenticated/improve'
+      path: '/improve'
+      fullPath: '/improve'
+      preLoaderRoute: typeof AuthenticatedImproveRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/inbox': {
       id: '/_authenticated/inbox'
       path: '/inbox'
@@ -542,6 +561,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
   AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
   AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
+  AuthenticatedImproveRoute: typeof AuthenticatedImproveRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedMemoryRoute: typeof AuthenticatedMemoryRoute
@@ -567,6 +587,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
   AuthenticatedFilesRoute: AuthenticatedFilesRoute,
   AuthenticatedHealthRoute: AuthenticatedHealthRoute,
+  AuthenticatedImproveRoute: AuthenticatedImproveRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedMemoryRoute: AuthenticatedMemoryRoute,
