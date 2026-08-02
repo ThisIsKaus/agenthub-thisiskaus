@@ -18,6 +18,7 @@ import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCorpusRouteImport } from './routes/_authenticated/corpus'
 import { Route as AuthenticatedCostRouteImport } from './routes/_authenticated/cost'
 import { Route as AuthenticatedDigestRouteImport } from './routes/_authenticated/digest'
+import { Route as AuthenticatedEngineRouteImport } from './routes/_authenticated/engine'
 import { Route as AuthenticatedEvalsRouteImport } from './routes/_authenticated/evals'
 import { Route as AuthenticatedFactoryRouteImport } from './routes/_authenticated/factory'
 import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
@@ -77,6 +78,11 @@ const AuthenticatedCostRoute = AuthenticatedCostRouteImport.update({
 const AuthenticatedDigestRoute = AuthenticatedDigestRouteImport.update({
   id: '/digest',
   path: '/digest',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEngineRoute = AuthenticatedEngineRouteImport.update({
+  id: '/engine',
+  path: '/engine',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEvalsRoute = AuthenticatedEvalsRouteImport.update({
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/corpus': typeof AuthenticatedCorpusRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
+  '/engine': typeof AuthenticatedEngineRoute
   '/evals': typeof AuthenticatedEvalsRoute
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/corpus': typeof AuthenticatedCorpusRoute
   '/cost': typeof AuthenticatedCostRoute
   '/digest': typeof AuthenticatedDigestRoute
+  '/engine': typeof AuthenticatedEngineRoute
   '/evals': typeof AuthenticatedEvalsRoute
   '/factory': typeof AuthenticatedFactoryRoute
   '/files': typeof AuthenticatedFilesRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/_authenticated/corpus': typeof AuthenticatedCorpusRoute
   '/_authenticated/cost': typeof AuthenticatedCostRoute
   '/_authenticated/digest': typeof AuthenticatedDigestRoute
+  '/_authenticated/engine': typeof AuthenticatedEngineRoute
   '/_authenticated/evals': typeof AuthenticatedEvalsRoute
   '/_authenticated/factory': typeof AuthenticatedFactoryRoute
   '/_authenticated/files': typeof AuthenticatedFilesRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/corpus'
     | '/cost'
     | '/digest'
+    | '/engine'
     | '/evals'
     | '/factory'
     | '/files'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/corpus'
     | '/cost'
     | '/digest'
+    | '/engine'
     | '/evals'
     | '/factory'
     | '/files'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/_authenticated/corpus'
     | '/_authenticated/cost'
     | '/_authenticated/digest'
+    | '/_authenticated/engine'
     | '/_authenticated/evals'
     | '/_authenticated/factory'
     | '/_authenticated/files'
@@ -393,6 +405,13 @@ declare module '@tanstack/react-router' {
       path: '/digest'
       fullPath: '/digest'
       preLoaderRoute: typeof AuthenticatedDigestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/engine': {
+      id: '/_authenticated/engine'
+      path: '/engine'
+      fullPath: '/engine'
+      preLoaderRoute: typeof AuthenticatedEngineRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/evals': {
@@ -518,6 +537,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCorpusRoute: typeof AuthenticatedCorpusRoute
   AuthenticatedCostRoute: typeof AuthenticatedCostRoute
   AuthenticatedDigestRoute: typeof AuthenticatedDigestRoute
+  AuthenticatedEngineRoute: typeof AuthenticatedEngineRoute
   AuthenticatedEvalsRoute: typeof AuthenticatedEvalsRoute
   AuthenticatedFactoryRoute: typeof AuthenticatedFactoryRoute
   AuthenticatedFilesRoute: typeof AuthenticatedFilesRoute
@@ -542,6 +562,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCorpusRoute: AuthenticatedCorpusRoute,
   AuthenticatedCostRoute: AuthenticatedCostRoute,
   AuthenticatedDigestRoute: AuthenticatedDigestRoute,
+  AuthenticatedEngineRoute: AuthenticatedEngineRoute,
   AuthenticatedEvalsRoute: AuthenticatedEvalsRoute,
   AuthenticatedFactoryRoute: AuthenticatedFactoryRoute,
   AuthenticatedFilesRoute: AuthenticatedFilesRoute,
@@ -570,13 +591,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
