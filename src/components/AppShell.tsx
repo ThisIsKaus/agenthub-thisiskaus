@@ -118,7 +118,7 @@ export function AppShell() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b border-rule bg-background/95 backdrop-blur">
-        <div className="mx-auto w-full max-w-[1100px] px-4">
+        <div className="page-width">
           <div className="flex items-baseline justify-between gap-4 py-3">
             <h1 className="font-serif text-2xl leading-none text-paper">
               AgentHub
@@ -139,14 +139,14 @@ export function AppShell() {
             </div>
           </div>
 
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Pill label="serving" value={String(services.lms ?? "—")} className={tone(services.lms)} />
             <PlanePill />
             <Pill label="mtd" value={`$${fixed(spend.mtd, 2, "0.00")}`} />
             <Pill label="wip" value={`${factory.wip ?? 0}/${factory.limit ?? 2}`} />
           </div>
 
-          <nav className="-mx-4 flex gap-5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav className="flex gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {GROUPS.map((group) => {
               const active =
                 group.to === pathname || group.subs.some((sub) => sub.to === pathname);
@@ -165,7 +165,7 @@ export function AppShell() {
           </nav>
 
           {current && current.subs.length > 1 && (
-            <div className="-mx-4 flex gap-4 overflow-x-auto border-t border-rule px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-4 overflow-x-auto border-t border-rule py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {current.subs.map((sub) => (
                 <Link
                   key={sub.to}
@@ -182,15 +182,9 @@ export function AppShell() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1100px] px-4 py-8">
+      <main className="pb-16">
         <Outlet />
       </main>
-
-      <footer className="mt-8 border-t border-rule pb-16">
-        <p className="mx-auto w-full max-w-[1100px] px-4 py-6 font-mono text-[10px] leading-relaxed text-faint">
-          AgentHub · local plane over loopback on the machine · published status everywhere else
-        </p>
-      </footer>
 
       <JobDrawer />
     </div>

@@ -137,6 +137,12 @@
   gap: 56px;
 }
 
+@utility page-width {
+  width: 86vw;
+  max-width: 1240px;
+  margin-inline: auto;
+}
+
 @utility page-stack {
   display: flex;
   flex-direction: column;
@@ -144,7 +150,8 @@
 }
 
 @media (max-width: 900px) {
-  .page-container {
+  .page-container,
+  .page-width {
     width: 92vw;
     padding-block: 28px 40px;
     gap: 40px;
