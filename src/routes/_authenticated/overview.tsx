@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
-import { Empty, FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
+import { FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
 import { MachineStatePanel } from "@/components/MachineStatePanel";
 import { DecisionStream } from "@/components/DecisionStream";
 import { AboutSystemBody } from "@/components/AboutSystemBody";
@@ -11,7 +11,7 @@ import { BoardDiagram, type Zone } from "@/components/BoardDiagram";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
 import { asPercent, modelName, num, useBoardTelemetry } from "@/hooks/use-board-telemetry";
 import { changesSince, snapshotOf, useLastSeen } from "@/lib/since";
-import { useLocal, isRefusal } from "@/lib/local-bridge";
+import { useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { clockOf, derivePlane } from "@/lib/machine-state";
 
