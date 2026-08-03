@@ -131,6 +131,20 @@ function SkillsPage() {
     if (seed && !active) setActive(draftSkill(root, seed.slice(0, 48), seed));
   }, [seed, active, root]);
 
+  /** The body is read on open, once. A refusal is stated and left alone. */
+  async function openSkill(skill: Skill) {
+    if (active?.path === skill.path) {
+      setActive(null);
+      return;
+    }
+    setActive(skill);
+    setNote(null);
+    const { skill: loaded, refusal } = await loadSkillBody(local, skill);
+    setActive((current) => (current?.path === skill.path ? loaded : current));
+    if (refusal) setNote(refusal);
+  }
+
+
   async function mine() {
     setMining(true);
     setNote("mining the machine for repetition…");
