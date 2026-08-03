@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Disclosure } from "@/components/Disclosure";
 import { RefChip, ReferencePicker } from "@/components/canvas/ReferencePicker";
 import {
   ProvenanceFold,
