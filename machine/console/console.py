@@ -940,11 +940,6 @@ def skills():
         counts[r["state"]] = counts.get(r["state"], 0) + 1
     return {"skills": out, "count": len(out), "counts": counts}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=4100, log_level="warning")
-
-
 # ---------------------------------------------------------------- canvas
 # The workbench where a captured thought becomes a finished artefact. Distinct from Ask,
 # which is one question with no persistence; from Inbox, which triages what arrived; and from
@@ -1050,4 +1045,11 @@ def canvas_handover(id: str = Form(...)):
     dest.write_text(f.read_text())
     return {"ok": True, "path": str(dest),
             "note": "queued for ingest; retrievable after the next ingest run"}
+
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=4100, log_level="warning")
+
 
