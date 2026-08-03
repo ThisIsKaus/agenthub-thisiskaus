@@ -1,5 +1,5 @@
 # AgentHub local API — contract for Lovable
-_Generated from console.py by AST parse, 2026-08-03T18:18. Do not edit by hand._
+_Generated from console.py by AST parse, 2026-08-03T18:37. Do not edit by hand._
 
 ## How to call it
 
