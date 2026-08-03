@@ -555,7 +555,7 @@ function ModelsPage() {
                     <td
                       className={`py-2 text-right font-mono text-[11px] ${row.tested ? "text-muted-foreground" : "text-watch"}`}
                     >
-                      {row.tested ? String(row.tested) : "never"}
+                      {row.tested ? String(row.tested).slice(0, 10) : "never"}
                     </td>
                     <td
                       className={`py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] ${
