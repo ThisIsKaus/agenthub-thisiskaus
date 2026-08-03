@@ -1061,6 +1061,35 @@ export function CanvasBlockCard({
                   Critique on another lane
                 </button>
               )}
+              <button
+                type="button"
+                data-testid="answer-below"
+                onClick={() => void answerBelow()}
+                disabled={busy || !block.text.trim()}
+                title="Put this block's text to the corpus and write the answer into a new block underneath"
+                className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Answer below
+              </button>
+              {block.kind === "prompt" && cloudBlockedBy && (
+                <span className="w-full font-mono text-[10px] text-watch">
+                  a cited source is classed {cloudBlockedBy} — the cloud lane is unavailable for the
+                  critique, so it runs on a second local lane or not at all
+                </span>
+              )}
+              {passes.length > 0 && (
+                <ul className="w-full space-y-0.5 font-mono text-[10px] tabular-nums text-faint">
+                  {passes.map((pass) => (
+                    <li key={pass.id}>
+                      {pass.label} ·{" "}
+                      {pass.endedAt
+                        ? `${Math.round((pass.endedAt - pass.startedAt) / 100) / 10}s`
+                        : "running…"}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
 
               {busy && (
                 <span className="font-mono text-[10px] tabular-nums text-faint">
