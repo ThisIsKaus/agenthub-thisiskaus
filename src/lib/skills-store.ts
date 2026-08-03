@@ -252,17 +252,11 @@ export async function fetchSkills(
   const files = rows.filter(
     (row) => row.path?.endsWith(".md") && !row.path.includes("/versions/"),
   );
-  const loaded = await Promise.all(
-    files.map(async (row) => {
-      try {
-        const file = await local.get<{ raw?: string }>("/api/file", { path: row.path });
-        return applyRow(parseSkill(file.raw ?? "", row.path), row);
-      } catch {
-        // The file would not open; the row still describes a real skill.
-        return applyRow(parseSkill("", row.path), row);
-      }
-    }),
-  );
+  // The list is built from the listing alone. Reading every file here is what
+  // produced a flood of refused /api/file calls; a body is read only when the
+  // user opens one skill.
+  const loaded = files.map((row) => applyRow(parseSkill("", row.path), row));
+
   const skills = loaded
     .filter((skill): skill is Skill => skill !== null)
     .sort((a, b) => a.name.localeCompare(b.name));
