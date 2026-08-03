@@ -1,68 +1,136 @@
-import { normaliseDoc, type CanvasDoc } from "@/lib/canvas-types";
+/**
+ * Canvas persistence. The machine now owns canvas storage behind /api/canvas,
+ * so this module no longer writes loose files: it saves a document by id and
+ * the machine snapshots the previous version on every save. That snapshotting
+ * is why the canvas has no branches — history without merge semantics.
+ */
+
+import { emptyDoc, normaliseDoc, type CanvasDoc } from "@/lib/canvas-types";
 
 type Local = {
   get: <T>(path: string, query?: Record<string, string | number | undefined>) => Promise<T>;
   post: <T>(path: string, form: Record<string, string | number | Blob | undefined>) => Promise<T>;
 };
 
-export const CANVAS_SUFFIX = ".canvas.json";
+export type LibraryEntry = {
+  id: string;
+  title: string;
+  state: string;
+  updated?: string;
+  words?: number;
+};
 
-/** Canvases live beside drafts on the machine. They are never written anywhere else. */
-export function canvasDir(roots: { name: string; path: string }[]): string | null {
-  const drafts = roots.find((root) => root.name.toLowerCase() === "drafts");
-  const docs = roots.find((root) => root.name.toLowerCase() === "docs");
-  const base = drafts ?? docs ?? roots[0];
-  return base ? `${base.path.replace(/\/$/, "")}/canvas` : null;
+export type Library = {
+  documents: LibraryEntry[];
+  counts: Record<string, number>;
+  states: string[];
+};
+
+function str(value: unknown, fallback = ""): string {
+  return typeof value === "string" && value ? value : fallback;
 }
 
-export function slugify(title: string) {
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-  return slug || "canvas";
-}
+export async function listCanvases(local: Local): Promise<Library> {
+  const data = await local.get<{
+    documents?: unknown[];
+    counts?: Record<string, unknown>;
+    states?: unknown[];
+  }>("/api/canvas");
 
-export type LibraryEntry = { name: string; path: string; title: string; modified?: string };
+  const documents = (Array.isArray(data.documents) ? data.documents : [])
+    .map((entry): LibraryEntry | null => {
+      const row = (entry ?? {}) as Record<string, unknown>;
+      const id = str(row.id);
+      if (!id) return null;
+      return {
+        id,
+        title: str(row.title, "Untitled canvas"),
+        state: str(row.state, "idea"),
+        updated: typeof row.updated === "string" ? row.updated : undefined,
+        words: typeof row.words === "number" ? row.words : undefined,
+      };
+    })
+    .filter((entry): entry is LibraryEntry => entry !== null)
+    .sort((a, b) => (b.updated ?? "").localeCompare(a.updated ?? ""));
 
-export async function listCanvases(local: Local, dir: string): Promise<LibraryEntry[]> {
-  try {
-    const listing = await local.get<{ files?: { name: string; path: string; modified?: string }[] }>(
-      "/api/tree",
-      { path: dir },
-    );
-    return (listing.files ?? [])
-      .filter((file) => file.name.endsWith(CANVAS_SUFFIX))
-      .map((file) => ({
-        name: file.name,
-        path: file.path,
-        title: file.name.slice(0, -CANVAS_SUFFIX.length).replace(/-/g, " "),
-        modified: file.modified,
-      }))
-      .sort((a, b) => (b.modified ?? "").localeCompare(a.modified ?? ""));
-  } catch {
-    // The folder does not exist yet. An empty library is the correct answer.
-    return [];
+
+  const counts: Record<string, number> = {};
+  for (const [key, value] of Object.entries(data.counts ?? {})) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) counts[key] = parsed;
   }
+
+  const states = (Array.isArray(data.states) ? data.states : []).filter(
+    (item): item is string => typeof item === "string",
+  );
+
+  return { documents, counts, states };
 }
 
-export async function readCanvas(local: Local, path: string): Promise<CanvasDoc | null> {
-  const file = await local.get<{ raw?: string }>("/api/file", { path });
+/**
+ * A canvas is a block document; the machine stores it as one body string. A
+ * body it cannot parse is not lost — it is read forward as a single note.
+ */
+export async function readCanvas(local: Local, id: string): Promise<CanvasDoc | null> {
+  const data = await local.get<{
+    id?: string;
+    title?: string;
+    state?: string;
+    body?: string;
+    sources?: unknown;
+    created?: string;
+    versions?: number;
+  }>("/api/canvas/doc", { id });
+
+  const versions = typeof data.versions === "number" ? data.versions : 0;
+  const sources = Array.isArray(data.sources)
+    ? (data.sources as unknown[]).filter((item): item is string => typeof item === "string")
+    : [];
+
+  let doc: CanvasDoc | null = null;
   try {
-    return normaliseDoc(JSON.parse(file.raw ?? ""), path);
+    doc = normaliseDoc(JSON.parse(data.body ?? ""));
   } catch {
-    return null;
+    doc = null;
   }
+  if (!doc) {
+    doc = emptyDoc(str(data.title, "Untitled canvas"));
+    doc.blocks[0] = { ...doc.blocks[0], kind: "note", text: str(data.body) } as CanvasDoc["blocks"][number];
+  }
+
+  return {
+    ...doc,
+    id: str(data.id, id),
+    title: str(data.title, doc.title),
+    stage: (str(data.state, doc.stage) as CanvasDoc["stage"]) ?? doc.stage,
+    created: str(data.created, doc.created),
+    sources: sources.length ? sources : doc.sources,
+    versions,
+  };
 }
 
-export async function writeCanvas(local: Local, dir: string, doc: CanvasDoc): Promise<string> {
-  const path = doc.path ?? `${dir}/${slugify(doc.title)}${CANVAS_SUFFIX}`;
-  const payload: CanvasDoc = { ...doc, path, updated: new Date().toISOString() };
-  await local.post("/api/file/save", { path, content: JSON.stringify(payload, null, 2) });
-  return path;
+/** Save the whole document. Returns the version count the machine now holds. */
+export async function writeCanvas(local: Local, doc: CanvasDoc): Promise<number> {
+  const payload: CanvasDoc = { ...doc, updated: new Date().toISOString() };
+  const response = await local.post<{ versions?: number }>("/api/canvas/save", {
+    id: doc.id,
+    title: doc.title,
+    body: JSON.stringify(payload, null, 2),
+    state: doc.stage,
+    sources: JSON.stringify(doc.sources ?? []),
+  });
+  return typeof response?.versions === "number" ? response.versions : doc.versions;
 }
 
-export async function deleteCanvas(local: Local, path: string) {
-  await local.post("/api/file/delete", { path });
+export async function setCanvasState(local: Local, id: string, state: string) {
+  await local.post("/api/canvas/state", { id, state });
+}
+
+/** Copy the document into the inbox. Returns the destination path it reports. */
+export async function handoverCanvas(local: Local, id: string): Promise<string | null> {
+  const response = await local.post<{ path?: string; destination?: string; dest?: string }>(
+    "/api/canvas/handover",
+    { id },
+  );
+  return response?.path ?? response?.destination ?? response?.dest ?? null;
 }

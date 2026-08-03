@@ -110,16 +110,11 @@ export type CaptureBlock = Base & { kind: "capture" };
 export type CanvasBlock = PromptBlock | NoteBlock | JobBlock | CaptureBlock;
 
 /**
- * A named set of pins across blocks — "the cautious reading" vs "the fast one".
- * A branch is a selection, never a copy: no document merge is ever attempted,
- * because three-way merge of a tree-shaped document is not a solved problem.
+ * Branching was removed deliberately. Every save snapshots the previous version
+ * on the machine, which is the right weight for a personal draft workspace:
+ * history without merge semantics.
  */
-export type BranchSelection = {
-  id: string;
-  name: string;
-  created: string;
-  pins: Record<string, string>;
-};
+
 
 /**
  * Every canvas is also a project. A thought and a shipped thing are the same
@@ -135,8 +130,11 @@ export type CanvasDoc = {
   created: string;
   updated: string;
   blocks: CanvasBlock[];
-  branches: BranchSelection[];
-  activeBranch: string | null;
+  /** Where this draft came from: paths recorded as provenance, shown at the foot. */
+  sources: string[];
+  /** How many prior versions the machine holds for this document. */
+  versions: number;
+
   /** Where this piece of work has got to. A canvas at 'idea' is still a project. */
   stage: Stage;
   /** Who it is for: personal, a product, or a named client engagement. */
@@ -219,8 +217,9 @@ export function emptyDoc(title = "Untitled canvas"): CanvasDoc {
     created: now,
     updated: now,
     blocks: [emptyBlock("prompt")],
-    branches: [],
-    activeBranch: null,
+    sources: [],
+    versions: 0,
+
     stage: "idea",
     entity: "personal",
     sensitivity: "S1p",
@@ -263,8 +262,11 @@ export function normaliseDoc(raw: unknown, path?: string): CanvasDoc | null {
     created: typeof value.created === "string" ? value.created : new Date().toISOString(),
     updated: typeof value.updated === "string" ? value.updated : new Date().toISOString(),
     blocks: blocks.length ? blocks : [emptyBlock("prompt")],
-    branches: Array.isArray(value.branches) ? (value.branches as BranchSelection[]).filter(isBranch) : [],
-    activeBranch: typeof value.activeBranch === "string" ? value.activeBranch : null,
+    sources: Array.isArray(value.sources)
+      ? (value.sources as unknown[]).filter((item): item is string => typeof item === "string")
+      : [],
+    versions: typeof value.versions === "number" ? value.versions : 0,
+
     stage: (STAGES as readonly string[]).includes(value.stage as string)
       ? (value.stage as Stage)
       : "idea",
@@ -279,11 +281,6 @@ export function normaliseDoc(raw: unknown, path?: string): CanvasDoc | null {
 
 }
 
-function isBranch(value: unknown): value is BranchSelection {
-  if (!value || typeof value !== "object") return false;
-  const branch = value as Record<string, unknown>;
-  return typeof branch.id === "string" && typeof branch.name === "string" && !!branch.pins;
-}
 
 function normaliseBlock(raw: unknown): CanvasBlock | null {
   if (!raw || typeof raw !== "object") return null;

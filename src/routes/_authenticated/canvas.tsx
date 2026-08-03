@@ -7,23 +7,22 @@ import { CanvasBlockCard } from "@/components/canvas/CanvasBlockCard";
 import { useReferenceCatalogue } from "@/lib/canvas-refs";
 import { useLocal } from "@/lib/local-bridge";
 import {
-  canvasDir,
-  deleteCanvas,
+  handoverCanvas,
   listCanvases,
   readCanvas,
+  setCanvasState,
   writeCanvas,
   type LibraryEntry,
 } from "@/lib/canvas-store";
 import {
   emptyBlock,
   emptyDoc,
-  newId,
-  pinnedRun,
   STAGES,
-  type BranchSelection,
   type BlockKind,
   type CanvasBlock,
   type CanvasDoc,
+  type CanvasRef,
+  type Stage,
 } from "@/lib/canvas-types";
 
 export const Route = createFileRoute("/_authenticated/canvas")({
@@ -31,26 +30,29 @@ export const Route = createFileRoute("/_authenticated/canvas")({
     seed: typeof search.seed === "string" ? search.seed : undefined,
   }),
   head: () => ({
-
     meta: [
       { title: "Canvas — AgentHub" },
       {
         name: "description",
         content:
-          "A block document that asks the corpus, runs machine jobs and hands work over, with live references to files, skills, projects and tools.",
+          "The workbench where a captured thought becomes a finished artefact: ask the corpus, critique on a second lane, and hand the result over.",
       },
       { property: "og:title", content: "Canvas — AgentHub" },
       {
         property: "og:description",
         content:
-          "A block document that asks the corpus, runs machine jobs and hands work over, with live references to files, skills, projects and tools.",
+          "The workbench where a captured thought becomes a finished artefact: ask the corpus, critique on a second lane, and hand the result over.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => (
-    <Page title="Canvas" subtitle="A canvas is a project: think, ask the corpus, run the machine and ship from one document." footer="Canvas · drafts live on the machine under drafts/canvas">
+    <Page
+      title="Canvas"
+      subtitle="The one place you author rather than read. Ask the corpus inline, critique on a second lane, and hand the finished draft over."
+      footer="Canvas · documents live on the machine; every save keeps the previous version"
+    >
       <LocalOnly>
         <CanvasPage />
       </LocalOnly>
@@ -89,7 +91,7 @@ function HarnessBoard({ doc }: { doc: CanvasDoc }) {
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
           Execution harness
         </p>
-        <p className="font-mono text-[10px] text-faint">local · append-only runs · content-addressed</p>
+        <p className="font-mono text-[10px] text-faint">local · append-only runs · versioned saves</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-5">
         {stages.map((stage, index) => (
@@ -116,109 +118,10 @@ function HarnessBoard({ doc }: { doc: CanvasDoc }) {
   );
 }
 
-function BranchBar({
-  doc,
-  onChange,
-}: {
-  doc: CanvasDoc;
-  onChange: (patch: Partial<CanvasDoc>) => void;
-}) {
-  function snapshot(name: string): BranchSelection {
-    return {
-      id: newId("branch"),
-      name,
-      created: new Date().toISOString(),
-      pins: Object.fromEntries(
-        doc.blocks.flatMap((block) => {
-          const run = pinnedRun(block);
-          return run ? [[block.id, run.id]] : [];
-        }),
-      ),
-    };
-  }
-
-  function createBranch() {
-    const branch = snapshot(`Path ${doc.branches.length + 1}`);
-    onChange({ branches: [...doc.branches, branch], activeBranch: branch.id });
-  }
-
-  function selectBranch(id: string | null) {
-    const branch = doc.branches.find((entry) => entry.id === id);
-    onChange({
-      activeBranch: id,
-      blocks: branch
-        ? doc.blocks.map((block) => ({
-            ...block,
-            pinnedRunId: branch.pins[block.id] ?? block.pinnedRunId,
-          }))
-        : doc.blocks,
-    });
-  }
-
-  function updateBranch() {
-    if (!doc.activeBranch) return;
-    const next = snapshot("");
-    onChange({
-      branches: doc.branches.map((branch) =>
-        branch.id === doc.activeBranch ? { ...branch, pins: next.pins } : branch,
-      ),
-    });
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-rule px-4 py-2" data-testid="branch-bar">
-      <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">branches</span>
-      <button
-        type="button"
-        onClick={() => selectBranch(null)}
-        className={`border px-2 py-1 font-mono text-[10px] ${
-          doc.activeBranch === null ? "border-copper text-copper" : "border-rule text-muted-foreground"
-        }`}
-      >
-        main
-      </button>
-      {doc.branches.map((branch) => (
-        <button
-          key={branch.id}
-          type="button"
-          onClick={() => selectBranch(branch.id)}
-          title={`${Object.keys(branch.pins).length} pinned block outputs`}
-          className={`border px-2 py-1 font-mono text-[10px] ${
-            doc.activeBranch === branch.id
-              ? "border-copper text-copper"
-              : "border-rule text-muted-foreground hover:text-paper"
-          }`}
-        >
-          {branch.name}
-        </button>
-      ))}
-      <button
-        type="button"
-        onClick={createBranch}
-        className="border border-rule px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-copper hover:text-copper"
-      >
-        + branch
-      </button>
-      {doc.activeBranch && (
-        <button
-          type="button"
-          onClick={updateBranch}
-          className="font-mono text-[9px] uppercase tracking-[0.12em] text-faint hover:text-copper"
-        >
-          update pins
-        </button>
-      )}
-      <span className="ml-auto font-mono text-[9px] text-faint">
-        A branch is a named set of pinned outputs—not a copy.
-      </span>
-    </div>
-  );
-}
-
 const ENTITIES = ["personal", "Agenticality", "NXI", "Envelope Collective", "client"];
 const SENSITIVITIES = ["S0", "S1p", "S1c", "S2", "S3"];
 
-/** A canvas carries its own project record: stage, who it is for, and how far it may travel. */
+/** A canvas carries its own project record: state, who it is for, how far it may travel. */
 function ProjectBar({
   doc,
   onChange,
@@ -232,26 +135,12 @@ function ProjectBar({
   return (
     <section className="border border-rule bg-panel" data-testid="project-bar">
       <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
-        <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">stage</span>
-        {STAGES.map((stage) => (
-          <button
-            key={stage}
-            type="button"
-            onClick={() => onChange({ stage })}
-            className={`border px-2 py-1 font-mono text-[10px] ${
-              doc.stage === stage
-                ? "border-copper text-copper"
-                : "border-rule text-muted-foreground hover:text-paper"
-            }`}
-          >
-            {stage}
-          </button>
-        ))}
+        <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">for</span>
         <select
           value={doc.entity}
           onChange={(event) => onChange({ entity: event.target.value })}
           aria-label="Entity"
-          className="ml-auto border border-rule bg-panel2 px-2 py-1 font-mono text-[10px] text-paper outline-none focus:border-copper"
+          className="border border-rule bg-panel2 px-2 py-1 font-mono text-[10px] text-paper outline-none focus:border-copper"
         >
           {(ENTITIES.includes(doc.entity) ? ENTITIES : [doc.entity, ...ENTITIES]).map((entity) => (
             <option key={entity} value={entity}>
@@ -271,6 +160,11 @@ function ProjectBar({
             </option>
           ))}
         </select>
+        <span className="ml-auto font-mono text-[9px] text-faint">
+          {["S1c", "S2", "S3"].includes(doc.sensitivity)
+            ? `${doc.sensitivity} — local lanes only; the cloud lane is unavailable to this document`
+            : "cloud lane permitted for this document"}
+        </span>
       </div>
       <div className="flex flex-wrap items-center gap-2 border-t border-rule px-4 py-2">
         <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">skills</span>
@@ -295,9 +189,7 @@ function ProjectBar({
         >
           + skill
         </button>
-        <span className="ml-auto font-mono text-[9px] text-faint">
-          {doc.sensitivity === "S3" ? "S3 — local only, never handed over" : "loaded into every run"}
-        </span>
+        <span className="ml-auto font-mono text-[9px] text-faint">loaded into every run</span>
       </div>
       {open && (
         <div className="flex flex-wrap gap-2 border-t border-rule px-4 py-2">
@@ -328,22 +220,24 @@ function ProjectBar({
 function CanvasPage() {
   const local = useLocal();
   const queryClient = useQueryClient();
-  const { roots, skills: skillRefs } = useReferenceCatalogue();
-  const dir = useMemo(() => canvasDir(roots), [roots]);
+  const { skills: skillRefs } = useReferenceCatalogue();
   const skillNames = useMemo(() => skillRefs.map((ref) => ref.label), [skillRefs]);
   const { seed } = Route.useSearch();
 
-
   const [doc, setDoc] = useState<CanvasDoc | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const dirty = useRef(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [filter, setFilter] = useState<string>("all");
+  const [handover, setHandover] = useState<"idle" | "confirm" | "working">("idle");
+  const [handoverPath, setHandoverPath] = useState<string | null>(null);
   const timer = useRef<number | null>(null);
 
   const library = useQuery({
-    queryKey: ["canvas", "library", dir],
-    enabled: Boolean(dir) && local.available,
-    queryFn: () => listCanvases(local, dir as string),
+    queryKey: ["canvas", "library"],
+    enabled: local.available,
+    queryFn: () => listCanvases(local),
   });
 
   useEffect(() => {
@@ -359,38 +253,37 @@ function CanvasPage() {
 
   const save = useCallback(
     async (next: CanvasDoc) => {
-      if (!dir) return;
       setSaving("saving to the machine…");
       try {
-        const path = await writeCanvas(local, dir, next);
-        dirty.current = false;
-        setDoc((current) => (current && current.id === next.id ? { ...current, path } : current));
+        const versions = await writeCanvas(local, next);
+        setDirty(false);
+        setDoc((current) => (current && current.id === next.id ? { ...current, versions } : current));
         setSaving(`saved ${new Date().toISOString().slice(11, 16)}`);
-        void queryClient.invalidateQueries({ queryKey: ["canvas", "library", dir] });
+        void queryClient.invalidateQueries({ queryKey: ["canvas", "library"] });
       } catch {
         setSaving("the machine did not save this canvas");
       }
     },
-    [dir, local, queryClient],
+    [local, queryClient],
   );
 
   // Autosave is debounced; the document lives on the machine and nowhere else.
   useEffect(() => {
-    if (!doc || !dirty.current || !dir) return;
+    if (!doc || !dirty) return;
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => void save(doc), 1200);
     return () => {
       if (timer.current) window.clearTimeout(timer.current);
     };
-  }, [doc, dir, save]);
+  }, [doc, dirty, save]);
 
   function patchDoc(patch: Partial<CanvasDoc>) {
-    dirty.current = true;
+    setDirty(true);
     setDoc((current) => (current ? { ...current, ...patch } : current));
   }
 
   function patchBlock(id: string, patch: Partial<CanvasBlock>) {
-    dirty.current = true;
+    setDirty(true);
     setDoc((current) =>
       current
         ? {
@@ -405,7 +298,7 @@ function CanvasPage() {
 
   /** Functional block update — safe when several runs land at once. */
   function updateBlock(id: string, updater: (block: CanvasBlock) => CanvasBlock) {
-    dirty.current = true;
+    setDirty(true);
     setDoc((current) =>
       current
         ? {
@@ -416,11 +309,39 @@ function CanvasPage() {
     );
   }
 
-
   function addBlock(kind: BlockKind) {
-    dirty.current = true;
+    setDirty(true);
     setDoc((current) =>
       current ? { ...current, blocks: [...current.blocks, emptyBlock(kind)] } : current,
+    );
+  }
+
+  /** Insert a produced block directly beneath the one that produced it. */
+  function insertAfter(id: string, block: CanvasBlock) {
+    setDirty(true);
+    setDoc((current) => {
+      if (!current) return current;
+      const index = current.blocks.findIndex((entry) => entry.id === id);
+      const blocks = [...current.blocks];
+      blocks.splice(index < 0 ? blocks.length : index + 1, 0, block);
+      return { ...current, blocks };
+    });
+  }
+
+  /** Provenance: where this draft came from, recorded once per document. */
+  function addSource(reference: CanvasRef) {
+    const line = reference.path ?? reference.label;
+    setDoc((current) => {
+      if (!current || current.sources.includes(line)) return current;
+      setDirty(true);
+      return { ...current, sources: [...current.sources, line] };
+    });
+  }
+
+  function removeSource(line: string) {
+    setDirty(true);
+    setDoc((current) =>
+      current ? { ...current, sources: current.sources.filter((item) => item !== line) } : current,
     );
   }
 
@@ -428,7 +349,7 @@ function CanvasPage() {
     const target = index + direction;
     setDoc((current) => {
       if (!current || target < 0 || target >= current.blocks.length) return current;
-      dirty.current = true;
+      setDirty(true);
       const blocks = [...current.blocks];
       const [held] = blocks.splice(index, 1);
       blocks.splice(target, 0, held);
@@ -437,7 +358,7 @@ function CanvasPage() {
   }
 
   function removeBlock(id: string) {
-    dirty.current = true;
+    setDirty(true);
     setDoc((current) => {
       if (!current) return current;
       const blocks = current.blocks.filter((block) => block.id !== id);
@@ -446,7 +367,7 @@ function CanvasPage() {
   }
 
   function duplicateBlock(id: string) {
-    dirty.current = true;
+    setDirty(true);
     setDoc((current) => {
       if (!current) return current;
       const index = current.blocks.findIndex((block) => block.id === id);
@@ -459,38 +380,56 @@ function CanvasPage() {
     });
   }
 
+  /** The six states both filter the library and set this document's own state. */
+  async function chooseState(stage: Stage) {
+    if (!doc) return;
+    setFilter(stage);
+    patchDoc({ stage });
+    try {
+      await setCanvasState(local, doc.id, stage);
+      void queryClient.invalidateQueries({ queryKey: ["canvas", "library"] });
+    } catch {
+      setSaving("the machine did not record that state");
+    }
+  }
+
   async function openCanvas(entry: LibraryEntry) {
     setSaving(null);
+    setHandoverPath(null);
     try {
-      const loaded = await readCanvas(local, entry.path);
+      const loaded = await readCanvas(local, entry.id);
       if (loaded) {
-        dirty.current = false;
+        setDirty(false);
         setDoc(loaded);
         setLibraryOpen(false);
       } else {
-        setSaving("that file is not a canvas");
+        setSaving("the machine did not return that document");
       }
     } catch {
       setSaving("the machine did not open that canvas");
     }
   }
 
-  async function removeCanvas(entry: LibraryEntry) {
-    setSaving("awaiting approval on the machine…");
+  async function confirmHandover() {
+    if (!doc) return;
+    setHandover("working");
+    setHandoverPath(null);
     try {
-      await deleteCanvas(local, entry.path);
-      setSaving("removed");
-      if (doc?.path === entry.path) {
-        dirty.current = false;
-        setDoc(emptyDoc());
-      }
-      void queryClient.invalidateQueries({ queryKey: ["canvas", "library", dir] });
+      if (dirty) await save(doc);
+      const path = await handoverCanvas(local, doc.id);
+      setHandoverPath(path ?? "copied to the inbox");
+      setHandover("idle");
     } catch {
-      setSaving("denied at the approval dialog");
+      setHandover("idle");
+      setSaving("the hand-over was refused on the machine");
     }
   }
 
   if (!doc) return null;
+
+  const counts = library.data?.counts ?? {};
+  const documents = library.data?.documents ?? [];
+  const shown = filter === "all" ? documents : documents.filter((entry) => entry.state === filter);
 
   return (
     <div className="space-y-4" data-testid="canvas-page">
@@ -498,7 +437,6 @@ function CanvasPage() {
       <HarnessBoard doc={doc} />
 
       <section className="border border-rule bg-panel">
-
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-b border-rule px-4 py-3">
           <input
             value={doc.title}
@@ -510,17 +448,24 @@ function CanvasPage() {
           />
           <button
             type="button"
+            data-testid="save-canvas"
             onClick={() => void save(doc)}
-            className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+            title={dirty ? "There are unsaved changes" : "Everything is saved on the machine"}
+            className={`border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${
+              dirty
+                ? "border-copper text-copper"
+                : "border-rule text-muted-foreground hover:border-copper hover:text-copper"
+            }`}
           >
-            Save
+            {dirty ? "Save · unsaved" : "Save · saved"}
           </button>
           <button
             type="button"
             onClick={() => {
-              dirty.current = false;
+              setDirty(false);
               setDoc(emptyDoc());
               setSaving(null);
+              setHandoverPath(null);
             }}
             className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
           >
@@ -538,26 +483,76 @@ function CanvasPage() {
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 font-mono text-[10px] text-faint">
           <span>{doc.blocks.length} blocks</span>
-          <span className="truncate">{doc.path ?? (dir ? `${dir}/…` : "not yet written")}</span>
           <span className="tabular-nums">edited {stamp(doc.updated)}</span>
+          <button
+            type="button"
+            data-testid="toggle-history"
+            onClick={() => setHistoryOpen((open) => !open)}
+            className="uppercase tracking-[0.14em] text-faint hover:text-copper"
+          >
+            history · <span className="tabular-nums text-paper">{doc.versions}</span>{" "}
+            {doc.versions === 1 ? "version" : "versions"}
+          </button>
+          <span className={dirty ? "text-copper" : "text-faint"} data-testid="dirty-state">
+            {dirty ? "unsaved changes" : "all changes saved"}
+          </span>
           {saving && <span className="text-copper">{saving}</span>}
         </div>
 
-        <BranchBar doc={doc} onChange={patchDoc} />
+        {historyOpen && (
+          <p className="border-t border-rule px-4 py-3 font-mono text-[10px] leading-relaxed text-faint">
+            Every save snapshots the previous version on the machine — {doc.versions} kept for this
+            document, first written {stamp(doc.created)}. There are no branches: a personal draft
+            workspace does not need merge semantics, and a snapshot per save is the right weight.
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2 border-t border-rule px-4 py-2" data-testid="lifecycle-bar">
+          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">state</span>
+          <button
+            type="button"
+            onClick={() => setFilter("all")}
+            className={`border px-2 py-1 font-mono text-[10px] ${
+              filter === "all" ? "border-copper text-copper" : "border-rule text-muted-foreground"
+            }`}
+          >
+            all <span className="tabular-nums">{documents.length}</span>
+          </button>
+          {STAGES.map((stage) => (
+            <button
+              key={stage}
+              type="button"
+              onClick={() => void chooseState(stage)}
+              title={`Set this document to ${stage} and show only ${stage} documents`}
+              className={`border px-2 py-1 font-mono text-[10px] ${
+                doc.stage === stage || filter === stage
+                  ? "border-copper text-copper"
+                  : "border-rule text-muted-foreground hover:text-paper"
+              }`}
+            >
+              {stage} <span className="tabular-nums">{counts[stage] ?? 0}</span>
+            </button>
+          ))}
+          <span className="ml-auto font-mono text-[9px] text-faint">
+            this document is {doc.stage}
+          </span>
+        </div>
 
         {libraryOpen && (
           <div className="border-t border-rule" data-testid="canvas-library">
             {library.isLoading && (
               <p className="px-4 py-3 font-mono text-[11px] text-faint">reading the machine…</p>
             )}
-            {!library.isLoading && (library.data ?? []).length === 0 && (
+            {!library.isLoading && shown.length === 0 && (
               <p className="px-4 py-3 font-mono text-[11px] text-faint">
-                no canvases yet — the first save writes one
+                {documents.length === 0
+                  ? "no canvases yet — the first save writes one"
+                  : `no documents at ${filter} — choose all to see the other ${documents.length}`}
               </p>
             )}
-            {(library.data ?? []).map((entry) => (
+            {shown.map((entry) => (
               <div
-                key={entry.path}
+                key={entry.id}
                 className="flex items-baseline justify-between gap-3 border-t border-rule px-4 py-2 first:border-t-0"
               >
                 <button
@@ -567,16 +562,13 @@ function CanvasPage() {
                 >
                   {entry.title}
                 </button>
+                <span className="shrink-0 font-mono text-[10px] text-faint">{entry.state}</span>
                 <span className="shrink-0 font-mono text-[10px] tabular-nums text-faint">
-                  {entry.modified ?? "—"}
+                  {typeof entry.words === "number" ? `${entry.words} w` : "—"}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => void removeCanvas(entry)}
-                  className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-faint hover:text-risk"
-                >
-                  remove
-                </button>
+                <span className="shrink-0 font-mono text-[10px] tabular-nums text-faint">
+                  {stamp(entry.updated)}
+                </span>
               </div>
             ))}
           </div>
@@ -593,10 +585,11 @@ function CanvasPage() {
             doc={doc}
             onChange={(patch) => patchBlock(block.id, patch)}
             onUpdate={(updater) => updateBlock(block.id, updater)}
-
             onRemove={() => removeBlock(block.id)}
             onMove={(direction) => moveBlock(index, direction)}
             onDuplicate={() => duplicateBlock(block.id)}
+            onInsertAfter={(produced) => insertAfter(block.id, produced)}
+            onAddSource={addSource}
           />
         ))}
       </div>
@@ -614,12 +607,83 @@ function CanvasPage() {
             {entry.label}
           </button>
         ))}
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {handover === "confirm" ? (
+            <>
+              <span className="font-mono text-[10px] text-paper">
+                This copies the document to the inbox. It becomes searchable after the next ingest
+                run.
+              </span>
+              <button
+                type="button"
+                data-testid="handover-confirm"
+                onClick={() => void confirmHandover()}
+                className="border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-copper"
+              >
+                Copy it
+              </button>
+              <button
+                type="button"
+                onClick={() => setHandover("idle")}
+                className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint hover:text-paper"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              data-testid="handover"
+              onClick={() => setHandover("confirm")}
+              disabled={handover === "working"}
+              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-40"
+            >
+              {handover === "working" ? "handing over…" : "Hand over to inbox"}
+            </button>
+          )}
+        </div>
       </div>
 
-      <p className="font-mono text-[10px] leading-relaxed text-faint">
-        Canvases are written to the machine as files and never leave it. A hand-over block is the
-        one exception: it passes text out, and only when you press it.
+      {handoverPath && (
+        <p className="border border-rule bg-panel px-4 py-2 font-mono text-[10px] text-copper" data-testid="handover-path">
+          copied to {handoverPath}
+        </p>
+      )}
 
+      <section className="border border-rule bg-panel" data-testid="doc-sources">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-rule px-4 py-2">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">Built from</p>
+          <p className="font-mono text-[9px] text-faint">
+            provenance · recorded per document, saved with it
+          </p>
+        </div>
+        {doc.sources.length === 0 ? (
+          <p className="px-4 py-3 font-mono text-[10px] text-faint">
+            nothing recorded — use “+ built from” on any block to name a source
+          </p>
+        ) : (
+          <ul className="px-4 py-2">
+            {doc.sources.map((line) => (
+              <li key={line} className="flex items-baseline justify-between gap-3 py-[3px]">
+                <span className="min-w-0 flex-1 truncate font-mono text-[10.5px] text-muted-foreground">
+                  {line}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeSource(line)}
+                  className="shrink-0 font-mono text-[10px] text-faint hover:text-risk"
+                >
+                  remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <p className="font-mono text-[10px] leading-relaxed text-faint">
+        Canvases are written to the machine and never leave it. Hand-over is the one exception: it
+        passes text out, and only when you press it.
       </p>
     </div>
   );
