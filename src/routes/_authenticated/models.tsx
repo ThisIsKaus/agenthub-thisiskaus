@@ -270,6 +270,29 @@ function ModelsPage() {
     }
   }
 
+  /** Duplicates are cleared by unloading each unexpected instance in turn. */
+  async function clearDuplicates() {
+    const label = "clear duplicates";
+    setBusy(label);
+    setNote("awaiting the machine…");
+    try {
+      for (const entry of unexpected) {
+        await local.post("/api/models/action", { action: "unload", model: modelId(entry) });
+      }
+      setNote(`${label} — done`);
+      await models.refetch();
+    } catch (error) {
+      setNote(
+        isRefusal(error)
+          ? error.message || "denied at the approval dialog"
+          : "the machine did not carry that out",
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+
   const disabled = busy !== null;
 
   return (
