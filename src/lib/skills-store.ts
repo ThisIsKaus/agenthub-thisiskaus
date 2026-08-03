@@ -147,7 +147,7 @@ function applyRow(skill: Skill, row: SkillRow): Skill {
   return {
     ...skill,
     state,
-    name: skill.name || row.name || skill.name,
+    name: row.name?.trim() || skill.name,
     description: row.description?.trim() || skill.description,
   };
 }
