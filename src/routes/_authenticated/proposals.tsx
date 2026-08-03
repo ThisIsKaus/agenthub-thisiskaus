@@ -6,6 +6,8 @@ import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
+import { relativeTime } from "@/lib/captures";
+
 
 export const Route = createFileRoute("/_authenticated/proposals")({
   head: () => ({
