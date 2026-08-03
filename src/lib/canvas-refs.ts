@@ -3,7 +3,7 @@ import { useLocal } from "@/lib/local-bridge";
 import { JOB_KEYS, type CanvasRef } from "@/lib/canvas-types";
 import { listSkills, type Skill } from "@/lib/skills-store";
 
-type SkillRow = { name: string; path: string; size?: number; modified?: string };
+type SkillRow = { name: string; path: string; description?: string; size?: number; modified?: string };
 type PromptRow = { name: string; path: string; kind?: string };
 type ProjectRow = { name: string; entity?: string; stage?: string; status?: string; sensitivity?: string };
 type BenchRow = { role?: string; id?: string; tps?: string | number; gib?: string | number };
