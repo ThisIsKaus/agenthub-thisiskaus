@@ -301,12 +301,13 @@ function ModelsPage() {
           />
           <span className="uppercase tracking-[0.14em] text-paper">{pressure}</span>
           <span className="tabular-nums">
-            compressed {fixed(budget.compressed_gib, 1)} GiB · free {fixed(budget.free_gib, 1)} GiB ·
-            wired limit{" "}
+            envelope {fixed(envelope, 1)} GiB · compressed {fixed(budget.compressed_gib, 1)} GiB ·
+            free {fixed(budget.free_gib, 1)} GiB · wired limit{" "}
             {budget.wired_limit_mb != null && budget.wired_limit_mb !== ""
               ? `${fixed(budget.wired_limit_mb, 0)} MB`
-              : String(budget.source ?? "unknown")}
+              : String(budget.source ?? "system default")}
           </span>
+
         </p>
 
         {loading ? (
