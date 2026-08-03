@@ -204,7 +204,7 @@ function SkillsPage() {
               <li key={skill.path} className="border-t border-rule first:border-t-0">
                 <button
                   type="button"
-                  onClick={() => void open(skill)}
+                  onClick={() => void openSkill(skill)}
                   className="block w-full px-4 py-3 text-left hover:bg-panel2"
                 >
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
