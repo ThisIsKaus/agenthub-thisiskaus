@@ -165,7 +165,18 @@ function ProposalsPage() {
           {counts.map(([status, n]) => (
             <StatusPill key={status} label={status} value={n} />
           ))}
-          <StatusPill label="last diagnosed" value={formatStamp(lastDiagnosed as string)} />
+          <StatusPill
+            label="last diagnosed"
+            tone={lastDiagnosed ? "paper" : "watch"}
+            value={
+              lastDiagnosed ? (
+                <span title={String(lastDiagnosed)}>{relativeTime(String(lastDiagnosed))}</span>
+              ) : (
+                "never"
+              )
+            }
+          />
+
           <button
             onClick={() => void runJob("diagnose", "Run diagnosis", () => void load())}
             className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-copper transition-colors hover:bg-copper/10"
