@@ -425,7 +425,12 @@ function CanvasPage() {
     }
   }
 
-  if (!doc) return null;
+  if (!doc)
+    return (
+      <p className="font-mono text-[10px] text-faint" data-testid="canvas-no-doc">
+        Open or create a document to edit.
+      </p>
+    );
 
   const counts = library.data?.counts ?? {};
   const documents = library.data?.documents ?? [];
