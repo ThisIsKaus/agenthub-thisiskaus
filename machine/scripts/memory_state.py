@@ -104,7 +104,9 @@ def collect():
             "pinned core incomplete — the knowledge base cannot work without the embedder"
             if len(pinned) != len(PINNED) else
             "memory pressure critical — evict the elastic tier" if lvl == "red" else
-            "compression is high; an idle large model costs more than an unloaded one"
+            f"a large model is resident ({e_gib} GiB) — high compression is expected "
+            f"until its TTL expires" if e_gib > 8 and v["compressed_gib"] > 8 else
+            "compression is high with no large model resident — investigate"
             if v["compressed_gib"] > 8 else "healthy"),
     }
 
