@@ -285,7 +285,7 @@ function ModelsPage() {
 
       {/* THE BUDGET BAR */}
       <section className="border border-rule bg-panel px-3 py-3">
-        <h2 className="font-serif text-[17px] text-paper">Memory budget</h2>
+        <SectionHeading>Memory budget</SectionHeading>
 
         <p className="mt-2 flex flex-wrap items-baseline gap-x-2 font-mono text-[11px] text-muted-foreground">
           <span

@@ -79,36 +79,18 @@ function fmt(value: number | null | undefined, digits = 0) {
 }
 
 function FactCell({ label, value, unit, detail, tone = "paper" }: Fact) {
-  const toneClass = {
-    paper: "text-paper",
-    ok: "text-ok",
-    watch: "text-watch",
-    risk: "text-risk",
-    copper: "text-copper",
-  }[tone];
-  const missing = value === null;
-
   return (
-    <div className="border border-rule bg-panel2 px-3 py-4 sm:px-4 sm:py-5">
-      <div
-        className={`font-serif text-[1.85rem] leading-none tabular-nums sm:text-[2.1rem] ${
-          missing ? "text-faint" : toneClass
-        }`}
-      >
-        {missing ? "—" : value}
-        {!missing && unit ? (
-          <span className="ml-1 font-mono text-[13px] text-muted-foreground">{unit}</span>
-        ) : null}
-      </div>
-      <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-1 break-words font-mono text-[10px] leading-relaxed text-faint">
-        {missing ? "needs the machine" : detail}
-      </div>
-    </div>
+    <Field
+      label={label}
+      value={value}
+      unit={unit}
+      detail={detail}
+      tone={tone}
+      missing={value === null}
+    />
   );
 }
+
 
 function SectionHead({ title, note }: { title: string; note: string }) {
   return (
