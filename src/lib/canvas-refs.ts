@@ -32,12 +32,17 @@ export function useReferenceCatalogue() {
     enabled,
     staleTime: STALE,
     queryFn: async () => ({
+      // The skills endpoint is the source: it cannot be refused by the path
+      // allowlist, and it already carries the description that tells you
+      // whether loading a skill will help.
       skills: (await listSkills(local)).map((skill: Skill) => ({
         name: skill.name,
         path: skill.path,
+        description: skill.description,
       })) as SkillRow[],
     }),
   });
+
 
 
   const prompts = useQuery({
