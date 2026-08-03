@@ -757,24 +757,6 @@ export function CanvasBlockCard({
           </button>
           <button
             type="button"
-            onClick={() => onMove(-1)}
-            disabled={index === 0}
-            aria-label="Move block up"
-            className="font-mono text-[11px] text-faint hover:text-copper disabled:opacity-30"
-          >
-            ↑
-          </button>
-          <button
-            type="button"
-            onClick={() => onMove(1)}
-            disabled={index === total - 1}
-            aria-label="Move block down"
-            className="font-mono text-[11px] text-faint hover:text-copper disabled:opacity-30"
-          >
-            ↓
-          </button>
-          <button
-            type="button"
             onClick={onDuplicate}
             className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint hover:text-copper"
           >
