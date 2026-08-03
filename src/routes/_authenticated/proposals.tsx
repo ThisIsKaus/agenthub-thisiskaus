@@ -308,17 +308,16 @@ function ProposalRow({
                 ["effort", proposal.effort],
                 ["confidence", proposal.confidence],
               ].map(([label, value]) => (
-                <div key={String(label)} className="border border-rule bg-panel2 px-3 py-2">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-                    {label as string}
-                  </div>
-                  <div className="mt-1.5 font-mono text-sm tabular-nums text-paper">
-                    {figure(value as string | number | undefined)}
-                  </div>
-                </div>
+                <Field
+                  key={String(label)}
+                  label={label as string}
+                  value={figure(value as string | number | undefined)}
+                  className="px-3 py-3 sm:px-3 sm:py-3"
+                />
               ))}
             </div>
           </section>
+
 
           {controls.length > 0 && (
             <label className="flex items-start gap-2 text-[13px] text-muted-foreground">
