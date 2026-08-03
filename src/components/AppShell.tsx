@@ -204,7 +204,7 @@ export function AppShell() {
 export function Panel({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
     <section className="border border-rule bg-panel p-5">
-      <h2 className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">{title}</h2>
+      <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">{title}</div>
       <div className="mt-4 text-sm text-muted-foreground">{children}</div>
     </section>
   );
