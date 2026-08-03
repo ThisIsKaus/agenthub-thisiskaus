@@ -43,7 +43,7 @@ const VIEWS: { to: string; label: string; group: string }[] = [
   { to: "/knowledge", label: "Knowledge", group: "Corpus" },
   { to: "/memory", label: "Memory", group: "Corpus" },
   { to: "/models", label: "Models", group: "Engine" },
-  { to: "/model-scanner", label: "Scanner", group: "Engine" },
+  { to: "/model-scanner", label: "Model scanner", group: "Engine" },
   { to: "/prompts", label: "Prompts", group: "Engine" },
   { to: "/evals", label: "Evals", group: "Improve" },
   { to: "/proposals", label: "Proposals", group: "Improve" },

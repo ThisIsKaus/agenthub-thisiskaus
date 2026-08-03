@@ -327,7 +327,7 @@ function FilesPage() {
 
         <Panel title={file?.name ?? "Viewer"}>
           {!file ? (
-            <Empty>Choose a file.</Empty>
+            <Empty>Select a file to read it</Empty>
           ) : draft !== null ? (
             <>
               <textarea

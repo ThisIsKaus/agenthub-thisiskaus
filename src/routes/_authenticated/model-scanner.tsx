@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/model-scanner")({
     ],
   }),
   component: () => (
-    <Page title="Scanner" subtitle="Measure a candidate model against the lane it would serve before anything is promoted." footer="Scanner · benchmarks run on the machine">
+    <Page title="Model scanner" subtitle="Measure a candidate model against the lane it would serve before anything is promoted." footer="Model scanner · benchmarks run on the machine">
       <LocalOnly>
         <ScannerPage />
       </LocalOnly>
