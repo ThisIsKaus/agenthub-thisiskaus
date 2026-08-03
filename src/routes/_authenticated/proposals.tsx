@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
+import { Field } from "@/components/Field";
+
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { relativeTime } from "@/lib/captures";
