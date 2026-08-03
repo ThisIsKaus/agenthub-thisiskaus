@@ -50,8 +50,14 @@ type Proposal = {
 
 type ProposalsData = {
   proposals?: Proposal[];
+  counts?: Record<string, unknown>;
+  last_diagnosed?: string | null;
   stats?: Record<string, unknown> & { last_diagnosed?: string; diagnosed?: string };
 };
+
+/** The statuses the queue speaks in, in the order they are worth reading. */
+const STATUS_ORDER = ["open", "approved", "rejected", "deferred"];
+
 
 const PROTECTED: { match: (path: string) => boolean; control: string }[] = [
   { match: (p) => p === "machine/scripts/approve.sh", control: "the approval dialog" },
