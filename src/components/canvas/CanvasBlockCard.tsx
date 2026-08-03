@@ -27,8 +27,12 @@ import {
   type Upstream,
 } from "@/lib/canvas-runs";
 import {
+  emptyBlock,
   JOB_KEYS,
+  LANES,
   newId,
+
+
   pinnedRun,
   runText,
   SOURCE_COUNTS,
@@ -69,6 +73,9 @@ async function pool<T, R>(items: T[], limit: number, worker: (item: T, index: nu
   return results;
 }
 
+/** Sensitivity classes that may never travel to a cloud lane. */
+const LOCAL_ONLY_CLASSES = ["S1c", "S2", "S3"];
+
 export function CanvasBlockCard({
   block,
   index,
@@ -79,6 +86,8 @@ export function CanvasBlockCard({
   onRemove,
   onMove,
   onDuplicate,
+  onInsertAfter,
+  onAddSource,
 }: {
   block: CanvasBlock;
   index: number;
@@ -90,16 +99,22 @@ export function CanvasBlockCard({
   onRemove: () => void;
   onMove: (direction: -1 | 1) => void;
   onDuplicate: () => void;
+  /** Insert a produced block directly beneath this one. */
+  onInsertAfter: (block: CanvasBlock) => void;
+  /** Record a source in the document's provenance list. */
+  onAddSource: (reference: CanvasRef) => void;
 }) {
   const local = useLocal();
   const capacity = useLaneCapacity();
   const autopilot = useAutopilot();
   const drawer = useJobDrawer();
   const [picker, setPicker] = useState(false);
+  const [pickerMode, setPickerMode] = useState<"reference" | "source">("reference");
   const [pickerQuery, setPickerQuery] = useState("");
   const [deps, setDeps] = useState(false);
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [passes, setPasses] = useState<{ id: string; label: string; startedAt: number; endedAt: number | null }[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [compareId, setCompareId] = useState<string | null>(null);
   const box = useRef<HTMLTextAreaElement>(null);
@@ -111,6 +126,22 @@ export function CanvasBlockCard({
   const upstreams = upstreamsOf(block, doc);
   const targets = fanOutTargets(block);
   const children = current ? block.runs.filter((run) => run.parentRunId === current.id) : [];
+
+  /**
+   * A cited source classed S1c, S2 or S3 keeps the whole document off the cloud
+   * lane. The control says so rather than silently answering somewhere else.
+   */
+  const sensitiveRef = block.refs.find((ref) =>
+    LOCAL_ONLY_CLASSES.some((cls) => (ref.meta ?? "").includes(cls)),
+  );
+  const cloudBlockedBy = LOCAL_ONLY_CLASSES.includes(doc.sensitivity)
+    ? doc.sensitivity
+    : sensitiveRef
+      ? (LOCAL_ONLY_CLASSES.find((cls) => (sensitiveRef.meta ?? "").includes(cls)) ?? null)
+      : null;
+
+
+
 
   useEffect(() => {
     if (!busy) return;
@@ -252,13 +283,59 @@ export function CanvasBlockCard({
     return data;
   }
 
+  /** Per-pass timing, so a slow source is visible while it is still running. */
+  function openPass(id: string, label: string) {
+    setPasses((live) => [...live, { id, label, startedAt: Date.now(), endedAt: null }]);
+  }
+  function closePass(id: string) {
+    setPasses((live) => live.map((pass) => (pass.id === id ? { ...pass, endedAt: Date.now() } : pass)));
+  }
+
+  /**
+   * With no explicit references, "one pass per source" still means one pass per
+   * source: the corpus is retrieved once to learn which documents matter, then
+   * each is asked on its own.
+   */
+  async function discoverTargets(prompt: string, model: string, k: number): Promise<CanvasRef[]> {
+    setStatus("retrieving the sources to ask separately…");
+    const probe = await ask(prompt, model, k);
+
+    const seen = new Set<string>();
+    const found: CanvasRef[] = [];
+    for (const source of probe.sources ?? []) {
+      const path = source.path ?? source.file;
+      if (!path || seen.has(path)) continue;
+      seen.add(path);
+      found.push({ id: `source:${path}`, kind: "source", label: source.file ?? path, path });
+    }
+    return found;
+  }
+
   /** One question, one lane, one answer. */
   async function runAsk() {
     if (block.kind !== "prompt" || busy) return;
     const prompt = composeQuestion(block.text, block.refs, upstreams);
     if (!prompt.trim()) return;
 
-    if (block.fanOut && targets.length >= 2) return runFanOut(prompt);
+    if (block.fanOut) {
+      if (targets.length >= 2) return runFanOut(prompt, targets);
+      setBusy(true);
+      try {
+        const discovered = await discoverTargets(prompt, block.model, block.k);
+        setBusy(false);
+        setStatus(null);
+        if (discovered.length >= 2) return runFanOut(prompt, discovered);
+        onUpdate((live) => ({
+          ...live,
+          note: "the corpus returned fewer than two sources — answered in one pass",
+        }));
+      } catch {
+        setBusy(false);
+        setStatus(null);
+      }
+    }
+
+
 
     setBusy(true);
     setStatus("thinking on the machine…");
@@ -325,12 +402,13 @@ export function CanvasBlockCard({
    * scoped to a single source so a weak match in one cannot quietly colour the
    * others; the merge sees every child answer and is told to name disagreement.
    */
-  async function runFanOut(prompt: string) {
+  async function runFanOut(prompt: string, list: CanvasRef[]) {
     if (block.kind !== "prompt") return;
     setBusy(true);
+    setPasses([]);
     const digest = inputDigest(block, prompt, upstreams);
     const parent = shell({
-      label: `merge · ${targets.length} sources`,
+      label: `merge · ${list.length} sources`,
       prompt,
       requested: block.model,
       upstreams,
@@ -341,9 +419,9 @@ export function CanvasBlockCard({
     const started = Date.now();
 
     try {
-      setStatus(`0/${targets.length} sources`);
+      setStatus(`0/${list.length} sources`);
       let done = 0;
-      const answers = await pool(targets, FAN_CONCURRENCY, async (target, position) => {
+      const answers = await pool(list, FAN_CONCURRENCY, async (target, position) => {
         const scoped = composeQuestion(block.text, block.refs, upstreams, target);
         const child = shell({
           label: `${target.label}`,
@@ -356,6 +434,7 @@ export function CanvasBlockCard({
           k: block.k,
         });
         startRun(child);
+        openPass(child.id, target.label);
         const childStarted = Date.now();
         try {
           const data = await ask(scoped, block.model, block.k);
@@ -376,10 +455,12 @@ export function CanvasBlockCard({
           failRun(child.id, error, "this source did not answer");
           return { target, answer: "", id: child.id };
         } finally {
+          closePass(child.id);
           done += 1;
-          setStatus(`${done}/${targets.length} sources`);
+          setStatus(`${done}/${list.length} sources`);
         }
       });
+
 
       onUpdate((live) => ({
         ...live,
@@ -425,21 +506,42 @@ export function CanvasBlockCard({
   }
 
   /**
-   * Reflection, done honestly: the critique runs on a different lane than the
-   * answer it is reviewing. A model reviewing its own weights mostly re-hedges.
+   * Canon requires review by a different model family before anything ships.
+   * The default is the opposite lane: a local draft is critiqued on the cloud
+   * lane and a cloud draft on a local one. When a cited source is S1c, S2 or S3
+   * the cloud lane is unavailable and the control says so — it never falls back
+   * to local quietly.
    */
+  function critiqueLane() {
+    const wrote =
+      current?.provenance.model ?? (block.kind === "prompt" ? block.model : LANES[0].id);
+
+    const wroteOnCloud = capacity.byId(wrote)?.status === "cloud" || wrote.startsWith("cloud");
+    if (!wroteOnCloud && !cloudBlockedBy) {
+      const cloud = capacity.lanes.find((lane) => lane.status === "cloud" && lane.id !== wrote);
+      if (cloud) return cloud;
+    }
+    return capacity.critiqueLane(wrote);
+  }
+
   async function runCritique() {
     if (block.kind !== "prompt" || busy || !current) return;
     const answer = runText(current);
     if (!answer.trim()) return;
     // Never auto-select a cold lane: loading a second large model is what the
     // machine refuses, and a refusal is not a second opinion.
-    const lane = capacity.critiqueLane(current.provenance.model);
+    const lane = critiqueLane();
     if (!lane) {
       setStatus(null);
-      onUpdate((live) => ({ ...live, note: "no second lane is loaded — load one on Engine · Models" }));
+      onUpdate((live) => ({
+        ...live,
+        note: cloudBlockedBy
+          ? `${cloudBlockedBy} keeps this off the cloud lane, and no second local lane is loaded — load one on Engine · Models`
+          : "no second lane is loaded — load one on Engine · Models",
+      }));
       return;
     }
+
 
     const prompt = [
       "Review the answer below against the question. Name anything unsupported by the",
@@ -484,6 +586,51 @@ export function CanvasBlockCard({
       setStatus(null);
     }
   }
+
+  /**
+   * "Answer below": this block's own text is put to the corpus, and the answer
+   * arrives as a new note block beneath it, carrying its sources as references.
+   * Distinct from Ask, which answers in place — two controls reading "Ask" is
+   * not discoverable.
+   */
+  async function answerBelow() {
+    if (busy) return;
+    const question = block.text.trim();
+    if (!question) return;
+    const model = block.kind === "prompt" ? block.model : LANES[0].id;
+    const k = block.kind === "prompt" ? block.k : 8;
+    setBusy(true);
+    setStatus("asking the corpus…");
+    try {
+      const data = await ask(composeQuestion(question, block.refs, upstreams), model, k);
+      const produced = emptyBlock("note") as CanvasBlock;
+      const sources = (data.sources ?? [])
+        .map((source): CanvasRef | null => {
+          const path = source.path ?? source.file;
+          if (!path) return null;
+          return { id: `source:${path}`, kind: "source", label: source.file ?? path, path };
+        })
+
+        .filter((ref): ref is CanvasRef => ref !== null);
+      onInsertAfter({
+        ...produced,
+        text: data.answer ?? "",
+        refs: sources,
+        dependsOn: [block.id],
+      });
+    } catch (error) {
+      onUpdate((live) => ({
+        ...live,
+        note: isRefusal(error)
+          ? "denied at the approval dialog"
+          : "the machine did not answer that question",
+      }));
+    } finally {
+      setBusy(false);
+      setStatus(null);
+    }
+  }
+
 
   /**
    * Job blocks now record the machine's job id, so a run written to disk can be
@@ -710,6 +857,7 @@ export function CanvasBlockCard({
               data-testid="add-reference"
               onClick={() => {
                 trigger.current = null;
+                setPickerMode("reference");
                 setPicker((open) => !open);
               }}
               className="border border-rule px-2 py-[3px] font-mono text-[10.5px] text-faint hover:border-copper hover:text-copper"
@@ -718,18 +866,32 @@ export function CanvasBlockCard({
             </button>
             <button
               type="button"
+              data-testid="add-source"
+              onClick={() => {
+                trigger.current = null;
+                setPickerMode("source");
+                setPicker(true);
+              }}
+              title="Record where this draft came from — kept in the document's provenance list"
+              className="border border-rule px-2 py-[3px] font-mono text-[10.5px] text-faint hover:border-copper hover:text-copper"
+            >
+              + built from
+            </button>
+            <button
+              type="button"
               data-testid="add-dependency"
               onClick={() => setDeps((open) => !open)}
               disabled={available.length === 0}
               title={
                 available.length === 0
-                  ? "Add a second block first — then this one can be built from its answer"
+                  ? "Add a second block first — then this one can read its answer"
                   : "Feed another block's pinned answer into this one"
               }
               className="border border-rule px-2 py-[3px] font-mono text-[10.5px] text-faint hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-rule disabled:hover:text-faint"
             >
-              + built from
+              + link block
             </button>
+
 
           </div>
 
@@ -770,13 +932,29 @@ export function CanvasBlockCard({
           <ReferencePicker
             open={picker}
             initialQuery={pickerQuery}
-            selected={block.refs}
-            onPick={addRef}
+            selected={pickerMode === "source" ? [] : block.refs}
+            onPick={(reference) => {
+              if (pickerMode === "source") {
+                onAddSource(reference);
+                setPicker(false);
+                setPickerMode("reference");
+                return;
+              }
+              addRef(reference);
+            }}
             onClose={() => {
               trigger.current = null;
               setPicker(false);
+              setPickerMode("reference");
             }}
           />
+
+          {picker && pickerMode === "source" && (
+            <p className="mt-1 font-mono text-[10px] text-faint">
+              chosen sources are recorded in this document's provenance list, shown at the foot
+            </p>
+          )}
+
 
           {block.kind === "prompt" && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -812,18 +990,18 @@ export function CanvasBlockCard({
                 type="button"
                 data-testid="toggle-fanout"
                 onClick={() => onChange({ fanOut: !block.fanOut } as Partial<CanvasBlock>)}
-                disabled={targets.length < 2}
                 title={
-                  targets.length < 2
-                    ? "Reference two or more files and this asks each one separately, then merges"
-                    : "Ask each referenced source separately, then merge the answers"
+                  targets.length >= 2
+                    ? "Ask each referenced source separately, then merge the answers"
+                    : "Retrieve first, then ask each retrieved source separately and attribute every answer"
                 }
-                className={`border px-2 py-1 font-mono text-[11px] disabled:cursor-not-allowed disabled:opacity-40 ${
+                className={`border px-2 py-1 font-mono text-[11px] ${
                   block.fanOut ? "border-copper text-copper" : "border-rule text-muted-foreground"
                 }`}
               >
                 one pass per source{targets.length >= 2 ? ` · ${targets.length}` : ""}
               </button>
+
               {capacity.byId(block.model)?.status === "cold" && (
                 <span className="w-full font-mono text-[10px] text-watch">
                   {capacity.byId(block.model)?.label} is not loaded —{" "}
@@ -885,6 +1063,35 @@ export function CanvasBlockCard({
                   Critique on another lane
                 </button>
               )}
+              <button
+                type="button"
+                data-testid="answer-below"
+                onClick={() => void answerBelow()}
+                disabled={busy || !block.text.trim()}
+                title="Put this block's text to the corpus and write the answer into a new block underneath"
+                className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Answer below
+              </button>
+              {block.kind === "prompt" && cloudBlockedBy && (
+                <span className="w-full font-mono text-[10px] text-watch">
+                  a cited source is classed {cloudBlockedBy} — the cloud lane is unavailable for the
+                  critique, so it runs on a second local lane or not at all
+                </span>
+              )}
+              {passes.length > 0 && (
+                <ul className="w-full space-y-0.5 font-mono text-[10px] tabular-nums text-faint">
+                  {passes.map((pass) => (
+                    <li key={pass.id}>
+                      {pass.label} ·{" "}
+                      {pass.endedAt
+                        ? `${Math.round((pass.endedAt - pass.startedAt) / 100) / 10}s`
+                        : "running…"}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
 
               {busy && (
                 <span className="font-mono text-[10px] tabular-nums text-faint">

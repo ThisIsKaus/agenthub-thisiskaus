@@ -200,17 +200,23 @@ function ModelsPage() {
   const data = models.data ?? {};
   const bench = data.bench ?? [];
   const resident = normalizeIds(data.resident);
-  const memory = data.memory ?? {};
-  const budget = memory.budget ?? {};
+  // Some machine builds nest the block under `memory`, some flatten it onto the
+  // response, and some put the figures directly on `memory` without a `budget`.
+  const memory: MemoryBlock =
+    data.memory ?? ((data as { budget?: unknown }).budget ? (data as MemoryBlock) : {});
+  const budget = memory.budget ?? (memory as MemoryBlock["budget"]) ?? {};
 
   const envelope = n(budget.envelope_gib);
   const pinnedGib = n(budget.pinned_gib);
   const elasticGib = n(budget.elastic_gib);
   const headroomGib = n(budget.headroom_gib, Math.max(0, envelope - pinnedGib - elasticGib));
-  const pinned = memory.pinned ?? [];
+  const pinned = (memory.pinned ?? (budget as { pinned?: MemoryEntry[] }).pinned ?? []).filter(
+    (entry) => modelId(entry) !== "",
+  );
   const elastic = memory.elastic ?? [];
-  const unexpected = memory.unexpected ?? [];
+  const unexpected = (memory.unexpected ?? []).filter((entry) => modelId(entry) !== "");
   const pressure = memory.pressure ?? "unknown";
+
 
   const pct = (value: number) => (envelope > 0 ? Math.max(0, Math.min(100, (value / envelope) * 100)) : 0);
   const elasticLabel = elastic.map((entry) => modelId(entry)).filter(Boolean).join(" · ");
@@ -264,6 +270,29 @@ function ModelsPage() {
     }
   }
 
+  /** Duplicates are cleared by unloading each unexpected instance in turn. */
+  async function clearDuplicates() {
+    const label = "clear duplicates";
+    setBusy(label);
+    setNote("awaiting the machine…");
+    try {
+      for (const entry of unexpected) {
+        await local.post("/api/models/action", { action: "unload", model: modelId(entry) });
+      }
+      setNote(`${label} — done`);
+      await models.refetch();
+    } catch (error) {
+      setNote(
+        isRefusal(error)
+          ? error.message || "denied at the approval dialog"
+          : "the machine did not carry that out",
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+
   const disabled = busy !== null;
 
   return (
@@ -295,12 +324,13 @@ function ModelsPage() {
           />
           <span className="uppercase tracking-[0.14em] text-paper">{pressure}</span>
           <span className="tabular-nums">
-            compressed {fixed(budget.compressed_gib, 1)} GiB · free {fixed(budget.free_gib, 1)} GiB ·
-            wired limit{" "}
+            envelope {fixed(envelope, 1)} GiB · compressed {fixed(budget.compressed_gib, 1)} GiB ·
+            free {fixed(budget.free_gib, 1)} GiB · wired limit{" "}
             {budget.wired_limit_mb != null && budget.wired_limit_mb !== ""
               ? `${fixed(budget.wired_limit_mb, 0)} MB`
-              : String(budget.source ?? "unknown")}
+              : String(budget.source ?? "system default")}
           </span>
+
         </p>
 
         {loading ? (
@@ -378,7 +408,7 @@ function ModelsPage() {
           <button
             type="button"
             disabled={disabled}
-            onClick={() => void act("pin", undefined, "clear duplicates")}
+            onClick={() => void clearDuplicates()}
             className="mt-2 border border-watch px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-watch disabled:opacity-50"
           >
             {busy === "clear duplicates" ? "…" : "Clear duplicates"}
@@ -525,7 +555,7 @@ function ModelsPage() {
                     <td
                       className={`py-2 text-right font-mono text-[11px] ${row.tested ? "text-muted-foreground" : "text-watch"}`}
                     >
-                      {row.tested ? String(row.tested) : "never"}
+                      {row.tested ? String(row.tested).slice(0, 10) : "never"}
                     </td>
                     <td
                       className={`py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] ${
