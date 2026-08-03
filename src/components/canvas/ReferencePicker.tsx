@@ -61,8 +61,11 @@ function Row({
     >
       <span className="min-w-0 flex-1 truncate font-mono text-[12px]">{reference.label}</span>
       {reference.meta && (
-        <span className="shrink-0 font-mono text-[10px] text-faint">{reference.meta}</span>
+        <span className="max-w-[52%] shrink truncate font-mono text-[10px] text-faint">
+          {reference.meta}
+        </span>
       )}
+
     </button>
   );
 }
