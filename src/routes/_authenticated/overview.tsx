@@ -96,12 +96,12 @@ function FactCell({ label, value, unit, detail, tone = "paper" }: Fact) {
 
 function SectionHead({ title, note }: { title: string; note: string }) {
   return (
-    <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-      <h2 className="font-serif text-[25px] leading-[1.15] text-paper">{title}</h2>
-      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">{note}</span>
+    <div className="mb-2">
+      <SectionHeading note={note}>{title}</SectionHeading>
     </div>
   );
 }
+
 
 function OverviewPage() {
   useRealtimeState();

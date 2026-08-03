@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Field } from "@/components/Field";
 
 /** A large monospace figure with a hairline-quiet label. */
 export function Stat({
@@ -57,36 +58,21 @@ export function formatStamp(value: string | null | undefined) {
   });
 }
 
-/** Editorial figure: large Instrument Serif number, monospace label, quiet detail. */
+/** Editorial figure — the shared <Field> pattern. */
 export function Figure({
   label,
   value,
   detail,
   tone = "paper",
 }: {
-  label: string;
+  label: ReactNode;
   value: ReactNode;
   detail?: string;
   tone?: "paper" | "ok" | "watch" | "risk" | "copper";
 }) {
-  const toneClass = {
-    paper: "text-paper",
-    ok: "text-ok",
-    watch: "text-watch",
-    risk: "text-risk",
-    copper: "text-copper",
-  }[tone];
-
-  return (
-    <div className="border border-rule bg-panel2 px-4 py-5">
-      <div className={`font-serif text-[2.5rem] leading-none tabular-nums ${toneClass}`}>{value}</div>
-      <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
-      </div>
-      {detail && <div className="mt-1 font-mono text-[10px] text-faint">{detail}</div>}
-    </div>
-  );
+  return <Field label={label} value={value} detail={detail} tone={tone} />;
 }
+
 
 /** Small monospace status pill. */
 export function StatusPill({
