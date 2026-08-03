@@ -31,6 +31,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "skills"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: async () => ({
       // The skills endpoint is the source: it cannot be refused by the path
       // allowlist, and it already carries the description that tells you
@@ -49,6 +50,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "prompts"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ prompts?: PromptRow[] }>("/api/prompts"),
   });
 
@@ -56,6 +58,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "factory"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ projects?: ProjectRow[] }>("/api/factory"),
   });
 
@@ -63,6 +66,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "models"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ resident?: { id: string; size?: string }[]; bench?: BenchRow[]; aliases?: string[] }>(
       "/api/models",
     ),
@@ -72,6 +76,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "kb"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ sources?: SourceRow[]; chunks?: number; documents?: number }>("/api/kb"),
   });
 
@@ -79,6 +84,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "roots"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ roots?: RootRow[] }>("/api/roots"),
   });
 
@@ -169,6 +175,7 @@ export function useTree(path: string | null) {
     queryKey: ["canvas", "tree", path ?? "root"],
     enabled: local.available && path !== null,
     staleTime: 30_000,
+    retry: false,
     queryFn: () => local.get<TreeListing>("/api/tree", { path: path ?? "" }),
   });
 }
