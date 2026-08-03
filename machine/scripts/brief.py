@@ -123,6 +123,37 @@ One row in `state`, id = 'current'. Use these field names exactly:
 
 Insert into `jobs` with `kind` + `payload`; claimed within 30s: {', '.join(kinds)}.
 
+## Components own the layout — a view may not override them
+
+Written as prose this standard was violated twice: the mobile container shipped at 92vw
+against a 7% requirement, and tertiary text shipped below AA contrast.
+
+<Page>     86vw container (max 1240px, centred), h1 31px sentence case, 56px section rhythm,
+           Geist Mono footer. Every route renders inside it.
+<Section>  every h2, exactly 25px sentence case, optional 72ch subtitle.
+<Field>    large Instrument Serif number, uppercase Geist Mono 10px label, tertiary detail.
+           Any h3 inside is 15px medium. Numbers tabular-nums.
+
+No view sets its own heading size, container width or footer.
+
+## Rendering rules, not style preferences
+
+Collapsed content is NOT MOUNTED — render children only when open. A disclosure that mounts
+its rows costs DOM weight on every visit, leaves every hidden control in the tab order, and
+grows with the data. Measured here: one page carried 12,293 nodes and 3,024 hidden buttons to
+show 938 characters, while another rendered 20,519 characters in 549 nodes.
+
+Lists past ~100 rows need a filter, not a cap. Capping trades a performance problem for a
+usability one — the reason to open a 3,000-row list is to find one row.
+
+Every figure carries provenance: live, or published with its age.
+
+## Report what you measured, not what you changed
+
+"h2 computes 25px on all sixteen routes" is a result. "Applied Section everywhere" is an
+intention. Where a gate names a number, report the number. Defects have twice been declared
+closed on the evidence of the two pages under discussion rather than the sixteen that exist.
+
 ## Local API
 
 Base `http://127.0.0.1:4100`, `credentials: 'omit'`. **Every POST takes multipart form fields,
