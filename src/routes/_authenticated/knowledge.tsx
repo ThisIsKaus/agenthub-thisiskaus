@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/knowledge")({
 });
 
 type KbSource = { file: string; path: string; chunks: number };
-type KbStats = { chunks: number; documents: number; sources?: KbSource[] };
+type KbStats = { chunks: number; documents?: number; files?: number; sources?: KbSource[] };
 function KnowledgePage() {
   const local = useLocal();
   const { runJob } = useJobDrawer();
@@ -85,12 +85,94 @@ function KnowledgePage() {
 
   const sources = [...(stats?.sources ?? [])].sort((a, b) => b.chunks - a.chunks);
 
+  const byExtension = (() => {
+    const map = new Map<string, { ext: string; chunks: number; documents: number }>();
+    for (const source of stats?.sources ?? []) {
+      const name = source.file ?? "";
+      const dot = name.lastIndexOf(".");
+      const ext = dot > 0 ? name.slice(dot).toLowerCase() : "(none)";
+      const row = map.get(ext) ?? { ext, chunks: 0, documents: 0 };
+      row.chunks += Number(source.chunks) || 0;
+      row.documents += 1;
+      map.set(ext, row);
+    }
+    return [...map.values()]
+      .map((row) => ({ ...row, ratio: row.documents ? row.chunks / row.documents : 0 }))
+      .sort((a, b) => b.ratio - a.ratio);
+  })();
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Figure label="Chunks" value={loading ? "—" : (stats?.chunks?.toLocaleString() ?? "—")} />
-        <Figure label="Documents" value={loading ? "—" : (stats?.documents?.toLocaleString() ?? "—")} />
+        <Figure
+          label="Documents"
+          value={loading ? "—" : ((stats?.documents ?? stats?.files)?.toLocaleString() ?? "—")}
+        />
       </div>
+
+      <Panel title="Readability">
+        {loading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-4 w-full" />
+            ))}
+          </div>
+        ) : byExtension.length === 0 ? (
+          <Empty>No sources indexed.</Empty>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-rule">
+                <th className="py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                  Extension
+                </th>
+                <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                  Chunks
+                </th>
+                <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                  Documents
+                </th>
+                <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                  Chunks / doc
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {byExtension.map((row) => {
+                const tone =
+                  row.ratio > 40 ? "text-watch" : row.ratio < 30 ? "text-ok" : "text-paper";
+                return (
+                  <tr key={row.ext} className="border-b border-rule last:border-b-0">
+                    <td className="py-2 text-left text-[13px] text-paper">{row.ext}</td>
+                    <td className="py-2 text-right font-mono text-[13px] tabular-nums text-muted-foreground">
+                      {row.chunks.toLocaleString()}
+                    </td>
+                    <td className="py-2 text-right font-mono text-[13px] tabular-nums text-muted-foreground">
+                      {row.documents.toLocaleString()}
+                    </td>
+                    <td
+                      className={`py-2 text-right font-mono text-[13px] tabular-nums ${tone}`}
+                      title={
+                        row.ratio > 40
+                          ? "far above the corpus average — a reader may have failed and emitted noise rather than text"
+                          : undefined
+                      }
+                    >
+                      {row.ratio.toFixed(1)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+        <p className="mt-3 max-w-[72ch] font-mono text-[10px] leading-relaxed text-faint">
+          The corpus average is roughly 17 chunks per document. A ratio above 40 usually means a
+          reader failed — that is what a binary file read as text looks like.
+        </p>
+      </Panel>
+
 
       <Panel title="Detail">
         <Disclosure
