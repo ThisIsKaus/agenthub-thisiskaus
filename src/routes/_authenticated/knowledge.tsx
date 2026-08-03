@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/knowledge")({
 });
 
 type KbSource = { file: string; path: string; chunks: number };
-type KbStats = { chunks: number; documents: number; sources?: KbSource[] };
+type KbStats = { chunks: number; documents?: number; files?: number; sources?: KbSource[] };
 function KnowledgePage() {
   const local = useLocal();
   const { runJob } = useJobDrawer();
