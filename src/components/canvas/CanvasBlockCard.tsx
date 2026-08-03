@@ -868,57 +868,7 @@ export function CanvasBlockCard({
             >
               + built from
             </button>
-            <button
-              type="button"
-              data-testid="add-dependency"
-              onClick={() => setDeps((open) => !open)}
-              disabled={available.length === 0}
-              title={
-                available.length === 0
-                  ? "Add a second block first — then this one can read its answer"
-                  : "Feed another block's pinned answer into this one"
-              }
-              className="border border-rule px-2 py-[3px] font-mono text-[10.5px] text-faint hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-rule disabled:hover:text-faint"
-            >
-              + link block
-            </button>
-
-
           </div>
-
-          {deps && (
-            <div className="mt-2 border border-rule bg-panel2" data-testid="dependency-picker">
-              {available.map((candidate) => {
-                const position = doc.blocks.findIndex((entry) => entry.id === candidate.id);
-                const on = block.dependsOn.includes(candidate.id);
-                return (
-                  <button
-                    key={candidate.id}
-                    type="button"
-                    onClick={() => toggleDependency(candidate.id)}
-                    className={`flex w-full items-baseline gap-3 border-t border-rule px-3 py-2 text-left first:border-t-0 hover:bg-panel ${
-                      on ? "text-copper" : "text-paper"
-                    }`}
-                  >
-                    <span className="font-mono text-[10px] text-faint">
-                      {String(position + 1).padStart(2, "0")}
-                    </span>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-                      {KIND_LABEL[candidate.kind]}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[12.5px]">
-                      {candidate.text.trim() || "empty block"}
-                    </span>
-                    <span className="font-mono text-[10px] text-faint">{on ? "linked" : "link"}</span>
-                  </button>
-                );
-              })}
-              <p className="border-t border-rule px-3 py-2 font-mono text-[10px] leading-relaxed text-faint">
-                A linked block's pinned run is quoted into this one before it is sent. Change the
-                upstream and this block goes stale rather than re-running itself.
-              </p>
-            </div>
-          )}
 
           <ReferencePicker
             open={picker}
