@@ -797,13 +797,16 @@ export function CanvasBlockCard({
             </p>
           )}
 
+          <p className="mb-2 font-mono text-[10px] text-faint">
+            Editing, saving and lifecycle work. Five tools are specified but not built.
+          </p>
           <textarea
             ref={box}
             value={block.text}
             data-testid="block-input"
             onChange={(event) => onText(event.target.value, event.target.selectionStart)}
             onKeyDown={(event) => {
-              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+              if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && block.kind !== "prompt") {
                 event.preventDefault();
                 primary();
               }
