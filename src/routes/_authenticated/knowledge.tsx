@@ -85,6 +85,22 @@ function KnowledgePage() {
 
   const sources = [...(stats?.sources ?? [])].sort((a, b) => b.chunks - a.chunks);
 
+  const byExtension = (() => {
+    const map = new Map<string, { ext: string; chunks: number; documents: number }>();
+    for (const source of stats?.sources ?? []) {
+      const name = source.file ?? "";
+      const dot = name.lastIndexOf(".");
+      const ext = dot > 0 ? name.slice(dot).toLowerCase() : "(none)";
+      const row = map.get(ext) ?? { ext, chunks: 0, documents: 0 };
+      row.chunks += Number(source.chunks) || 0;
+      row.documents += 1;
+      map.set(ext, row);
+    }
+    return [...map.values()]
+      .map((row) => ({ ...row, ratio: row.documents ? row.chunks / row.documents : 0 }))
+      .sort((a, b) => b.ratio - a.ratio);
+  })();
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
