@@ -87,8 +87,11 @@ def foundation():
     # the protection working — but a stale editor snapshot could still commit a tree missing
     # files it never knew about. Compare local against the remote and count what is there.
     sh(f"git -C {H} fetch -q origin main", 90)
-    gone = sh(f"git -C {H} diff --diff-filter=D --name-only origin/main -- machine/ machine", 60)
-    remote_n = sh(f"git -C {H} ls-tree -r origin/main --name-only machine/ | wc -l", 60).strip()
+    gone = sh("git -C ~/Workspace diff --diff-filter=D --name-only origin/main -- machine/", 60)
+    # ~/AgentHub is a symlink into ~/Workspace/machine, so from inside it the repo prefix is
+    # the root, not machine/. Ask the repository root, which is where the prefix exists.
+    remote_n = sh("git -C ~/Workspace ls-tree -r origin/main --name-only machine/ | wc -l",
+                  60).strip()
     try:
         remote_n = int(remote_n)
     except Exception:
