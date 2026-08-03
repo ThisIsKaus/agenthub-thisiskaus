@@ -87,8 +87,11 @@ export function useReferenceCatalogue() {
     kind: "skill",
     label: row.name,
     path: row.path,
-    meta: row.modified ?? undefined,
+    // The trigger line, not a timestamp: it is what tells you whether loading
+    // this skill will help.
+    meta: row.description?.split("\n")[0]?.trim() || undefined,
   }));
+
 
   const promptRefs: CanvasRef[] = (prompts.data?.prompts ?? []).map((row) => ({
     id: `prompt:${row.path}`,
