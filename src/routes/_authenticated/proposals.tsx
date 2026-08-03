@@ -4,8 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
+import { Field } from "@/components/Field";
+
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
+import { relativeTime } from "@/lib/captures";
+
 
 export const Route = createFileRoute("/_authenticated/proposals")({
   head: () => ({
@@ -50,8 +54,14 @@ type Proposal = {
 
 type ProposalsData = {
   proposals?: Proposal[];
+  counts?: Record<string, unknown>;
+  last_diagnosed?: string | null;
   stats?: Record<string, unknown> & { last_diagnosed?: string; diagnosed?: string };
 };
+
+/** The statuses the queue speaks in, in the order they are worth reading. */
+const STATUS_ORDER = ["open", "approved", "rejected", "deferred"];
+
 
 const PROTECTED: { match: (path: string) => boolean; control: string }[] = [
   { match: (p) => p === "machine/scripts/approve.sh", control: "the approval dialog" },
@@ -106,16 +116,36 @@ function ProposalsPage() {
     [data],
   );
 
+  /**
+   * One figure per status the machine reports, each labelled by its own status.
+   * Never a single total: "approved 3" for three open proposals states the opposite
+   * of the truth.
+   */
   const counts = useMemo(() => {
     const map = new Map<string, number>();
-    for (const proposal of proposals) {
-      const key = proposal.status ?? "open";
-      map.set(key, (map.get(key) ?? 0) + 1);
+    const reported = data?.counts;
+    if (reported && typeof reported === "object") {
+      for (const [status, value] of Object.entries(reported)) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) map.set(status, parsed);
+      }
     }
-    return [...map.entries()];
-  }, [proposals]);
+    if (map.size === 0) {
+      for (const proposal of proposals) {
+        const key = proposal.status ?? "open";
+        map.set(key, (map.get(key) ?? 0) + 1);
+      }
+    }
+    return [...map.entries()].sort((a, b) => {
+      const ai = STATUS_ORDER.indexOf(a[0]);
+      const bi = STATUS_ORDER.indexOf(b[0]);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+  }, [data, proposals]);
 
-  const lastDiagnosed = data?.stats?.last_diagnosed ?? data?.stats?.diagnosed;
+  const lastDiagnosed =
+    data?.last_diagnosed ?? data?.stats?.last_diagnosed ?? data?.stats?.diagnosed ?? null;
+
 
   async function act(id: string, action: string, actionNote: string) {
     setNote(null);
@@ -139,7 +169,18 @@ function ProposalsPage() {
           {counts.map(([status, n]) => (
             <StatusPill key={status} label={status} value={n} />
           ))}
-          <StatusPill label="last diagnosed" value={formatStamp(lastDiagnosed as string)} />
+          <StatusPill
+            label="last diagnosed"
+            tone={lastDiagnosed ? "paper" : "watch"}
+            value={
+              lastDiagnosed ? (
+                <span title={String(lastDiagnosed)}>{relativeTime(String(lastDiagnosed))}</span>
+              ) : (
+                "never"
+              )
+            }
+          />
+
           <button
             onClick={() => void runJob("diagnose", "Run diagnosis", () => void load())}
             className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-copper transition-colors hover:bg-copper/10"
@@ -223,9 +264,10 @@ function ProposalRow({
             {controls.length > 0 && <span className="text-watch">control</span>}
           </span>
         </span>
-        <span className="shrink-0 font-mono text-lg tabular-nums text-copper">
-          {proposal.score ?? "—"}
+        <span className="shrink-0 font-mono text-lg tabular-nums text-copper" title="score">
+          {typeof proposal.score === "number" ? proposal.score.toFixed(2) : (proposal.score ?? "—")}
         </span>
+
       </button>
 
       {open && (
@@ -269,17 +311,16 @@ function ProposalRow({
                 ["effort", proposal.effort],
                 ["confidence", proposal.confidence],
               ].map(([label, value]) => (
-                <div key={String(label)} className="border border-rule bg-panel2 px-3 py-2">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-                    {label as string}
-                  </div>
-                  <div className="mt-1.5 font-mono text-sm tabular-nums text-paper">
-                    {figure(value as string | number | undefined)}
-                  </div>
-                </div>
+                <Field
+                  key={String(label)}
+                  label={label as string}
+                  value={figure(value as string | number | undefined)}
+                  className="px-3 py-3 sm:px-3 sm:py-3"
+                />
               ))}
             </div>
           </section>
+
 
           {controls.length > 0 && (
             <label className="flex items-start gap-2 text-[13px] text-muted-foreground">
