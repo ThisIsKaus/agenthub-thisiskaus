@@ -264,9 +264,10 @@ function ProposalRow({
             {controls.length > 0 && <span className="text-watch">control</span>}
           </span>
         </span>
-        <span className="shrink-0 font-mono text-lg tabular-nums text-copper">
-          {proposal.score ?? "—"}
+        <span className="shrink-0 font-mono text-lg tabular-nums text-copper" title="score">
+          {typeof proposal.score === "number" ? proposal.score.toFixed(2) : (proposal.score ?? "—")}
         </span>
+
       </button>
 
       {open && (
