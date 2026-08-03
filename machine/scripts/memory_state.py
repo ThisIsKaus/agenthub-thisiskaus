@@ -18,9 +18,17 @@ ENVELOPE_GIB = 26.0
 
 
 def sh(cmd, timeout=15):
+    """PATH-independent. Called from the console under launchd, where PATH is minimal, bare
+    `lms` is not found and residency silently reports zero — while vm_stat, being in /usr/bin,
+    keeps working. The result is a memory block that looks live and reports no models."""
+    import os
+    env = dict(os.environ)
+    home = os.path.expanduser("~")
+    env["PATH"] = (f"/opt/homebrew/bin:{home}/.lmstudio/bin:{home}/.local/bin:"
+                   + env.get("PATH", "/usr/bin:/bin"))
     try:
         return subprocess.run(cmd, shell=True, capture_output=True, text=True,
-                              timeout=timeout).stdout.strip()
+                              timeout=timeout, env=env).stdout.strip()
     except Exception:
         return ""
 

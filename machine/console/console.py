@@ -484,8 +484,8 @@ def classify(text: str = Form(...)):
 
 # ---------------------------------------------------------------- models
 
-@app.get("/api/models")
-def models():
+# Renamed and wrapped. The bench and alias logic below is correct and untouched.
+def _models_base():
     resident, available, bench = [], [], []
     out = sh("lms ps", timeout=15)
     for line in out.splitlines():
@@ -523,6 +523,61 @@ def models():
     return {"resident": resident, "available": available, "bench": bench, "aliases": aliases}
 
 
+
+@app.get("/api/models")
+def models():
+    """Residency, memory and the measured bench in one response.
+
+    The interface asked for `pinned`, `elastic` and a `memory.budget` block that no provider
+    supplied, so the page read "0.0 GiB" and "The machine names no pinned models" while two
+    models were resident. memory_state.py had computed all of it since 1 August and was only
+    ever run as a script.
+    """
+    d = _models_base()
+    try:
+        sys.path.insert(0, str(H / "scripts"))
+        import importlib, memory_state
+        importlib.reload(memory_state)
+        m = memory_state.collect()
+    except Exception as ex:
+        d["memory"] = {"error": f"{type(ex).__name__}: {ex}"}
+        return d
+    d["memory"] = m
+    if not d.get("resident"):
+        # One parser, not two that can disagree. memory_state reads lms ps correctly.
+        d["resident"] = [{"id": r["id"], "size": f"{r['gib']} GiB"}
+                         for r in (m.get("pinned", []) + m.get("elastic", []))]
+    return d
+
+
+@app.get("/api/failover")
+def failover():
+    """The five recovery rungs and when each was last exercised.
+
+    All five were tested and dated on 31 July; the interface said "never" for every one
+    because this endpoint did not exist. Evidence that exists but cannot be seen is worse
+    than evidence that does not — it produces false alarm rather than known ignorance.
+    """
+    names = ["model unavailable", "serving layer down", "router down",
+             "memory pressure critical", "all local down"]
+    try:
+        raw = json.loads((H / "state" / "failover.json").read_text())
+    except Exception:
+        raw = {}
+    out = []
+    for n, name in enumerate(names, 1):
+        if n == 5:
+            a, b = raw.get("5-S0"), raw.get("5-S3")
+            e = a or b
+            ok = bool(a and b and a.get("ok") and b.get("ok"))
+            detail = " · ".join(x["detail"] for x in (a, b) if x) if e else ""
+        else:
+            e = raw.get(str(n))
+            ok = bool(e and e.get("ok"))
+            detail = e.get("detail", "") if e else ""
+        out.append({"rung": n, "name": name, "tested": e.get("tested") if e else None,
+                    "ok": ok if e else None, "detail": detail})
+    return out
 @app.post("/api/models/action")
 def models_action(action: str = Form(...), model: str = Form("")):
     if action == "mode":
