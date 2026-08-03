@@ -112,7 +112,9 @@ function SkillsPage() {
     queryKey: ["skills", "list"],
     enabled: local.available,
     queryFn: () => fetchSkills(local),
+    retry: false,
   });
+
 
   const list = useMemo(() => skills.data?.skills ?? [], [skills.data]);
   const root = skillsRoot(list) ?? "skills";
