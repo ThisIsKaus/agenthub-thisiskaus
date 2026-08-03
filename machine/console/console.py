@@ -806,7 +806,7 @@ def job(id: str):
 
 # ---------------------------------------------------------------- proposals and build cascade
 
-@app.get("/api/proposals")
+# Wrapped, not rewritten — the ranking logic below is correct.
 def proposals_list():
     d = H / "state" / "proposals"
     items = []
@@ -823,6 +823,24 @@ def proposals_list():
     return {"proposals": items, "stats": stats}
 
 
+
+@app.get("/api/proposals")
+def proposals():
+    """Adds the run timestamp and per-status counts the queue needs.
+
+    The view read "LAST DIAGNOSED —" because no timestamp existed anywhere, and "APPROVED 3"
+    over three open proposals because it had only a total to render.
+    """
+    d = _proposals_base()
+    try:
+        d["last_diagnosed"] = (H / "state" / "last-diagnosed.txt").read_text().strip()
+    except Exception:
+        d["last_diagnosed"] = None
+    counts = {}
+    for pr in d.get("proposals", []):
+        counts[pr.get("status", "open")] = counts.get(pr.get("status", "open"), 0) + 1
+    d["counts"] = counts
+    return d
 @app.post("/api/proposals/act")
 def proposals_act(id: str = Form(...), action: str = Form(...), note: str = Form("")):
     if action not in ("approve", "reject", "defer"):
@@ -925,3 +943,111 @@ def skills():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=4100, log_level="warning")
+
+
+# ---------------------------------------------------------------- canvas
+# The workbench where a captured thought becomes a finished artefact. Distinct from Ask,
+# which is one question with no persistence; from Inbox, which triages what arrived; and from
+# Build, which changes the system's own code. This is the only place you author something.
+# Every save snapshots the previous version. Branching was considered and cut: a personal
+# draft workspace does not need merge semantics.
+
+CANVAS = H / "drafts" / "canvas"
+CANVAS_STATES = ("idea", "shaping", "wip", "review", "shipped", "parked")
+
+
+def _canvas_id(raw: str) -> str:
+    """An id that can contain a path separator is a file-read primitive, not an id."""
+    i = (raw or "").strip()
+    if not i or "/" in i or "\\" in i or i.startswith(".") or ".." in i:
+        raise HTTPException(403, "invalid document id")
+    return i
+
+
+def _canvas_parse(text: str):
+    meta, body = {}, text
+    if text.startswith("---"):
+        end = text.find("\n---", 3)
+        if end != -1:
+            for line in text[3:end].splitlines():
+                if ":" in line:
+                    k, v = line.split(":", 1)
+                    meta[k.strip()] = v.strip().strip('"').strip("'")
+            body = text[end + 4:].lstrip("\n")
+    return meta, body
+
+
+@app.get("/api/canvas")
+def canvas_list():
+    CANVAS.mkdir(parents=True, exist_ok=True)
+    docs, counts = [], {}
+    for f in sorted(CANVAS.glob("*.md"), key=lambda x: -x.stat().st_mtime):
+        meta, body = _canvas_parse(f.read_text(errors="ignore"))
+        st = meta.get("state", "idea")
+        counts[st] = counts.get(st, 0) + 1
+        docs.append({"id": f.stem, "title": meta.get("title", f.stem), "state": st,
+                     "updated": dt.datetime.fromtimestamp(f.stat().st_mtime)
+                                  .isoformat(timespec="minutes"),
+                     "words": len(body.split())})
+    return {"documents": docs, "counts": counts, "states": list(CANVAS_STATES)}
+
+
+@app.get("/api/canvas/doc")
+def canvas_doc(id: str):
+    f = CANVAS / f"{_canvas_id(id)}.md"
+    if not f.exists():
+        raise HTTPException(404, "no such document")
+    meta, body = _canvas_parse(f.read_text(errors="ignore"))
+    src = meta.get("sources", "[]")
+    vdir = CANVAS / ".versions" / f.stem
+    return {"id": f.stem, "title": meta.get("title", f.stem),
+            "state": meta.get("state", "idea"), "body": body,
+            "sources": json.loads(src) if src.startswith("[") else [],
+            "created": meta.get("created"),
+            "versions": len(list(vdir.glob("*.md"))) if vdir.exists() else 0}
+
+
+@app.post("/api/canvas/save")
+def canvas_save(id: str = Form(...), title: str = Form(...), body: str = Form(...),
+                state: str = Form("idea"), sources: str = Form("[]")):
+    if state not in CANVAS_STATES:
+        raise HTTPException(422, f"state must be one of {CANVAS_STATES}")
+    CANVAS.mkdir(parents=True, exist_ok=True)
+    f = CANVAS / f"{_canvas_id(id)}.md"
+    created = dt.datetime.now().isoformat(timespec="seconds")
+    if f.exists():
+        meta, _ = _canvas_parse(f.read_text(errors="ignore"))
+        created = meta.get("created", created)
+        v = CANVAS / ".versions" / f.stem
+        v.mkdir(parents=True, exist_ok=True)
+        (v / f"{dt.datetime.now().strftime('%Y%m%d-%H%M%S')}.md").write_text(f.read_text())
+    f.write_text(f"---\ntitle: {title}\nstate: {state}\ncreated: {created}\n"
+                 f"sources: {sources}\n---\n\n{body}\n")
+    return canvas_doc(f.stem)
+
+
+@app.post("/api/canvas/state")
+def canvas_state(id: str = Form(...), state: str = Form(...)):
+    if state not in CANVAS_STATES:
+        raise HTTPException(422, f"state must be one of {CANVAS_STATES}")
+    f = CANVAS / f"{_canvas_id(id)}.md"
+    if not f.exists():
+        raise HTTPException(404, "no such document")
+    meta, body = _canvas_parse(f.read_text(errors="ignore"))
+    meta["state"] = state
+    head = "".join(f"{k}: {v}\n" for k, v in meta.items())
+    f.write_text(f"---\n{head}---\n\n{body}\n")
+    return canvas_doc(f.stem)
+
+
+@app.post("/api/canvas/handover")
+def canvas_handover(id: str = Form(...)):
+    """Copy a finished draft into the inbox so the corpus can retrieve it later."""
+    f = CANVAS / f"{_canvas_id(id)}.md"
+    if not f.exists():
+        raise HTTPException(404, "no such document")
+    dest = H / "inbox" / f"canvas-{f.stem}.md"
+    dest.write_text(f.read_text())
+    return {"ok": True, "path": str(dest),
+            "note": "queued for ingest; retrievable after the next ingest run"}
+

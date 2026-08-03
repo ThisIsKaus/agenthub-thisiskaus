@@ -1,12 +1,12 @@
 # AgentHub — brief for Lovable
-_Generated from the live machine 2026-08-03T07:39. Do not edit._
+_Generated from the live machine 2026-08-03T18:07. Do not edit._
 
 ## What exists
 
 A personal AI hub on one MacBook Pro M5 Max. **Not being rebuilt** — you are building the
 single workspace that fronts it. Running locally: 4 models under LM Studio (quality brain
-114.9 t/s), a router on :4000 with 9 aliases, a knowledge base of 49540
-chunks across 3023 documents indexed from OneDrive, a local API on
+114.9 t/s), a router on :4000 with 9 aliases, a knowledge base of 49542
+chunks across 3024 documents indexed from OneDrive, a local API on
 :4100 exposing every capability, launchd jobs (nightly digest, 4-hourly backup, self-test),
 and a native macOS approval dialog for anything changing external state.
 
@@ -51,7 +51,7 @@ client named in every artifact header, nothing client-flavoured in kb_main.
 - S2 Envelope Collective (Neelam): reads flagged; writes require her recorded confirmation. Never on her behalf.
 - S3 finance/tax/wealth: LOCAL ONLY, router-enforced. Cloud only via anonymisation recipe + per-task approval.
 
-Corpus by class: {"S3": 2206, "S1p": 768, "S2": 43, "S1c": 6}
+Corpus by class: {"S3": 2206, "S1p": 769, "S2": 43, "S1c": 6}
 
 The remote plane publishes **only status and counts** — never document text, file paths, email
 subjects or personal data. Digest shows item detail on the local plane, counts only on the
@@ -87,6 +87,11 @@ by design; offer no edit control for them.
 |---|---|
 | POST `/api/ask` | form: { q: string, model?: string, k?: number } |
 | POST `/api/build` | form: { intent: string, scope?: string } |
+| GET `/api/canvas` | no parameters |
+| GET `/api/canvas/doc` | query: { id: string } |
+| POST `/api/canvas/handover` | form: { id: string } |
+| POST `/api/canvas/save` | form: { id: string, title: string, body: string, state?: string, sources?: string } |
+| POST `/api/canvas/state` | form: { id: string, state: string } |
 | GET `/api/capabilities` | no parameters |
 | POST `/api/capture` | form: { text: string } |
 | GET `/api/cascade/stats` | no parameters |
@@ -98,6 +103,7 @@ by design; offer no edit control for them.
 | GET `/api/evals` | no parameters |
 | GET `/api/factory` | no parameters |
 | POST `/api/factory/action` | form: { action: string, name?: string, stage?: string } |
+| GET `/api/failover` | no parameters |
 | GET `/api/file` | query: { path: string } |
 | POST `/api/file/delete` | form: { path: string } |
 | POST `/api/file/new` | form: { path: string, name: string, kind?: string } |

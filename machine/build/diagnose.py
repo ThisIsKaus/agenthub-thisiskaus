@@ -379,6 +379,8 @@ def main():
         (OUT / f"{p['id']}.json").write_text(json.dumps(p, indent=2))
         written += 1
 
+    (OUT.parent / "last-diagnosed.txt").write_text(
+        dt.datetime.now().isoformat(timespec="seconds"))
     print(f"\n{written} new proposals ({len(proposals) - written} already known)\n")
     for p in sorted(proposals, key=lambda x: -score(x))[:8]:
         print(f"  {score(p):5.2f}  {p.get('title','')[:72]}")

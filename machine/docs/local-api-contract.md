@@ -1,5 +1,5 @@
 # AgentHub local API — contract for Lovable
-_Generated from console.py by AST parse, 2026-08-03T07:32. Do not edit by hand._
+_Generated from console.py by AST parse, 2026-08-03T18:07. Do not edit by hand._
 
 ## How to call it
 
@@ -33,13 +33,18 @@ Every POST takes **multipart form fields**, not a JSON body. Sending JSON will
 return HTTP 422. A 403 means the path was outside the allowlist or an approval
 dialog was denied — surface it as a refusal, never as an error.
 
-## Endpoints (36)
+## Endpoints (42)
 
 | Method | Path | Parameters | Purpose |
 |---|---|---|---|
 | GET | `/` | no parameters | index |
 | POST | `/api/ask` | form: { q: string, model?: string, k?: number } | ask |
 | POST | `/api/build` | form: { intent: string, scope?: string } | build |
+| GET | `/api/canvas` | no parameters | canvas_list |
+| GET | `/api/canvas/doc` | query: { id: string } | canvas_doc |
+| POST | `/api/canvas/handover` | form: { id: string } | Copy a finished draft into the inbox so the corpus can retrieve it later. |
+| POST | `/api/canvas/save` | form: { id: string, title: string, body: string, state?: string, sources?: string } | canvas_save |
+| POST | `/api/canvas/state` | form: { id: string, state: string } | canvas_state |
 | GET | `/api/capabilities` | no parameters | Probed by the unified console to decide whether the local plane is available. |
 | POST | `/api/capture` | form: { text: string } | capture |
 | GET | `/api/cascade/stats` | no parameters | cascade_stats |
@@ -51,6 +56,7 @@ dialog was denied — surface it as a refusal, never as an error.
 | GET | `/api/evals` | no parameters | evals |
 | GET | `/api/factory` | no parameters | factory |
 | POST | `/api/factory/action` | form: { action: string, name?: string, stage?: string } | factory_action |
+| GET | `/api/failover` | no parameters | The five recovery rungs and when each was last exercised. |
 | GET | `/api/file` | query: { path: string } | get_file |
 | POST | `/api/file/delete` | form: { path: string } | delete_file |
 | POST | `/api/file/new` | form: { path: string, name: string, kind?: string } | new_file |
@@ -60,16 +66,16 @@ dialog was denied — surface it as a refusal, never as an error.
 | GET | `/api/kb` | no parameters | kb_stats |
 | POST | `/api/kb/forget` | form: { path: string } | kb_forget |
 | GET | `/api/memory` | query: { q?: string, n?: number } | memory |
-| GET | `/api/models` | no parameters | models |
+| GET | `/api/models` | no parameters | Residency, memory and the measured bench in one response. |
 | POST | `/api/models/action` | form: { action: string, model?: string } | models_action |
 | GET | `/api/prompts` | no parameters | prompts |
 | POST | `/api/prompts/save` | form: { path: string, content: string } | prompts_save |
-| GET | `/api/proposals` | no parameters | proposals_list |
+| GET | `/api/proposals` | no parameters | Adds the run timestamp and per-status counts the queue needs. |
 | POST | `/api/proposals/act` | form: { id: string, action: string, note?: string } | proposals_act |
 | GET | `/api/roots` | no parameters | roots |
 | POST | `/api/run` | form: { key: string } | run |
 | GET | `/api/selftest` | no parameters | selftest_last |
-| GET | `/api/skills` | no parameters | skills_list |
+| GET | `/api/skills` | no parameters | Agent Skills are directories — <name>/SKILL.md — not flat files. This listed *.md and |
 | POST | `/api/skills/save` | form: { path: string, content: string } | skills_save |
 | GET | `/api/state` | no parameters | state |
 | GET | `/api/tree` | query: { path?: string } | tree |
