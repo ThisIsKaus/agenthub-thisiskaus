@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Disclosure } from "@/components/Disclosure";
 import { RefChip, ReferencePicker } from "@/components/canvas/ReferencePicker";
 import {
   ProvenanceFold,
@@ -111,7 +112,6 @@ export function CanvasBlockCard({
   const [picker, setPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<"reference" | "source">("reference");
   const [pickerQuery, setPickerQuery] = useState("");
-  const [deps, setDeps] = useState(false);
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [passes, setPasses] = useState<{ id: string; label: string; startedAt: number; endedAt: number | null }[]>([]);
@@ -713,20 +713,11 @@ export function CanvasBlockCard({
     if (block.kind === "capture") return void sendCapture();
   }
 
-  function toggleDependency(id: string) {
-    onChange({
-      dependsOn: block.dependsOn.includes(id)
-        ? block.dependsOn.filter((entry) => entry !== id)
-        : [...block.dependsOn, id],
-    } as Partial<CanvasBlock>);
-  }
-
   const canRun =
     block.kind === "job" ||
     (block.kind !== "note" &&
       (block.text.trim().length > 0 || block.refs.length > 0 || upstreams.length > 0));
 
-  const available = doc.blocks.filter((candidate) => candidate.id !== block.id);
   const output = current?.output;
 
   return (
@@ -763,24 +754,6 @@ export function CanvasBlockCard({
             className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint hover:text-copper"
           >
             {block.collapsed ? "open" : "fold"}
-          </button>
-          <button
-            type="button"
-            onClick={() => onMove(-1)}
-            disabled={index === 0}
-            aria-label="Move block up"
-            className="font-mono text-[11px] text-faint hover:text-copper disabled:opacity-30"
-          >
-            ↑
-          </button>
-          <button
-            type="button"
-            onClick={() => onMove(1)}
-            disabled={index === total - 1}
-            aria-label="Move block down"
-            className="font-mono text-[11px] text-faint hover:text-copper disabled:opacity-30"
-          >
-            ↓
           </button>
           <button
             type="button"
@@ -824,13 +797,16 @@ export function CanvasBlockCard({
             </p>
           )}
 
+          <p className="mb-2 font-mono text-[10px] text-faint">
+            Editing, saving and lifecycle work. Five tools are specified but not built.
+          </p>
           <textarea
             ref={box}
             value={block.text}
             data-testid="block-input"
             onChange={(event) => onText(event.target.value, event.target.selectionStart)}
             onKeyDown={(event) => {
-              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+              if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && block.kind !== "prompt") {
                 event.preventDefault();
                 primary();
               }
@@ -877,57 +853,7 @@ export function CanvasBlockCard({
             >
               + built from
             </button>
-            <button
-              type="button"
-              data-testid="add-dependency"
-              onClick={() => setDeps((open) => !open)}
-              disabled={available.length === 0}
-              title={
-                available.length === 0
-                  ? "Add a second block first — then this one can read its answer"
-                  : "Feed another block's pinned answer into this one"
-              }
-              className="border border-rule px-2 py-[3px] font-mono text-[10.5px] text-faint hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-rule disabled:hover:text-faint"
-            >
-              + link block
-            </button>
-
-
           </div>
-
-          {deps && (
-            <div className="mt-2 border border-rule bg-panel2" data-testid="dependency-picker">
-              {available.map((candidate) => {
-                const position = doc.blocks.findIndex((entry) => entry.id === candidate.id);
-                const on = block.dependsOn.includes(candidate.id);
-                return (
-                  <button
-                    key={candidate.id}
-                    type="button"
-                    onClick={() => toggleDependency(candidate.id)}
-                    className={`flex w-full items-baseline gap-3 border-t border-rule px-3 py-2 text-left first:border-t-0 hover:bg-panel ${
-                      on ? "text-copper" : "text-paper"
-                    }`}
-                  >
-                    <span className="font-mono text-[10px] text-faint">
-                      {String(position + 1).padStart(2, "0")}
-                    </span>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-                      {KIND_LABEL[candidate.kind]}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[12.5px]">
-                      {candidate.text.trim() || "empty block"}
-                    </span>
-                    <span className="font-mono text-[10px] text-faint">{on ? "linked" : "link"}</span>
-                  </button>
-                );
-              })}
-              <p className="border-t border-rule px-3 py-2 font-mono text-[10px] leading-relaxed text-faint">
-                A linked block's pinned run is quoted into this one before it is sent. Change the
-                upstream and this block goes stale rather than re-running itself.
-              </p>
-            </div>
-          )}
 
           <ReferencePicker
             open={picker}
@@ -955,6 +881,37 @@ export function CanvasBlockCard({
             </p>
           )}
 
+          <Disclosure
+            summary={
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Not yet built · 6
+              </span>
+            }
+            tone="quiet"
+          >
+            <ul className="space-y-2">
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">↑ ↓</span>
+                <span className="font-mono text-[10px] text-faint">reorder the block under the cursor</span>
+              </li>
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">+ link block</span>
+                <span className="font-mono text-[10px] text-faint">feed another block's pinned answer into this one</span>
+              </li>
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">Ask from this block</span>
+                <span className="font-mono text-[10px] text-faint">ask the corpus using this block as the question</span>
+              </li>
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">Answer below</span>
+                <span className="font-mono text-[10px] text-faint">insert the answer as a new block</span>
+              </li>
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">Critique on another lane</span>
+                <span className="font-mono text-[10px] text-faint">review this draft with a different model family</span>
+              </li>
+            </ul>
+          </Disclosure>
 
           {block.kind === "prompt" && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1030,7 +987,7 @@ export function CanvasBlockCard({
             </div>
           )}
 
-          {block.kind !== "note" && (
+          {block.kind !== "note" && block.kind !== "prompt" && (
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <button
                 type="button"
@@ -1039,68 +996,11 @@ export function CanvasBlockCard({
                 disabled={busy || !canRun}
                 className="border border-copper px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-copper disabled:opacity-40"
               >
-                {block.kind === "prompt"
-                  ? current
-                    ? "Ask again"
-                    : "Ask from this block"
-                  : block.kind === "job"
-                    ? "Run"
-                    : "Hand over"}
+                {block.kind === "job" ? "Run" : "Hand over"}
               </button>
-              {block.kind === "prompt" && (
-                <button
-                  type="button"
-                  data-testid="critique-block"
-                  onClick={() => void runCritique()}
-                  disabled={busy || current?.output.type !== "answer"}
-                  title={
-                    current?.output.type === "answer"
-                      ? "Re-read the answer on a different model and correct it"
-                      : "Ask something first — then a second model reviews the answer"
-                  }
-                  className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-rule disabled:hover:text-muted-foreground"
-                >
-                  Critique on another lane
-                </button>
-              )}
-              <button
-                type="button"
-                data-testid="answer-below"
-                onClick={() => void answerBelow()}
-                disabled={busy || !block.text.trim()}
-                title="Put this block's text to the corpus and write the answer into a new block underneath"
-                className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Answer below
-              </button>
-              {block.kind === "prompt" && cloudBlockedBy && (
-                <span className="w-full font-mono text-[10px] text-watch">
-                  a cited source is classed {cloudBlockedBy} — the cloud lane is unavailable for the
-                  critique, so it runs on a second local lane or not at all
-                </span>
-              )}
-              {passes.length > 0 && (
-                <ul className="w-full space-y-0.5 font-mono text-[10px] tabular-nums text-faint">
-                  {passes.map((pass) => (
-                    <li key={pass.id}>
-                      {pass.label} ·{" "}
-                      {pass.endedAt
-                        ? `${Math.round((pass.endedAt - pass.startedAt) / 100) / 10}s`
-                        : "running…"}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-
               {busy && (
                 <span className="font-mono text-[10px] tabular-nums text-faint">
                   {status ?? "working…"} {elapsed}s
-                </span>
-              )}
-              {busy && elapsed >= 20 && block.kind === "prompt" && (
-                <span className="font-mono text-[10px] text-faint">
-                  the 35B reasons before answering — this is normal
                 </span>
               )}
             </div>
