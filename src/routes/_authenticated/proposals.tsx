@@ -112,16 +112,36 @@ function ProposalsPage() {
     [data],
   );
 
+  /**
+   * One figure per status the machine reports, each labelled by its own status.
+   * Never a single total: "approved 3" for three open proposals states the opposite
+   * of the truth.
+   */
   const counts = useMemo(() => {
     const map = new Map<string, number>();
-    for (const proposal of proposals) {
-      const key = proposal.status ?? "open";
-      map.set(key, (map.get(key) ?? 0) + 1);
+    const reported = data?.counts;
+    if (reported && typeof reported === "object") {
+      for (const [status, value] of Object.entries(reported)) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) map.set(status, parsed);
+      }
     }
-    return [...map.entries()];
-  }, [proposals]);
+    if (map.size === 0) {
+      for (const proposal of proposals) {
+        const key = proposal.status ?? "open";
+        map.set(key, (map.get(key) ?? 0) + 1);
+      }
+    }
+    return [...map.entries()].sort((a, b) => {
+      const ai = STATUS_ORDER.indexOf(a[0]);
+      const bi = STATUS_ORDER.indexOf(b[0]);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+  }, [data, proposals]);
 
-  const lastDiagnosed = data?.stats?.last_diagnosed ?? data?.stats?.diagnosed;
+  const lastDiagnosed =
+    data?.last_diagnosed ?? data?.stats?.last_diagnosed ?? data?.stats?.diagnosed ?? null;
+
 
   async function act(id: string, action: string, actionNote: string) {
     setNote(null);
