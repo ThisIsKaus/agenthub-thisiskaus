@@ -167,9 +167,9 @@ function CaptureLane() {
       <InstallPrompt />
       <section className="border border-rule bg-panel p-4">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
             Capture · in
-          </h2>
+          </div>
           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
             {online ? "live" : "offline"}
           </span>
@@ -293,9 +293,9 @@ function TriageLane() {
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border border-rule bg-panel px-4 py-2.5">
-        <h2 className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
+        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
           Overnight · {data?.date ?? "—"}
-        </h2>
+        </div>
         <span className="font-mono text-[10px] text-faint">
           {open} undecided of {items.length}
         </span>

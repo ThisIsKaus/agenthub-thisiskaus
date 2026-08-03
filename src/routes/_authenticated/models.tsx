@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
 import { Empty, Skeleton } from "@/components/data";
+import { SectionHeading } from "@/components/Section";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { fixed } from "@/lib/format";
@@ -285,7 +286,7 @@ function ModelsPage() {
 
       {/* THE BUDGET BAR */}
       <section className="border border-rule bg-panel px-3 py-3">
-        <h2 className="font-serif text-[17px] text-paper">Memory budget</h2>
+        <SectionHeading>Memory budget</SectionHeading>
 
         <p className="mt-2 flex flex-wrap items-baseline gap-x-2 font-mono text-[11px] text-muted-foreground">
           <span

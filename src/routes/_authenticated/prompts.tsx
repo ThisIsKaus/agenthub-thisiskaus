@@ -141,8 +141,12 @@ function PromptsPage() {
                       active?.path === entry.path ? "text-copper" : "text-paper hover:text-copper"
                     }`}
                   >
-                    <span className="block break-all">{entry.name ?? entry.path}</span>
-                    <span className="font-mono text-[10px] text-faint">{entry.path}</span>
+                    <span className="block break-all text-[13px] text-paper">
+                      {entry.name ?? entry.path.split("/").pop() ?? entry.path}
+                    </span>
+                    <span className="mt-0.5 block break-all font-mono text-[10px] text-faint">
+                      {entry.path}
+                    </span>
                   </button>
                 </li>
               ))}

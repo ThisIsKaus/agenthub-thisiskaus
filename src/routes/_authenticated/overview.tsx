@@ -3,6 +3,8 @@ import { Page } from "@/components/Page";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
 import { FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
+import { Field } from "@/components/Field";
+import { SectionHeading } from "@/components/Section";
 import { MachineStatePanel } from "@/components/MachineStatePanel";
 import { DecisionStream } from "@/components/DecisionStream";
 import { Omnibox } from "@/components/Omnibox";
@@ -79,45 +81,27 @@ function fmt(value: number | null | undefined, digits = 0) {
 }
 
 function FactCell({ label, value, unit, detail, tone = "paper" }: Fact) {
-  const toneClass = {
-    paper: "text-paper",
-    ok: "text-ok",
-    watch: "text-watch",
-    risk: "text-risk",
-    copper: "text-copper",
-  }[tone];
-  const missing = value === null;
-
   return (
-    <div className="border border-rule bg-panel2 px-3 py-4 sm:px-4 sm:py-5">
-      <div
-        className={`font-serif text-[1.85rem] leading-none tabular-nums sm:text-[2.1rem] ${
-          missing ? "text-faint" : toneClass
-        }`}
-      >
-        {missing ? "—" : value}
-        {!missing && unit ? (
-          <span className="ml-1 font-mono text-[13px] text-muted-foreground">{unit}</span>
-        ) : null}
-      </div>
-      <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-1 break-words font-mono text-[10px] leading-relaxed text-faint">
-        {missing ? "needs the machine" : detail}
-      </div>
-    </div>
+    <Field
+      label={label}
+      value={value}
+      unit={unit}
+      detail={detail}
+      tone={tone}
+      missing={value === null}
+    />
   );
 }
+
 
 function SectionHead({ title, note }: { title: string; note: string }) {
   return (
-    <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-      <h2 className="font-serif text-[25px] leading-[1.15] text-paper">{title}</h2>
-      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">{note}</span>
+    <div className="mb-2">
+      <SectionHeading note={note}>{title}</SectionHeading>
     </div>
   );
 }
+
 
 function OverviewPage() {
   useRealtimeState();
