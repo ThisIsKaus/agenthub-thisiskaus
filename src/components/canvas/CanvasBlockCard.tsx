@@ -987,7 +987,7 @@ export function CanvasBlockCard({
             </div>
           )}
 
-          {block.kind !== "note" && (
+          {block.kind !== "note" && block.kind !== "prompt" && (
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <button
                 type="button"
@@ -996,68 +996,11 @@ export function CanvasBlockCard({
                 disabled={busy || !canRun}
                 className="border border-copper px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-copper disabled:opacity-40"
               >
-                {block.kind === "prompt"
-                  ? current
-                    ? "Ask again"
-                    : "Ask from this block"
-                  : block.kind === "job"
-                    ? "Run"
-                    : "Hand over"}
+                {block.kind === "job" ? "Run" : "Hand over"}
               </button>
-              {block.kind === "prompt" && (
-                <button
-                  type="button"
-                  data-testid="critique-block"
-                  onClick={() => void runCritique()}
-                  disabled={busy || current?.output.type !== "answer"}
-                  title={
-                    current?.output.type === "answer"
-                      ? "Re-read the answer on a different model and correct it"
-                      : "Ask something first — then a second model reviews the answer"
-                  }
-                  className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-rule disabled:hover:text-muted-foreground"
-                >
-                  Critique on another lane
-                </button>
-              )}
-              <button
-                type="button"
-                data-testid="answer-below"
-                onClick={() => void answerBelow()}
-                disabled={busy || !block.text.trim()}
-                title="Put this block's text to the corpus and write the answer into a new block underneath"
-                className="border border-rule px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Answer below
-              </button>
-              {block.kind === "prompt" && cloudBlockedBy && (
-                <span className="w-full font-mono text-[10px] text-watch">
-                  a cited source is classed {cloudBlockedBy} — the cloud lane is unavailable for the
-                  critique, so it runs on a second local lane or not at all
-                </span>
-              )}
-              {passes.length > 0 && (
-                <ul className="w-full space-y-0.5 font-mono text-[10px] tabular-nums text-faint">
-                  {passes.map((pass) => (
-                    <li key={pass.id}>
-                      {pass.label} ·{" "}
-                      {pass.endedAt
-                        ? `${Math.round((pass.endedAt - pass.startedAt) / 100) / 10}s`
-                        : "running…"}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-
               {busy && (
                 <span className="font-mono text-[10px] tabular-nums text-faint">
                   {status ?? "working…"} {elapsed}s
-                </span>
-              )}
-              {busy && elapsed >= 20 && block.kind === "prompt" && (
-                <span className="font-mono text-[10px] text-faint">
-                  the 35B reasons before answering — this is normal
                 </span>
               )}
             </div>
