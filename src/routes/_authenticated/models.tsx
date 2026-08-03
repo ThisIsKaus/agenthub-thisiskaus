@@ -408,7 +408,7 @@ function ModelsPage() {
           <button
             type="button"
             disabled={disabled}
-            onClick={() => void act("pin", undefined, "clear duplicates")}
+            onClick={() => void clearDuplicates()}
             className="mt-2 border border-watch px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-watch disabled:opacity-50"
           >
             {busy === "clear duplicates" ? "…" : "Clear duplicates"}
