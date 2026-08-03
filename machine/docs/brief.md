@@ -1,5 +1,5 @@
 # AgentHub — brief for Lovable
-_Generated from the live machine 2026-08-03T18:38. Do not edit._
+_Generated from the live machine 2026-08-04T07:05. Do not edit._
 
 ## What exists
 
@@ -83,49 +83,8 @@ error. Delete and forget block while the dialog is open, up to 5 minutes — sho
 approval on the machine…", not a spinner. Executable files (.py, .sh, .plist) are read-only
 by design; offer no edit control for them.
 
-| Endpoint | Parameters |
-|---|---|
-| POST `/api/ask` | form: { q: string, model?: string, k?: number } |
-| POST `/api/build` | form: { intent: string, scope?: string } |
-| GET `/api/canvas` | no parameters |
-| GET `/api/canvas/doc` | query: { id: string } |
-| POST `/api/canvas/handover` | form: { id: string } |
-| POST `/api/canvas/save` | form: { id: string, title: string, body: string, state?: string, sources?: string } |
-| POST `/api/canvas/state` | form: { id: string, state: string } |
-| GET `/api/capabilities` | no parameters |
-| POST `/api/capture` | form: { text: string } |
-| GET `/api/cascade/stats` | no parameters |
-| POST `/api/classify` | form: { text: string } |
-| GET `/api/cost` | query: { days?: number } |
-| GET `/api/digest` | query: { date?: string } |
-| POST `/api/draft` | form: { title: string, body: string } |
-| POST `/api/eval/correct` | form: { text: string, cls: string, entity: string, sensitivity: string, injection?: string } |
-| GET `/api/evals` | no parameters |
-| GET `/api/factory` | no parameters |
-| POST `/api/factory/action` | form: { action: string, name?: string, stage?: string } |
-| GET `/api/failover` | no parameters |
-| GET `/api/file` | query: { path: string } |
-| POST `/api/file/delete` | form: { path: string } |
-| POST `/api/file/new` | form: { path: string, name: string, kind?: string } |
-| POST `/api/file/save` | form: { path: string, content: string } |
-| GET `/api/health` | no parameters |
-| GET `/api/job` | query: { id: string } |
-| GET `/api/kb` | no parameters |
-| POST `/api/kb/forget` | form: { path: string } |
-| GET `/api/memory` | query: { q?: string, n?: number } |
-| GET `/api/models` | no parameters |
-| POST `/api/models/action` | form: { action: string, model?: string } |
-| GET `/api/prompts` | no parameters |
-| POST `/api/prompts/save` | form: { path: string, content: string } |
-| GET `/api/proposals` | no parameters |
-| POST `/api/proposals/act` | form: { id: string, action: string, note?: string } |
-| GET `/api/roots` | no parameters |
-| POST `/api/run` | form: { key: string } |
-| GET `/api/selftest` | no parameters |
-| GET `/api/skills` | no parameters |
-| POST `/api/skills/save` | form: { path: string, content: string } |
-| GET `/api/state` | no parameters |
-| GET `/api/tree` | query: { path?: string } |
+The full endpoint table with parameters is in machine/docs/local-api-contract.md.
+Read it for a signature rather than guessing at one.
 
 POST `/api/run` with `key` returns `{job, label}`; poll GET `/api/job?id=` every 900ms until
 `running` is false. Keys: verify(T0), doctor(T0), intake(T1), ingest(T1), eval(T0), backup(T1), report(T0), repair(T1), summarise(T1), diagnose(T1).

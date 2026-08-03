@@ -132,11 +132,7 @@ error. Delete and forget block while the dialog is open, up to 5 minutes — sho
 approval on the machine…", not a spinner. Executable files (.py, .sh, .plist) are read-only
 by design; offer no edit control for them.
 
-| Endpoint | Parameters |
-|---|---|
-{chr(10).join(ep)}
-
-POST `/api/run` with `key` returns `{{job, label}}`; poll GET `/api/job?id=` every 900ms until
+The full endpoint table with parameters is in machine/docs/local-api-contract.md.\nRead it for a signature rather than guessing at one.\n\nPOST `/api/run` with `key` returns `{{job, label}}`; poll GET `/api/job?id=` every 900ms until
 `running` is false. Keys: {', '.join(f"{c['key']}({c['tier']})" for c in cmds)}.
 
 Response shapes are in machine/docs/local-api-contract.md — read that for a field name rather than guessing at one.\n"""
