@@ -140,6 +140,16 @@ export function CanvasBlockCard({
       ? (LOCAL_ONLY_CLASSES.find((cls) => (sensitiveRef.meta ?? "").includes(cls)) ?? null)
       : null;
 
+  /** Per-source pass timing, so a slow source is visible while it is still slow. */
+  function openPass(id: string, label: string) {
+    setPasses((live) => [...live, { id, label, startedAt: Date.now(), endedAt: null }]);
+  }
+  function closePass(id: string) {
+    setPasses((live) =>
+      live.map((pass) => (pass.id === id ? { ...pass, endedAt: Date.now() } : pass)),
+    );
+  }
+
 
   useEffect(() => {
     if (!busy) return;
