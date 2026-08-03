@@ -1042,7 +1042,7 @@ export function CanvasBlockCard({
                 {block.kind === "prompt"
                   ? current
                     ? "Ask again"
-                    : "Ask"
+                    : "Ask from this block"
                   : block.kind === "job"
                     ? "Run"
                     : "Hand over"}
