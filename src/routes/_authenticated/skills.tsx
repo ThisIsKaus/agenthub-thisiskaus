@@ -12,6 +12,8 @@ import {
   STATE_TONE,
   draftSkill,
   fetchSkills,
+  loadSkillBody,
+
   listVersions,
   mineCandidates,
   readVersion,
