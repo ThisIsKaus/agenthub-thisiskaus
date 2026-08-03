@@ -3,6 +3,8 @@ import { Page } from "@/components/Page";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
 import { FigureSkeleton, Skeleton, formatStamp } from "@/components/data";
+import { Field } from "@/components/Field";
+import { SectionHeading } from "@/components/Section";
 import { MachineStatePanel } from "@/components/MachineStatePanel";
 import { DecisionStream } from "@/components/DecisionStream";
 import { Omnibox } from "@/components/Omnibox";
