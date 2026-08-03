@@ -831,7 +831,7 @@ def proposals():
     The view read "LAST DIAGNOSED —" because no timestamp existed anywhere, and "APPROVED 3"
     over three open proposals because it had only a total to render.
     """
-    d = _proposals_base()
+    d = proposals_list()
     try:
         d["last_diagnosed"] = (H / "state" / "last-diagnosed.txt").read_text().strip()
     except Exception:

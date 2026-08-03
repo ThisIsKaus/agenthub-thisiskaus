@@ -444,6 +444,19 @@ def safety():
         ver = json.loads(body).get("version", 0)
     except Exception:
         pass
+    # A 500 is a response. The console check only asserted that :4100 answers, so it stayed
+    # green while three endpoints returned Internal Server Error and canvas never registered.
+    broken = []
+    for ep in ("state", "models", "failover", "proposals", "skills", "kb",
+               "digest", "cost", "selftest", "canvas", "capabilities"):
+        code = sh(f"curl -s -o /dev/null -w '%{{http_code}}' -m 20 "
+                  f"http://127.0.0.1:4100/api/{ep}", 30).strip()
+        if code != "200":
+            broken.append(f"{ep}:{code}")
+    rec(g, "every endpoint answers 200", not broken,
+        ", ".join(broken) if broken else "11 endpoints healthy",
+        "an endpoint is erroring or was never registered — check console.err.log")
+
     rec(g, "console version current", ver >= 2, f"v{ver}",
         "the console is running an older build than the tests expect")
 
