@@ -175,6 +175,7 @@ function KnowledgePage() {
 
 
       <Panel title="Detail">
+        <p className="mb-3 font-mono text-[10px] text-faint">Expand a source to see its chunks.</p>
         <Disclosure
           summary={
             <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
@@ -182,7 +183,6 @@ function KnowledgePage() {
             </span>
           }
         >
-        <p className="mb-3 font-mono text-[10px] text-faint">Expand a source to see its chunks.</p>
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 6 }).map((_, index) => (
