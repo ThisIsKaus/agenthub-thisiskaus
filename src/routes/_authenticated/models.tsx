@@ -200,17 +200,23 @@ function ModelsPage() {
   const data = models.data ?? {};
   const bench = data.bench ?? [];
   const resident = normalizeIds(data.resident);
-  const memory = data.memory ?? {};
-  const budget = memory.budget ?? {};
+  // Some machine builds nest the block under `memory`, some flatten it onto the
+  // response, and some put the figures directly on `memory` without a `budget`.
+  const memory: MemoryBlock =
+    data.memory ?? ((data as { budget?: unknown }).budget ? (data as MemoryBlock) : {});
+  const budget = memory.budget ?? (memory as MemoryBlock["budget"]) ?? {};
 
   const envelope = n(budget.envelope_gib);
   const pinnedGib = n(budget.pinned_gib);
   const elasticGib = n(budget.elastic_gib);
   const headroomGib = n(budget.headroom_gib, Math.max(0, envelope - pinnedGib - elasticGib));
-  const pinned = memory.pinned ?? [];
+  const pinned = (memory.pinned ?? (budget as { pinned?: MemoryEntry[] }).pinned ?? []).filter(
+    (entry) => modelId(entry) !== "",
+  );
   const elastic = memory.elastic ?? [];
-  const unexpected = memory.unexpected ?? [];
+  const unexpected = (memory.unexpected ?? []).filter((entry) => modelId(entry) !== "");
   const pressure = memory.pressure ?? "unknown";
+
 
   const pct = (value: number) => (envelope > 0 ? Math.max(0, Math.min(100, (value / envelope) * 100)) : 0);
   const elasticLabel = elastic.map((entry) => modelId(entry)).filter(Boolean).join(" · ");
