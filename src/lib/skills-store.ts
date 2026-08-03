@@ -147,7 +147,7 @@ function applyRow(skill: Skill, row: SkillRow): Skill {
   return {
     ...skill,
     state,
-    name: skill.name || row.name || skill.name,
+    name: row.name?.trim() || skill.name,
     description: row.description?.trim() || skill.description,
   };
 }
@@ -223,6 +223,51 @@ export async function listSkills(local: Local): Promise<Skill[]> {
 }
 
 /**
+ * Paths the machine has already refused this session. A 403 is a control
+ * working: we ask once, remember the answer, and never ask again.
+ */
+const refusedPaths = new Map<string, string>();
+
+export function refusalFor(path: string): string | null {
+  return refusedPaths.get(path) ?? null;
+}
+
+export const SKILL_REFUSAL =
+  "denied at the approval dialog, or outside the allowlist";
+
+/**
+ * Read one skill's SKILL.md, on open only. Attempted at most once per path per
+ * session; a refusal is returned as text, never thrown into a retry loop.
+ */
+export async function loadSkillBody(
+  local: Local,
+  skill: Skill,
+): Promise<{ skill: Skill; refusal: string | null }> {
+  if (skill.raw.trim()) return { skill, refusal: null };
+  const already = refusedPaths.get(skill.path);
+  if (already) return { skill, refusal: already };
+  try {
+    const file = await local.get<{ raw?: string }>("/api/file", { path: skill.path });
+    const parsed = parseSkill(file.raw ?? "", skill.path);
+    return {
+      skill: {
+        ...parsed,
+        name: skill.name || parsed.name,
+        state: skill.state,
+        description: skill.description || parsed.description,
+      },
+      refusal: null,
+    };
+  } catch {
+    refusedPaths.set(skill.path, SKILL_REFUSAL);
+    // Logged once, here, for this path — the caller must not log again.
+    console.info(`skill body not read: ${SKILL_REFUSAL}`);
+    return { skill, refusal: SKILL_REFUSAL };
+  }
+}
+
+
+/**
  * The list and its lifecycle counts. Counts come from the endpoint when it
  * supplies them, so a bucket never reads 0 while the directory holds fifty.
  */
@@ -252,17 +297,11 @@ export async function fetchSkills(
   const files = rows.filter(
     (row) => row.path?.endsWith(".md") && !row.path.includes("/versions/"),
   );
-  const loaded = await Promise.all(
-    files.map(async (row) => {
-      try {
-        const file = await local.get<{ raw?: string }>("/api/file", { path: row.path });
-        return applyRow(parseSkill(file.raw ?? "", row.path), row);
-      } catch {
-        // The file would not open; the row still describes a real skill.
-        return applyRow(parseSkill("", row.path), row);
-      }
-    }),
-  );
+  // The list is built from the listing alone. Reading every file here is what
+  // produced a flood of refused /api/file calls; a body is read only when the
+  // user opens one skill.
+  const loaded = files.map((row) => applyRow(parseSkill("", row.path), row));
+
   const skills = loaded
     .filter((skill): skill is Skill => skill !== null)
     .sort((a, b) => a.name.localeCompare(b.name));

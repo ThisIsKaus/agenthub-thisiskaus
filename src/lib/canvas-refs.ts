@@ -3,7 +3,7 @@ import { useLocal } from "@/lib/local-bridge";
 import { JOB_KEYS, type CanvasRef } from "@/lib/canvas-types";
 import { listSkills, type Skill } from "@/lib/skills-store";
 
-type SkillRow = { name: string; path: string; size?: number; modified?: string };
+type SkillRow = { name: string; path: string; description?: string; size?: number; modified?: string };
 type PromptRow = { name: string; path: string; kind?: string };
 type ProjectRow = { name: string; entity?: string; stage?: string; status?: string; sensitivity?: string };
 type BenchRow = { role?: string; id?: string; tps?: string | number; gib?: string | number };
@@ -31,19 +31,26 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "skills"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: async () => ({
+      // The skills endpoint is the source: it cannot be refused by the path
+      // allowlist, and it already carries the description that tells you
+      // whether loading a skill will help.
       skills: (await listSkills(local)).map((skill: Skill) => ({
         name: skill.name,
         path: skill.path,
+        description: skill.description,
       })) as SkillRow[],
     }),
   });
+
 
 
   const prompts = useQuery({
     queryKey: ["canvas", "refs", "prompts"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ prompts?: PromptRow[] }>("/api/prompts"),
   });
 
@@ -51,6 +58,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "factory"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ projects?: ProjectRow[] }>("/api/factory"),
   });
 
@@ -58,6 +66,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "models"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ resident?: { id: string; size?: string }[]; bench?: BenchRow[]; aliases?: string[] }>(
       "/api/models",
     ),
@@ -67,6 +76,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "kb"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ sources?: SourceRow[]; chunks?: number; documents?: number }>("/api/kb"),
   });
 
@@ -74,6 +84,7 @@ export function useReferenceCatalogue() {
     queryKey: ["canvas", "refs", "roots"],
     enabled,
     staleTime: STALE,
+    retry: false,
     queryFn: () => local.get<{ roots?: RootRow[] }>("/api/roots"),
   });
 
@@ -82,8 +93,11 @@ export function useReferenceCatalogue() {
     kind: "skill",
     label: row.name,
     path: row.path,
-    meta: row.modified ?? undefined,
+    // The trigger line, not a timestamp: it is what tells you whether loading
+    // this skill will help.
+    meta: row.description?.split("\n")[0]?.trim() || undefined,
   }));
+
 
   const promptRefs: CanvasRef[] = (prompts.data?.prompts ?? []).map((row) => ({
     id: `prompt:${row.path}`,
@@ -161,6 +175,7 @@ export function useTree(path: string | null) {
     queryKey: ["canvas", "tree", path ?? "root"],
     enabled: local.available && path !== null,
     staleTime: 30_000,
+    retry: false,
     queryFn: () => local.get<TreeListing>("/api/tree", { path: path ?? "" }),
   });
 }

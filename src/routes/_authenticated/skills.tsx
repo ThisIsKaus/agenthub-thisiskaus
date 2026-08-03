@@ -12,6 +12,8 @@ import {
   STATE_TONE,
   draftSkill,
   fetchSkills,
+  loadSkillBody,
+
   listVersions,
   mineCandidates,
   readVersion,
@@ -110,7 +112,9 @@ function SkillsPage() {
     queryKey: ["skills", "list"],
     enabled: local.available,
     queryFn: () => fetchSkills(local),
+    retry: false,
   });
+
 
   const list = useMemo(() => skills.data?.skills ?? [], [skills.data]);
   const root = skillsRoot(list) ?? "skills";
@@ -128,6 +132,20 @@ function SkillsPage() {
   useEffect(() => {
     if (seed && !active) setActive(draftSkill(root, seed.slice(0, 48), seed));
   }, [seed, active, root]);
+
+  /** The body is read on open, once. A refusal is stated and left alone. */
+  async function openSkill(skill: Skill) {
+    if (active?.path === skill.path) {
+      setActive(null);
+      return;
+    }
+    setActive(skill);
+    setNote(null);
+    const { skill: loaded, refusal } = await loadSkillBody(local, skill);
+    setActive((current) => (current?.path === skill.path ? loaded : current));
+    if (refusal) setNote(refusal);
+  }
+
 
   async function mine() {
     setMining(true);
@@ -202,7 +220,7 @@ function SkillsPage() {
               <li key={skill.path} className="border-t border-rule first:border-t-0">
                 <button
                   type="button"
-                  onClick={() => setActive(active?.path === skill.path ? null : skill)}
+                  onClick={() => void openSkill(skill)}
                   className="block w-full px-4 py-3 text-left hover:bg-panel2"
                 >
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
