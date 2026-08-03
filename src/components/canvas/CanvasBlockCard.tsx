@@ -112,7 +112,6 @@ export function CanvasBlockCard({
   const [picker, setPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<"reference" | "source">("reference");
   const [pickerQuery, setPickerQuery] = useState("");
-  const [deps, setDeps] = useState(false);
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [passes, setPasses] = useState<{ id: string; label: string; startedAt: number; endedAt: number | null }[]>([]);
