@@ -713,20 +713,11 @@ export function CanvasBlockCard({
     if (block.kind === "capture") return void sendCapture();
   }
 
-  function toggleDependency(id: string) {
-    onChange({
-      dependsOn: block.dependsOn.includes(id)
-        ? block.dependsOn.filter((entry) => entry !== id)
-        : [...block.dependsOn, id],
-    } as Partial<CanvasBlock>);
-  }
-
   const canRun =
     block.kind === "job" ||
     (block.kind !== "note" &&
       (block.text.trim().length > 0 || block.refs.length > 0 || upstreams.length > 0));
 
-  const available = doc.blocks.filter((candidate) => candidate.id !== block.id);
   const output = current?.output;
 
   return (
