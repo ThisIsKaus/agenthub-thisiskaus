@@ -881,6 +881,37 @@ export function CanvasBlockCard({
             </p>
           )}
 
+          <Disclosure
+            summary={
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Not yet built · 6
+              </span>
+            }
+            tone="quiet"
+          >
+            <ul className="space-y-2">
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">↑ ↓</span>
+                <span className="font-mono text-[10px] text-faint">reorder the block under the cursor</span>
+              </li>
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">+ link block</span>
+                <span className="font-mono text-[10px] text-faint">feed another block's pinned answer into this one</span>
+              </li>
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">Ask from this block</span>
+                <span className="font-mono text-[10px] text-faint">ask the corpus using this block as the question</span>
+              </li>
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">Answer below</span>
+                <span className="font-mono text-[10px] text-faint">insert the answer as a new block</span>
+              </li>
+              <li className="flex items-baseline gap-3">
+                <span className="w-40 font-mono text-[11px] text-muted-foreground">Critique on another lane</span>
+                <span className="font-mono text-[10px] text-faint">review this draft with a different model family</span>
+              </li>
+            </ul>
+          </Disclosure>
 
           {block.kind === "prompt" && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
