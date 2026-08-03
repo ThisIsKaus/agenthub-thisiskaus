@@ -457,6 +457,18 @@ def safety():
         ", ".join(broken) if broken else "11 endpoints healthy",
         "an endpoint is erroring or was never registered — check console.err.log")
 
+    # A route defined after `if __name__ == "__main__"` is never registered: uvicorn.run
+    # blocks, so the decorator is never reached. The module still imports cleanly, so every
+    # static check passes and only a live request reveals it. Five appends to the end of this
+    # file have now gone wrong; this catches the class rather than the instance.
+    src = (H / "console" / "console.py").read_text(errors="ignore").splitlines()
+    guard = next((i for i, l in enumerate(src) if l.startswith("if __name__")), len(src))
+    orphans = [i + 1 for i, l in enumerate(src[guard:], start=guard)
+               if l.startswith("@app.")]
+    rec(g, "no routes below __main__", not orphans,
+        f"{len(orphans)} route(s) at line {orphans[0]}" if orphans else "clean",
+        "a route after uvicorn.run is never registered — move it above the guard")
+
     rec(g, "console version current", ver >= 2, f"v{ver}",
         "the console is running an older build than the tests expect")
 
