@@ -198,6 +198,8 @@ export function Omnibox() {
           onChange={(event) => {
             setText(event.target.value);
             setOverridden(false);
+            // Clearing the field collapses the ask surface.
+            if (!event.target.value.trim()) setAsked(null);
           }}
           onKeyDown={onKeyDown}
           disabled={busy}
