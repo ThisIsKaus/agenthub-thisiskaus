@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/cost")({
     ],
   }),
   component: () => (
-    <Page title="Cost" subtitle="Metered spend only — local inference and prepaid subscriptions carry the daily load at zero marginal cost." footer="Cost · published figures from the machine">
+    <Page title="Cost" footer="Cost · published figures from the machine">
       <CostPage />
     </Page>
   ),
@@ -91,7 +91,7 @@ function CostPage() {
 
   return (
     <div className="space-y-4">
-      <Section title="This month" flush subtitle="Metered spend only. Local inference is not billed and does not appear here.">
+      <Section title="This month" flush>
       <Panel title="Metered lane">
         {isPending ? (
           <div className="grid grid-cols-2 gap-px sm:grid-cols-3">

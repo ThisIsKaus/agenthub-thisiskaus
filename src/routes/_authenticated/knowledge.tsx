@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/knowledge")({
     ],
   }),
   component: () => (
-    <Page title="Knowledge" subtitle="What the corpus holds and where each chunk came from." footer="Knowledge · corpus counts read live from the machine">
+    <Page title="Knowledge" footer="Knowledge · corpus counts read live from the machine">
       <LocalOnly>
         <KnowledgePage />
       </LocalOnly>

@@ -32,7 +32,6 @@ export const Route = createFileRoute("/_authenticated/model-scanner")({
   component: () => (
     <Page
       title="Model scanner"
-      subtitle="Candidates are ranked against the memory envelope of this machine. Nothing is evidence until it has been benchmarked here."
       footer="Model scanner · local plane · benchmarks run on the machine"
     >
       <LocalOnly>
@@ -194,7 +193,7 @@ function ScannerPage() {
 
   return (
     <div>
-      <Section title="Envelope" subtitle="The constraint, stated before the options.">
+      <Section title="Envelope">
         <Panel title="Memory envelope">
           {loading ? (
             <Skeleton className="h-4 w-2/3" />
@@ -277,7 +276,7 @@ function ScannerPage() {
                               {candidate.id}
                             </span>
                             <span className="mt-0.5 block font-mono text-[10px] text-faint">
-                              {candidate.author ?? "unknown author"} · {state}
+                              {candidate.author ?? "—"} · {state}
                             </span>
                             {candidate.why && (
                               <span className="mt-1 block max-w-[62ch] text-[12px] leading-relaxed text-faint">
@@ -287,7 +286,7 @@ function ScannerPage() {
                           </td>
                           <td className="py-3 pr-3 font-mono text-[12px] tabular-nums text-muted-foreground">
                             {candidate.params !== undefined ? `${num(candidate.params, 0)}B` : "—"} ·{" "}
-                            {candidate.quant ?? "unknown"}
+                            {candidate.quant ?? "—"}
                           </td>
                           <td
                             className={`py-3 pr-3 text-right font-mono text-[12px] tabular-nums ${
@@ -339,7 +338,6 @@ function ScannerPage() {
       <Section
         title="Trial result"
         note={report ? `benchmarked ${formatStamp(report.at.toISOString())}` : undefined}
-        subtitle="Incumbent against candidate, read from the report the machine wrote."
       >
         <Panel title="Comparison">
           {!report ? (

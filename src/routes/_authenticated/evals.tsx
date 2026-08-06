@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/evals")({
     ],
   }),
   component: () => (
-    <Page title="Evals" subtitle="How well triage classifies, and whether anything got through that should not have." footer="Evals · scored on the machine against the golden set">
+    <Page title="Evals" footer="Evals · scored on the machine against the golden set">
       <LocalOnly>
         <EvalsPage />
       </LocalOnly>
@@ -104,7 +104,7 @@ function EvalsPage() {
         />
       </div>
 
-      <Section title="Current" flush subtitle="Four axes scored on the golden set. Run an eval to add a row to the history.">
+      <Section title="Current" flush>
       <Panel title="Current scores">
         {loading ? (
           <Skeleton className="h-6 w-72" />

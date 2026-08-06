@@ -34,6 +34,11 @@ export type MachineBlock = {
 
 export type LocalState = {
   available: boolean;
+  /**
+   * False until the first loopback probe settles. Nothing may claim a plane —
+   * and no published figure may render as current — while this is false.
+   */
+  resolved: boolean;
   version: string | null;
   features: string[];
   machine: MachineBlock | null;
@@ -148,6 +153,7 @@ async function localPost<T = unknown>(
 
 const EMPTY: LocalState = {
   available: false,
+  resolved: false,
   version: null,
   features: [],
   machine: null,
@@ -187,6 +193,7 @@ export function LocalBridgeProvider({ children }: { children: ReactNode }) {
       };
       setState({
         available: true,
+        resolved: true,
         version: data.version ?? null,
         features: data.features ?? [],
         machine: data.machine ?? null,
@@ -194,7 +201,7 @@ export function LocalBridgeProvider({ children }: { children: ReactNode }) {
       });
     } catch {
       // Absence is the expected state away from the machine — never an error.
-      setState({ ...EMPTY, lastProbe: new Date() });
+      setState({ ...EMPTY, resolved: true, lastProbe: new Date() });
     } finally {
       clearTimeout(timer);
       probing.current = false;

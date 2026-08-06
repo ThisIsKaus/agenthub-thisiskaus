@@ -80,6 +80,11 @@ export function useHubStateValue(): HubState {
   const localState = useQuery(localStateQueryOptions(local.get, local.available));
 
   return useMemo(() => {
+    // Until the loopback probe settles, the source is unknown. Published state
+    // may not be rendered as current on a machine that is about to answer.
+    if (!local.resolved) {
+      return { data: null, source: "published", asOf: null, provenance: "reading", isPending: true };
+    }
     const isLocal = local.available && !!localState.data;
     const data = isLocal ? fillGaps(localState.data!, published.data) : (published.data ?? null);
     const source: HubSource = isLocal ? "local" : "published";
@@ -91,7 +96,14 @@ export function useHubStateValue(): HubState {
       provenance: isLocal ? "live" : `published ${relative(asOf)}`,
       isPending: isLocal ? false : published.isPending && localState.isPending,
     };
-  }, [local.available, localState.data, localState.isPending, published.data, published.isPending]);
+  }, [
+    local.available,
+    local.resolved,
+    localState.data,
+    localState.isPending,
+    published.data,
+    published.isPending,
+  ]);
 }
 
 /**

@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/memory")({
     ],
   }),
   component: () => (
-    <Page title="Memory" subtitle="Everything asked and answered on the machine, searchable." footer="Memory · timeline read over loopback, never published">
+    <Page title="Memory" footer="Memory · timeline read over loopback, never published">
       <LocalOnly>
         <MemoryPage />
       </LocalOnly>

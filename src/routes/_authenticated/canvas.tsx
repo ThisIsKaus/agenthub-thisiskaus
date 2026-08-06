@@ -29,6 +29,8 @@ import {
 export const Route = createFileRoute("/_authenticated/canvas")({
   validateSearch: (search: Record<string, unknown>) => ({
     seed: typeof search.seed === "string" ? search.seed : undefined,
+    // A document the inbox already saved on the machine — opened, not re-created.
+    id: typeof search.id === "string" ? search.id : undefined,
   }),
   head: () => ({
     meta: [
@@ -51,7 +53,6 @@ export const Route = createFileRoute("/_authenticated/canvas")({
   component: () => (
     <Page
       title="Canvas"
-      subtitle="The one place you author rather than read. Ask the corpus inline, critique on a second lane, and hand the finished draft over."
       footer="Canvas · documents live on the machine; every save keeps the previous version"
     >
       <LocalOnly>
@@ -219,7 +220,7 @@ function CanvasPage() {
   const queryClient = useQueryClient();
   const { skills: skillRefs } = useReferenceCatalogue();
   const skillNames = useMemo(() => skillRefs.map((ref) => ref.label), [skillRefs]);
-  const { seed } = Route.useSearch();
+  const { seed, id: openId } = Route.useSearch();
 
   const [doc, setDoc] = useState<CanvasDoc | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -239,6 +240,21 @@ function CanvasPage() {
 
   useEffect(() => {
     if (doc) return;
+    // The inbox saves the document before it navigates; open that one.
+    if (openId && local.available) {
+      let cancelled = false;
+      void readCanvas(local, openId)
+        .then((loaded) => {
+          if (cancelled) return;
+          setDoc(loaded ?? emptyDoc());
+        })
+        .catch(() => {
+          if (!cancelled) setDoc(emptyDoc());
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
     const fresh = emptyDoc();
     // An item sent from the inbox arrives as the first note, already written down.
     if (seed) {
@@ -246,7 +262,7 @@ function CanvasPage() {
       fresh.blocks = [{ ...emptyBlock("note"), text: seed }, ...fresh.blocks];
     }
     setDoc(fresh);
-  }, [doc, seed]);
+  }, [doc, seed, openId, local]);
 
   const save = useCallback(
     async (next: CanvasDoc) => {
