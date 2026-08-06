@@ -91,7 +91,7 @@ function CostPage() {
 
   return (
     <div className="space-y-4">
-      <Section title="This month" flush subtitle="Metered spend only. Local inference is not billed and does not appear here.">
+      <Section title="This month" flush>
       <Panel title="Metered lane">
         {isPending ? (
           <div className="grid grid-cols-2 gap-px sm:grid-cols-3">
