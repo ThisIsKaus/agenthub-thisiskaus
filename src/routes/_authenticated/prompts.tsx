@@ -122,7 +122,7 @@ function PromptsPage() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <Section title="Canon files" flush>
+        <Section title="Canon files" flush subtitle="The canon files the system reads. Editing one re-scores retrieval on the next run.">
         <Panel title="Prompts">
           {loading ? (
             <div className="space-y-2">

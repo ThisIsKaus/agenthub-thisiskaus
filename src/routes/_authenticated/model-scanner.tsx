@@ -280,7 +280,7 @@ function ScannerPage() {
       </Panel>
       </Section>
 
-      <Section title="Candidates" flush>
+      <Section title="Candidates" flush subtitle="No scan has run. Scanning compares open-weight candidates against the current set, benchmarked on this machine.">
       <Panel title="Candidates">
         {loading ? (
           <div className="space-y-2">
