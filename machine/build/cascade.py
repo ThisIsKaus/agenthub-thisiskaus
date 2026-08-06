@@ -312,7 +312,12 @@ def target_file(intent, ctx):
 def extract_file(out):
     m = re.search(r"<<<FILE>>>\n?(.*?)\n?<<<END>>>", out, re.S)
     if m:
-        return m.group(1)
+        body = m.group(1)
+        # The model often opens with commentary before the markers and closes with a summary
+        # after. Strip a leading fence and any trailing prose that is clearly not code.
+        body = re.sub(r"^```[a-z]*\n", "", body)
+        body = re.sub(r"\n```\s*$", "", body)
+        return body
     # Some models drop the closing marker when they run long.
     m = re.search(r"<<<FILE>>>\n?(.*)", out, re.S)
     return m.group(1).rstrip() if m and len(m.group(1)) > 80 else None
@@ -403,8 +408,21 @@ def main():
 
     code, out = sh("git rev-parse --abbrev-ref HEAD", 30)
     base = out.strip()
-    if sh("git status --porcelain", 30)[1].strip():
-        sys.exit("the working tree is dirty — commit or stash before a build")
+    # Generated output is not uncommitted work. Session exports, digests and eval results are
+    # written by scheduled jobs and blocked two builds — the system's own output refusing the
+    # system's own changes. Auto-commit those; refuse only for genuine hand edits.
+    dirty = sh("git status --porcelain", 30)[1].strip().splitlines()
+    GENERATED = ("machine/docs/sessions/", "machine/digests/", "machine/evals/results-",
+                 "machine/evals/retrieval-", "machine/logs/", "machine/state/",
+                 "machine/docs/brief.md", "machine/docs/local-api-contract.md",
+                 "machine/docs/lovable-context.md")
+    hand = [l for l in dirty if not any(g in l for g in GENERATED)]
+    if dirty and not hand:
+        sh("git add -A && git commit -q -m 'generated: scheduled output before a build'", 60)
+        print(f"  auto-committed {len(dirty)} generated file(s)")
+    elif hand:
+        sys.exit("uncommitted hand edits — commit or stash before a build:\n  " +
+                 "\n  ".join(hand[:6]))
     sh(f"git checkout -q -b {branch}", 60)
 
     trace, resolved = "", None

@@ -10,6 +10,7 @@ Doctrine:
   - ~/AgentHub/vault is unreadable by construction
 """
 
+import shlex
 import json, os, re, shutil, subprocess, sys, threading, uuid
 import datetime as dt
 from pathlib import Path
@@ -1046,6 +1047,45 @@ def canvas_handover(id: str = Form(...)):
     return {"ok": True, "path": str(dest),
             "note": "queued for ingest; retrievable after the next ingest run"}
 
+
+
+
+@app.get("/api/models/scan")
+def models_scan():
+    """Candidates from Hugging Face, filtered to what fits alongside the pinned core.
+
+    Nothing here is evidence. Downloads measure popularity and published benchmarks measure
+    somebody else's hardware; only the trial measures this machine.
+    """
+    sys.path.insert(0, str(H / "models"))
+    try:
+        import importlib, scanner
+        importlib.reload(scanner)
+        d = scanner.scan()
+    except Exception as ex:
+        return {"candidates": [], "envelope": {}, "error": f"{type(ex).__name__}: {ex}",
+                "last_scan": None}
+    try:
+        d["current"] = json.loads(
+            (H / "docs" / "bench.json").read_text()) if (H / "docs" / "bench.json").exists() else []
+    except Exception:
+        d["current"] = []
+    return d
+
+
+@app.post("/api/models/scan/trial")
+def models_scan_trial(id: str = Form(...)):
+    """Download, bench, and evaluate a candidate in the incumbent's role.
+
+    The alias reverts afterwards regardless of outcome — a trial that quietly becomes
+    production is not a trial. Promotion is a separate action requiring approval.
+    """
+    free_gb = int(sh("df -g / | awk 'NR==2{print $4}'") or 0)
+    if free_gb < 100:
+        raise HTTPException(422, f"only {free_gb} GB free — refusing to download below 100 GB")
+    if "/" not in id or ".." in id:
+        raise HTTPException(422, "expected a Hugging Face model id of the form author/name")
+    return run_job("trial", f"{H}/scripts/model-trial.sh {shlex.quote(id)}")
 
 
 if __name__ == "__main__":
