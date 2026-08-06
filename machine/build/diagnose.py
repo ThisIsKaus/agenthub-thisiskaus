@@ -225,10 +225,21 @@ def from_skills():
         except Exception:
             pass
     dead = sorted(names - used)
-    if len(dead) >= 5 and used:
-        out.append(sig("debt", f"{len(dead)} skills have never been activated",
-                       "an unused skill is dead weight in the discovery budget: "
+    # A skill can only be activated by a build that selected it, and builds are rare. Flagging
+    # 44 of 48 as dead weight after ten builds measures build frequency, not skill worth — and
+    # acting on it would retire skills covering tax, negotiation and property because nobody
+    # asked the cascade a question about them. Require enough builds for the claim to mean
+    # something before making it.
+    builds = len(list((H / "state" / "builds").glob("*.json")))
+    if len(dead) >= 5 and used and builds >= 40:
+        out.append(sig("debt", f"{len(dead)} skills unactivated across {builds} builds",
+                       "with this many builds the sample is meaningful: "
                        + ", ".join(dead[:6])))
+    elif len(dead) >= 5 and builds < 40:
+        out.append(sig("warning", f"skill usage not yet measurable ({builds} builds)",
+                       f"{len(dead)} skills have not been activated, but activation is only "
+                       f"logged by the cascade and there have been {builds} builds. This "
+                       f"measures build frequency, not whether the skills are worth keeping."))
     runs = sorted((H / "skills-lib" / "evals").glob("routing-stress-test-*.json"), reverse=True)
     if runs:
         try:
