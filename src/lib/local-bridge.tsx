@@ -34,6 +34,11 @@ export type MachineBlock = {
 
 export type LocalState = {
   available: boolean;
+  /**
+   * False until the first loopback probe settles. Nothing may claim a plane —
+   * and no published figure may render as current — while this is false.
+   */
+  resolved: boolean;
   version: string | null;
   features: string[];
   machine: MachineBlock | null;
