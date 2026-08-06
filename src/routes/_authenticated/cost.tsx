@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useQuery } from "@tanstack/react-query";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Empty, Figure, FigureSkeleton, Row, Skeleton, formatStamp } from "@/components/data";
 import { stateQueryOptions } from "@/lib/state";
 import { useRealtimeState } from "@/hooks/use-realtime-state";
@@ -90,6 +91,7 @@ function CostPage() {
 
   return (
     <div className="space-y-4">
+      <Section title="This month" flush>
       <Panel title="Metered lane">
         {isPending ? (
           <div className="grid grid-cols-2 gap-px sm:grid-cols-3">
@@ -117,7 +119,9 @@ function CostPage() {
           Published {formatStamp(state?.updated_at)}
         </p>
       </Panel>
+      </Section>
 
+      <Section title="By model" flush>
       <Panel title="Detail">
         <Disclosure
           summary={
@@ -152,15 +156,19 @@ function CostPage() {
         <p className="mt-4 font-mono text-[10px] leading-relaxed text-faint">
           Work on the local lane costs nothing and never leaves the machine.
         </p>
+        </Disclosure>
+      </Panel>
+      </Section>
 
-        <div className="mt-4 border-t border-rule">
-          <Disclosure
-            summary={
-              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
-                Day by day · last {days.length || 30} days
-              </span>
-            }
-          >
+      <Section title="By day" flush>
+      <Panel title="Detail">
+        <Disclosure
+          summary={
+            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+              Day by day · last {days.length || 30} days
+            </span>
+          }
+        >
             {days.length > 0 ? (
               <ul className="space-y-1.5">
                 {days.map((day) => (
@@ -183,10 +191,9 @@ function CostPage() {
             ) : (
               <Empty>The machine has not published a daily breakdown.</Empty>
             )}
-          </Disclosure>
-        </div>
         </Disclosure>
       </Panel>
+      </Section>
     </div>
   );
 }

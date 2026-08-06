@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { Field } from "@/components/Field";
@@ -164,6 +165,7 @@ function ProposalsPage() {
 
   return (
     <div className="space-y-6">
+      <Section title="Queue">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           {counts.map(([status, n]) => (
@@ -214,6 +216,7 @@ function ProposalsPage() {
           ))}
         </div>
       )}
+      </Section>
     </div>
   );
 }

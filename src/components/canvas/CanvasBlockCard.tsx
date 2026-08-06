@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Disclosure } from "@/components/Disclosure";
+import { Section } from "@/components/Section";
 import { RefChip, ReferencePicker } from "@/components/canvas/ReferencePicker";
 import {
   ProvenanceFold,
@@ -881,10 +882,11 @@ export function CanvasBlockCard({
             </p>
           )}
 
+          <Section title="Not yet built" flush>
           <Disclosure
             summary={
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                Not yet built · 6
+                6 items
               </span>
             }
             tone="quiet"
@@ -912,6 +914,7 @@ export function CanvasBlockCard({
               </li>
             </ul>
           </Disclosure>
+          </Section>
 
           {block.kind === "prompt" && (
             <div className="mt-3 flex flex-wrap items-center gap-2">

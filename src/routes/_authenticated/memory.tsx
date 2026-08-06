@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Empty, Figure, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { useLocal } from "@/lib/local-bridge";
@@ -96,6 +97,7 @@ function MemoryPage() {
 
   return (
     <div className="space-y-4">
+      <Section title="Search">
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -136,7 +138,9 @@ function MemoryPage() {
         />
         <Figure label="Days of history" value={loading ? "—" : (days?.toLocaleString() ?? "—")} />
       </div>
+      </Section>
 
+      <Section title="Recent">
       <Panel title={mode === "search" ? "Matches" : "Recent"}>
         {loading ? (
           <div className="space-y-3">
@@ -173,6 +177,7 @@ function MemoryPage() {
           </ol>
         )}
       </Panel>
+      </Section>
     </div>
   );
 }

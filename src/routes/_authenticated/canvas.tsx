@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocalOnly } from "@/components/LocalOnly";
 import { CanvasBlockCard } from "@/components/canvas/CanvasBlockCard";
+import { Section } from "@/components/Section";
 import { useReferenceCatalogue } from "@/lib/canvas-refs";
 import { useLocal } from "@/lib/local-bridge";
 import {
@@ -86,13 +87,8 @@ function HarnessBoard({ doc }: { doc: CanvasDoc }) {
   ];
 
   return (
+    <Section title="Execution harness" note="local · append-only runs · versioned saves" flush>
     <section className="border border-rule bg-panel" data-testid="harness-board">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-rule px-4 py-2.5">
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
-          Execution harness
-        </p>
-        <p className="font-mono text-[10px] text-faint">local · append-only runs · versioned saves</p>
-      </div>
       <div className="grid grid-cols-1 sm:grid-cols-5">
         {stages.map((stage, index) => (
           <div
@@ -115,6 +111,7 @@ function HarnessBoard({ doc }: { doc: CanvasDoc }) {
         ))}
       </div>
     </section>
+    </Section>
   );
 }
 
@@ -441,6 +438,7 @@ function CanvasPage() {
       <ProjectBar doc={doc} onChange={patchDoc} skills={skillNames} />
       <HarnessBoard doc={doc} />
 
+      <Section title="Document" flush>
       <section className="border border-rule bg-panel">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-b border-rule px-4 py-3">
           <input
@@ -690,6 +688,7 @@ function CanvasPage() {
         Canvases are written to the machine and never leave it. Hand-over is the one exception: it
         passes text out, and only when you press it.
       </p>
+      </Section>
     </div>
   );
 }

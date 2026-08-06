@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Empty, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
@@ -224,6 +225,7 @@ function FilesPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <Section title="Tree" flush>
         <section
           onDragOver={(event) => {
             event.preventDefault();
@@ -324,7 +326,9 @@ function FilesPage() {
             Drop files here to add them to this folder.
           </p>
         </section>
+        </Section>
 
+        <Section title="Contents" flush>
         <Panel title={file?.name ?? "Viewer"}>
           {!file ? (
             <Empty>Select a file to read it</Empty>
@@ -366,6 +370,7 @@ function FilesPage() {
             </>
           )}
         </Panel>
+        </Section>
       </div>
 
       {note && <p className="font-mono text-[10px] text-faint">{note}</p>}
