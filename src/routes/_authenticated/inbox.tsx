@@ -16,13 +16,13 @@ export const Route = createFileRoute("/_authenticated/inbox")({
       {
         name: "description",
         content:
-          "Triage what arrived overnight: each line taken to one of three exits — dropped, filed as context, or written up as a skill or canvas.",
+          "Triage what arrived overnight: each line taken to one of three exits — filed as context, or written up as a skill or canvas.",
       },
       { property: "og:title", content: "Inbox — AgentHub" },
       {
         property: "og:description",
         content:
-          "Triage what arrived overnight: each line taken to one of three exits — dropped, filed as context, or written up as a skill or canvas.",
+          "Triage what arrived overnight: each line taken to one of three exits — filed as context, or written up as a skill or canvas.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -57,7 +57,7 @@ function InboxPage() {
 
 /* ----------------------------------------------------------------- triage */
 
-type Exit = "dropped" | "context" | "skill" | "canvas";
+type Exit = "context" | "skill" | "canvas";
 
 function TriageLane() {
   const local = useLocal();
