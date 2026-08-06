@@ -1,4 +1,12 @@
-models/
+# `models/` was written for LM Studio's weight cache and silently swallowed source code:
+# machine/models/scanner.py lived on one disk only, outside git and outside the CI guard that
+# refuses deletions under machine/. Ignore the weights, not the directory.
+models/*.gguf
+models/*.safetensors
+models/*.mlx
+models/*.bin
+!models/*.py
+!models/*.sh
 kb/
 vault/
 inbox/
