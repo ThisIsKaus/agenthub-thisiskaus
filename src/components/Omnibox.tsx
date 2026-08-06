@@ -71,7 +71,8 @@ export function Omnibox() {
   const [classifying, setClassifying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
-  const [answer, setAnswer] = useState<{ text: string; model?: string; sources?: AskSource[] } | null>(null);
+  /** The ask surface expands in place; the question it is answering lives here. */
+  const [asked, setAsked] = useState<string | null>(null);
   const examples = useMemo(pickExamples, []);
   const field = useRef<HTMLInputElement>(null);
   const seq = useRef(0);
