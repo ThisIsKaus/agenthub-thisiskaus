@@ -51,7 +51,7 @@ export const Route = createFileRoute("/_authenticated/skills")({
     ],
   }),
   component: () => (
-    <Page title="Skills" subtitle="Short instruction files the cascade loads only when a task needs them, mined, versioned and retired on a loop." footer="Skills · files read and written on the machine">
+    <Page title="Skills" footer="Skills · files read and written on the machine">
       <LocalOnly>
         <SkillsPage />
       </LocalOnly>

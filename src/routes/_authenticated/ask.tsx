@@ -29,7 +29,6 @@ export const Route = createFileRoute("/_authenticated/ask")({
   component: () => (
     <Page
       title="Ask"
-      subtitle="A question for the indexed corpus. Sources appear first; the answer is written beneath them."
       footer="Ask · asked and answered on the machine, over loopback"
     >
       <LocalOnly>

@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/files")({
     ],
   }),
   component: () => (
-    <Page title="Files" subtitle="Browse the allowlisted roots on the machine. Executable files are read-only by design." footer="Files · read over loopback, never copied to the cloud">
+    <Page title="Files" footer="Files · read over loopback, never copied to the cloud">
       <LocalOnly>
         <FilesPage />
       </LocalOnly>

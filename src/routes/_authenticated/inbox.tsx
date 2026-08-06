@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/inbox")({
     ],
   }),
   component: () => (
-    <Page title="Inbox" subtitle="One stream in, four exits out: dropped, filed as context, written up as a skill, or opened as a canvas." footer="Inbox · captures queue on the device and deliver when the machine polls">
+    <Page title="Inbox" footer="Inbox · captures queue on the device and deliver when the machine polls">
       <InboxPage />
     </Page>
   ),
