@@ -128,6 +128,9 @@ type SkillRow = {
   state?: string;
   tier?: string;
   size?: number;
+  /** The listing now carries the whole file; no per-skill read is needed. */
+  body?: string;
+  raw?: string;
 };
 
 export type SkillCounts = Record<SkillState, number>;
@@ -140,6 +143,17 @@ function emptyCounts(): SkillCounts {
 
 /** The list endpoint is the authority for state and description. */
 function applyRow(skill: Skill, row: SkillRow): Skill {
+  // The listing's text wins: it is the file, read once, for every skill.
+  const text = row.raw ?? row.body;
+  if (text != null && text.trim()) {
+    const parsed = parseSkill(text, row.path);
+    skill = {
+      ...parsed,
+      name: parsed.name || skill.name,
+      description: parsed.description || skill.description,
+      raw: text,
+    };
+  }
   const state =
     row.state && (SKILL_STATES as readonly string[]).includes(row.state)
       ? (row.state as SkillState)
