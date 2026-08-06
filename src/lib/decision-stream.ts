@@ -57,6 +57,10 @@ type CascadePayload = {
     verify?: string | boolean;
     first_pass?: boolean;
     merged?: boolean;
+    /** The machine's own word: the branch still exists and can be reviewed. */
+    reviewable?: boolean;
+    diff?: string;
+    branch?: string;
     review?: string;
     created?: string;
     at?: string;
@@ -87,16 +91,13 @@ function isWarn(state: string | undefined) {
   return (state ?? "").toLowerCase().startsWith("warn");
 }
 
-/** Resolved by the cascade, verified, but not yet merged by a human. */
+/**
+ * Only runs the machine marks `reviewable` may appear. A resolved-looking outcome
+ * is not enough: discarded branches no longer exist, and offering controls over
+ * them produced 404s at the git layer.
+ */
 function awaitingReview(run: NonNullable<CascadePayload["runs"]>[number]) {
-  if (run.merged === true) return false;
-  const outcome = (run.outcome ?? "").toLowerCase();
-  if (/merged|discard|abandon/.test(outcome)) return false;
-  const resolved =
-    /resolve|verified|pass|complete|done|ready/.test(outcome) ||
-    run.first_pass === true ||
-    /pass|ok|true/i.test(String(run.verify ?? ""));
-  return resolved;
+  return run.reviewable === true && run.merged !== true;
 }
 
 export function buildDigestItems(digest: DigestPayload | null): DecisionItem[] {

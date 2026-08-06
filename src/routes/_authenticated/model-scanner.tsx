@@ -193,7 +193,7 @@ function ScannerPage() {
 
   return (
     <div>
-      <Section title="Envelope" subtitle="The constraint, stated before the options.">
+      <Section title="Envelope">
         <Panel title="Memory envelope">
           {loading ? (
             <Skeleton className="h-4 w-2/3" />
@@ -338,7 +338,6 @@ function ScannerPage() {
       <Section
         title="Trial result"
         note={report ? `benchmarked ${formatStamp(report.at.toISOString())}` : undefined}
-        subtitle="Incumbent against candidate, read from the report the machine wrote."
       >
         <Panel title="Comparison">
           {!report ? (

@@ -11,6 +11,8 @@ import {
 
 type Action = { label: string; run: () => void | Promise<void>; primary?: boolean };
 
+/** Rows the machine can still act on. Everything else is history, not a decision. */
+
 const PILL_TONE: Record<DecisionItem["kind"], string> = {
   check: "border-risk/50 text-risk",
   proposal: "border-copper/50 text-copper",
@@ -22,6 +24,7 @@ const PILL_TONE: Record<DecisionItem["kind"], string> = {
 export function DecisionStream() {
   const local = useLocal();
   const live = local.available;
+  const resolved = local.resolved;
   const [items, setItems] = useState<DecisionItem[] | null>(null);
   const [echoes, setEchoes] = useState<Record<string, string>>({});
   const [dismissed, setDismissed] = useState<string[]>([]);
@@ -76,6 +79,18 @@ export function DecisionStream() {
   const dismiss = useCallback((id: string) => {
     setDismissed((current) => [...current, id]);
   }, []);
+
+  if (!resolved) {
+    return (
+      <Panel title="Needs a decision">
+        <div className="space-y-2">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      </Panel>
+    );
+  }
 
   if (!live) {
     return (
@@ -137,6 +152,7 @@ function StreamRow({
   const [busy, setBusy] = useState(false);
   const [reason, setReason] = useState("");
   const [askReason, setAskReason] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const attempt = useCallback(
     async (label: string, fn: () => Promise<void>, done?: boolean) => {
@@ -199,7 +215,7 @@ function StreamRow({
             true,
           ),
       },
-      { label: "Reject", run: () => setAskReason((open) => !open) },
+      { label: "Reject", run: () => setAskReason((shown) => !shown) },
       {
         label: "Defer",
         run: () =>
@@ -211,32 +227,13 @@ function StreamRow({
       },
     ];
   } else if (item.kind === "build") {
+    // No endpoint merges or discards a branch, so no control claims to.
+    // The evidence expands in place; the branch is merged on the machine.
     actions = [
       {
-        label: "Review diff",
+        label: open ? "Hide diff" : "Review diff",
         primary: true,
-        run: () =>
-          attempt("Review diff", () =>
-            local.post("/api/cascade/act", { id: String(raw.id ?? ""), action: "review" }),
-          ),
-      },
-      {
-        label: "Merge",
-        run: () =>
-          attempt(
-            "Merge",
-            () => local.post("/api/cascade/act", { id: String(raw.id ?? ""), action: "merge" }),
-            true,
-          ),
-      },
-      {
-        label: "Discard",
-        run: () =>
-          attempt(
-            "Discard",
-            () => local.post("/api/cascade/act", { id: String(raw.id ?? ""), action: "discard" }),
-            true,
-          ),
+        run: () => setOpen((current) => !current),
       },
     ];
   } else {
@@ -247,7 +244,7 @@ function StreamRow({
         primary: true,
         run: () =>
           attempt("Fix now", () =>
-            local.post("/api/cascade/build", { intent: `${item.what} — ${fix}` }),
+            local.post("/api/build", { intent: `${item.what} — ${fix}` }),
           ),
       },
       { label: "Acknowledge", run: () => onDone(item.id) },
@@ -291,6 +288,27 @@ function StreamRow({
           ))}
         </div>
       </div>
+
+      {open && item.kind === "build" && (
+        <div className="mt-2 border border-rule bg-panel2 p-2">
+          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+            {raw.branch ? `branch ${raw.branch}` : "branch on the machine"}
+          </p>
+          {raw.diff ? (
+            <pre className="mt-1 max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-paper">
+              {String(raw.diff)}
+            </pre>
+          ) : (
+            <p className="mt-1 max-w-[72ch] text-[12px] leading-relaxed text-faint">
+              The run carries no diff. Files touched:{" "}
+              {(item.raw as { files?: string[] }).files?.length
+                ? String((item.raw as { files?: string[] }).files!.length)
+                : "not recorded"}
+              . Merge the branch on the machine — no endpoint merges it from here.
+            </p>
+          )}
+        </div>
+      )}
 
       {askReason && (
         <div className="mt-2 flex flex-wrap items-center gap-2">

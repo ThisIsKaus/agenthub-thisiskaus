@@ -104,7 +104,7 @@ function EvalsPage() {
         />
       </div>
 
-      <Section title="Current" flush subtitle="Four axes scored on the golden set. Run an eval to add a row to the history.">
+      <Section title="Current" flush>
       <Panel title="Current scores">
         {loading ? (
           <Skeleton className="h-6 w-72" />
