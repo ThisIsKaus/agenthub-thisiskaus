@@ -1,5 +1,5 @@
 # AgentHub — brief for Lovable
-_Generated from the live machine 2026-08-04T07:07. Do not edit._
+_Generated from the live machine 2026-08-06T21:39. Do not edit._
 
 ## What exists
 

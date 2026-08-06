@@ -1,5 +1,5 @@
 # AgentHub local API — contract for Lovable
-_Generated from console.py by AST parse, 2026-08-03T18:38. Do not edit by hand._
+_Generated from console.py by AST parse, 2026-08-06T21:39. Do not edit by hand._
 
 ## How to call it
 
@@ -33,7 +33,7 @@ Every POST takes **multipart form fields**, not a JSON body. Sending JSON will
 return HTTP 422. A 403 means the path was outside the allowlist or an approval
 dialog was denied — surface it as a refusal, never as an error.
 
-## Endpoints (42)
+## Endpoints (44)
 
 | Method | Path | Parameters | Purpose |
 |---|---|---|---|
@@ -68,6 +68,8 @@ dialog was denied — surface it as a refusal, never as an error.
 | GET | `/api/memory` | query: { q?: string, n?: number } | memory |
 | GET | `/api/models` | no parameters | Residency, memory and the measured bench in one response. |
 | POST | `/api/models/action` | form: { action: string, model?: string } | models_action |
+| GET | `/api/models/scan` | no parameters | Candidates from Hugging Face, filtered to what fits alongside the pinned core. |
+| POST | `/api/models/scan/trial` | form: { id: string } | Download, bench, and evaluate a candidate in the incumbent's role. |
 | GET | `/api/prompts` | no parameters | prompts |
 | POST | `/api/prompts/save` | form: { path: string, content: string } | prompts_save |
 | GET | `/api/proposals` | no parameters | Adds the run timestamp and per-status counts the queue needs. |

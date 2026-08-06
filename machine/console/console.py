@@ -932,7 +932,10 @@ def skills():
         m = re.search(r"state:\s*(\w+)", meta)
         if m and m.group(1) in ("proposed", "active", "watch", "deprecated", "archived"):
             state = m.group(1)
+        # Return the body. The editor was fetching each skill by path and being refused,
+        # which is two failure points where one would do — the list already read the file.
         out.append({"name": sub.name, "path": str(f), "state": state,
+                    "body": raw,
                     "description": fm.get("description", ""), "tier": tier,
                     "size": st.st_size,
                     "modified": dt.datetime.fromtimestamp(st.st_mtime).isoformat(timespec="minutes")})
