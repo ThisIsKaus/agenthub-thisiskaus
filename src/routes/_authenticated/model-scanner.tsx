@@ -276,7 +276,7 @@ function ScannerPage() {
                               {candidate.id}
                             </span>
                             <span className="mt-0.5 block font-mono text-[10px] text-faint">
-                              {candidate.author ?? "unknown author"} · {state}
+                              {candidate.author ?? "—"} · {state}
                             </span>
                             {candidate.why && (
                               <span className="mt-1 block max-w-[62ch] text-[12px] leading-relaxed text-faint">
@@ -286,7 +286,7 @@ function ScannerPage() {
                           </td>
                           <td className="py-3 pr-3 font-mono text-[12px] tabular-nums text-muted-foreground">
                             {candidate.params !== undefined ? `${num(candidate.params, 0)}B` : "—"} ·{" "}
-                            {candidate.quant ?? "unknown"}
+                            {candidate.quant ?? "—"}
                           </td>
                           <td
                             className={`py-3 pr-3 text-right font-mono text-[12px] tabular-nums ${
