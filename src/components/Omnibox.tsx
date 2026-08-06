@@ -8,8 +8,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { isRefusal, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
-import { askProgressive, type AskSource } from "@/lib/ask-stream";
+import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { AskSurface } from "@/components/AskSurface";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { insertCaptureJob, queueCapture, type PendingCapture } from "@/lib/capture-queue";
 
