@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
+import { Markdown } from "@/components/Markdown";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
@@ -51,7 +52,7 @@ export const Route = createFileRoute("/_authenticated/skills")({
     ],
   }),
   component: () => (
-    <Page title="Skills" subtitle="Short instruction files the cascade loads only when a task needs them, mined, versioned and retired on a loop." footer="Skills · files read and written on the machine">
+    <Page title="Skills" footer="Skills · files read and written on the machine">
       <LocalOnly>
         <SkillsPage />
       </LocalOnly>
@@ -352,6 +353,8 @@ function Editor({
   const local = useLocal();
   const [busy, setBusy] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  // A skill is read by default; editing is a deliberate step.
+  const [editing, setEditing] = useState(() => !skill.raw.trim());
   const [diff, setDiff] = useState<{ stamp: string; parts: ReturnType<typeof wordDiff> } | null>(null);
 
   const versions = useQuery({
@@ -447,15 +450,28 @@ function Editor({
         </div>
       </div>
 
-      <textarea
-        value={skill.body}
-        onChange={(event) => onChange({ ...skill, body: event.target.value })}
-        rows={14}
-        spellCheck={false}
-        className="mt-3 w-full resize-y border border-rule bg-panel p-3 font-mono text-[12px] leading-relaxed text-paper outline-none focus:border-copper"
-      />
+      {editing ? (
+        <textarea
+          value={skill.body}
+          onChange={(event) => onChange({ ...skill, body: event.target.value })}
+          rows={14}
+          spellCheck={false}
+          className="mt-3 w-full resize-y border border-rule bg-panel p-3 font-mono text-[12px] leading-relaxed text-paper outline-none focus:border-copper"
+        />
+      ) : (
+        <div className="mt-3 border border-rule bg-panel p-3">
+          <Markdown text={skill.body} />
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setEditing((open) => !open)}
+          className="border border-rule px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+        >
+          {editing ? "Read" : "Edit"}
+        </button>
         <button
           type="button"
           disabled={busy}

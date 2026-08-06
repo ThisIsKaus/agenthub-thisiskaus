@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/cost")({
     ],
   }),
   component: () => (
-    <Page title="Cost" subtitle="Metered spend only — local inference and prepaid subscriptions carry the daily load at zero marginal cost." footer="Cost · published figures from the machine">
+    <Page title="Cost" footer="Cost · published figures from the machine">
       <CostPage />
     </Page>
   ),

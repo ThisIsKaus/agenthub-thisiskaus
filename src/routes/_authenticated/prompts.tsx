@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/prompts")({
     ],
   }),
   component: () => (
-    <Page title="Prompts" subtitle="The instruction files behind triage and the cascade. A change is unverified until it is re-scored." footer="Prompts · edited on the machine, versioned on save">
+    <Page title="Prompts" footer="Prompts · edited on the machine, versioned on save">
       <LocalOnly>
         <PromptsPage />
       </LocalOnly>

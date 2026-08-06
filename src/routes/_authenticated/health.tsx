@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/health")({
     ],
   }),
   component: () => (
-    <Page title="Health" subtitle="Self-test results, check by check, with the fix text for anything that failed." footer="Health · self-test read live from the machine">
+    <Page title="Health" footer="Health · self-test read live from the machine">
       <LocalOnly>
         <HealthPage />
       </LocalOnly>

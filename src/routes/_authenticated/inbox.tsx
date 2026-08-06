@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
 import { Disclosure } from "@/components/Disclosure";
 import { Panel } from "@/components/AppShell";
 import { Section } from "@/components/Section";
@@ -8,18 +7,7 @@ import { Page } from "@/components/Page";
 
 import { Empty, Skeleton } from "@/components/data";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { useOnline } from "@/hooks/use-online";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
-import { capturesQueryOptions, clockTime, relativeTime, type CaptureRow } from "@/lib/captures";
-import {
-  countPending,
-  flushQueue,
-  insertCaptureJob,
-  listPending,
-  queueCapture,
-  type PendingCapture,
-} from "@/lib/capture-queue";
-
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   head: () => ({
@@ -28,20 +16,20 @@ export const Route = createFileRoute("/_authenticated/inbox")({
       {
         name: "description",
         content:
-          "One stream: everything captured and everything read overnight, each line taken to one of four exits — drop, context, skill or canvas.",
+          "Triage what arrived overnight: each line taken to one of three exits — filed as context, or written up as a skill or canvas.",
       },
       { property: "og:title", content: "Inbox — AgentHub" },
       {
         property: "og:description",
         content:
-          "One stream: everything captured and everything read overnight, each line taken to one of four exits — drop, context, skill or canvas.",
+          "Triage what arrived overnight: each line taken to one of three exits — filed as context, or written up as a skill or canvas.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => (
-    <Page title="Inbox" subtitle="One stream in, four exits out: dropped, filed as context, written up as a skill, or opened as a canvas." footer="Inbox · captures queue on the device and deliver when the machine polls">
+    <Page title="Inbox" footer="Inbox · the overnight read, triaged on the machine">
       <InboxPage />
     </Page>
   ),
@@ -55,19 +43,11 @@ const ENTITIES = ["personal", "Agenticality", "NXI", "Envelope Collective", "cli
 const SENSITIVITIES = ["S0", "S1p", "S1c", "S2", "S3"];
 const INJECTIONS = ["none", "suspected", "confirmed"];
 
-const STATE_STYLE: Record<CaptureRow["state"], string> = {
-  held: "border-watch/60 text-watch",
-  queued: "border-rule text-muted-foreground",
-  delivered: "border-ok/60 text-ok",
-  failed: "border-risk/60 text-risk",
-};
-
+/** Capture lives in the omnibox on Overview. One input for one action. */
 function InboxPage() {
   return (
     <div className="space-y-4">
-      <Section title="Capture">
-        <CaptureLane />
-      </Section>
+      <InstallPrompt />
       <Section title="Digest">
         <TriageLane />
       </Section>
@@ -75,174 +55,9 @@ function InboxPage() {
   );
 }
 
-/* ---------------------------------------------------------------- capture */
-
-function CaptureLane() {
-  const online = useOnline();
-  const queryClient = useQueryClient();
-  const field = useRef<HTMLTextAreaElement>(null);
-
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [held, setHeld] = useState<CaptureRow[]>([]);
-  const [optimistic, setOptimistic] = useState<CaptureRow[]>([]);
-
-  const { data: sent } = useQuery(capturesQueryOptions);
-
-  const refreshHeld = useCallback(async () => {
-    try {
-      const pending = await listPending();
-      setHeld(
-        pending
-          .map((item) => ({
-            id: item.id,
-            text: item.text,
-            captured_at: item.captured_at,
-            state: "held" as const,
-          }))
-          .reverse(),
-      );
-    } catch {
-      /* IndexedDB unavailable — the capture still reaches the queue when online */
-    }
-  }, []);
-
-  useEffect(() => {
-    field.current?.focus();
-    void refreshHeld();
-  }, [refreshHeld]);
-
-  useEffect(() => {
-    if (!online) return;
-    let cancelled = false;
-    void flushQueue().then(async (flushed) => {
-      if (cancelled) return;
-      await refreshHeld();
-      if (flushed > 0) queryClient.invalidateQueries({ queryKey: ["captures"] });
-      await countPending().catch(() => 0);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [online, queryClient, refreshHeld]);
-
-  async function submit() {
-    const value = text.trim();
-    if (!value || busy) return;
-    setBusy(true);
-
-    const capture: PendingCapture = {
-      id: crypto.randomUUID(),
-      text: value,
-      captured_at: new Date().toISOString(),
-    };
-
-    setText("");
-    setOptimistic((current) => [
-      { id: capture.id, text: capture.text, captured_at: capture.captured_at, state: "queued" },
-      ...current,
-    ]);
-    field.current?.focus();
-
-    try {
-      if (!navigator.onLine) throw new Error("offline");
-      await insertCaptureJob(capture);
-      await queryClient.invalidateQueries({ queryKey: ["captures"] });
-      setOptimistic((current) => current.filter((item) => item.id !== capture.id));
-    } catch {
-      setOptimistic((current) => current.filter((item) => item.id !== capture.id));
-      try {
-        await queueCapture(capture);
-        await refreshHeld();
-      } catch {
-        setOptimistic((current) => [
-          { id: capture.id, text: capture.text, captured_at: capture.captured_at, state: "failed" },
-          ...current,
-        ]);
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const feed = [...optimistic, ...held, ...(sent ?? [])].slice(0, 20);
-
-  return (
-    <>
-      <InstallPrompt />
-      <section className="border border-rule bg-panel p-4">
-        <div className="flex items-baseline justify-between gap-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
-            Capture · in
-          </div>
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-            {online ? "live" : "offline"}
-          </span>
-        </div>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void submit();
-          }}
-          className="mt-3 space-y-3"
-        >
-          <textarea
-            ref={field}
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            onKeyDown={(event) => {
-              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                event.preventDefault();
-                void submit();
-              }
-            }}
-            rows={5}
-            placeholder="A thought, a decision, a reminder…"
-            className="w-full resize-y border border-rule bg-panel2 p-4 font-sans text-[16px] leading-[1.75] text-paper placeholder:text-faint focus:border-copper focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={busy || text.trim().length === 0}
-            className="h-11 w-full border border-copper font-mono text-[11px] uppercase tracking-[0.16em] text-copper transition-colors hover:bg-copper hover:text-ink disabled:cursor-not-allowed disabled:border-rule disabled:text-faint disabled:hover:bg-transparent disabled:hover:text-faint"
-          >
-            Send to AgentHub
-          </button>
-          <p className="font-mono text-[10px] text-faint">
-            {online
-              ? "⌘/Ctrl + Enter sends · claimed within 30s"
-              : "Held on this device — sends itself when you reconnect"}
-          </p>
-        </form>
-
-        {feed.length > 0 && (
-          <ul className="mt-4 border-t border-rule pt-2">
-            {feed.map((item) => (
-              <li key={item.id} className="border-t border-rule py-3 first:border-t-0">
-                <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed text-paper">
-                  {item.text}
-                </p>
-                <div className="mt-2 flex items-center gap-3">
-                  <span className="font-mono text-[10px] tabular-nums text-faint">
-                    {relativeTime(item.captured_at)} · {clockTime(item.captured_at)}
-                  </span>
-                  <span
-                    className={`border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${STATE_STYLE[item.state]}`}
-                  >
-                    {item.state}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </>
-  );
-}
-
 /* ----------------------------------------------------------------- triage */
 
-type Exit = "dropped" | "context" | "skill" | "canvas";
+type Exit = "context" | "skill" | "canvas";
 
 function TriageLane() {
   const local = useLocal();
@@ -371,14 +186,10 @@ function TriageLane() {
 
                   {exit ? (
                     <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-copper">
-                      {exit === "dropped" ? "dropped" : `→ ${exit}`}
+                      → {exit}
                     </p>
                   ) : (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <ExitButton
-                        label="Drop"
-                        onClick={() => setTaken((current) => ({ ...current, [index]: "dropped" }))}
-                      />
                       <ExitButton label="Context" onClick={() => void toContext(index, item)} />
                       <ExitButton
                         label="Skill"

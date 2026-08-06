@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/overview")({
     ],
   }),
   component: () => (
-    <Page title="Overview" subtitle="Where the machine stands right now, and what changed since you last looked." footer="Overview · local readings when the machine answers, published state otherwise">
+    <Page title="Overview" footer="Overview · local readings when the machine answers, published state otherwise">
       <OverviewPage />
     </Page>
   ),

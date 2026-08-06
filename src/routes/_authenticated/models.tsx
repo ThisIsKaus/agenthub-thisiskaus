@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/models")({
     ],
   }),
   component: () => (
-    <Page title="Models" subtitle="Tiered residency and the memory budget." footer="Models · residency read live from the machine">
+    <Page title="Models" footer="Models · residency read live from the machine">
       <LocalOnly>
         <ModelsPage />
       </LocalOnly>

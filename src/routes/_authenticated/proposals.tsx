@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/proposals")({
     ],
   }),
   component: () => (
-    <Page title="Proposals" subtitle="Changes the machine suggests to itself. Nothing lands without your decision." footer="Proposals · read and acted on over loopback">
+    <Page title="Proposals" footer="Proposals · read and acted on over loopback">
       <LocalOnly>
         <ProposalsPage />
       </LocalOnly>

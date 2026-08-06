@@ -32,7 +32,6 @@ export const Route = createFileRoute("/_authenticated/model-scanner")({
   component: () => (
     <Page
       title="Model scanner"
-      subtitle="Candidates are ranked against the memory envelope of this machine. Nothing is evidence until it has been benchmarked here."
       footer="Model scanner · local plane · benchmarks run on the machine"
     >
       <LocalOnly>

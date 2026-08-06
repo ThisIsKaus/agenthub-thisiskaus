@@ -51,7 +51,6 @@ export const Route = createFileRoute("/_authenticated/canvas")({
   component: () => (
     <Page
       title="Canvas"
-      subtitle="The one place you author rather than read. Ask the corpus inline, critique on a second lane, and hand the finished draft over."
       footer="Canvas · documents live on the machine; every save keeps the previous version"
     >
       <LocalOnly>

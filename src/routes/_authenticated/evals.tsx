@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/evals")({
     ],
   }),
   component: () => (
-    <Page title="Evals" subtitle="How well triage classifies, and whether anything got through that should not have." footer="Evals · scored on the machine against the golden set">
+    <Page title="Evals" footer="Evals · scored on the machine against the golden set">
       <LocalOnly>
         <EvalsPage />
       </LocalOnly>
