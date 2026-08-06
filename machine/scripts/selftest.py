@@ -114,6 +114,17 @@ def foundation():
     leaks = [l for l in tracked.splitlines()
              if l.startswith(("vault/", "kb/", "logs/", "state/", "digests/"))
              or l.endswith((".DS_Store", "report/index.html"))]
+    # A .gitignore rule written for data can swallow source. `models/` was meant for LM
+    # Studio weights and hid scanner.py from git, the remote, and the CI guard — one disk
+    # failure from gone, with every check reporting healthy.
+    src = sh("cd ~/Workspace && git status --porcelain --ignored machine/ | "
+             "grep '^!!' | grep -E '\\.(py|sh|md|json|yaml|jsonl)$' | head -5", 60)
+    orphan = [l.replace("!! ", "").strip() for l in src.splitlines() if l.strip()]
+    rec(g, "no source is gitignored", not orphan,
+        f"{len(orphan)} ignored source file(s): {orphan[0] if orphan else ''}"[:70]
+        if orphan else "clean",
+        "a data rule is swallowing code — narrow it and git add -f the file")
+
     rec(g, "gitignore effective", not leaks, ", ".join(leaks[:3]) or "no data tracked",
         "git rm --cached <path> and add it to .gitignore")
 
