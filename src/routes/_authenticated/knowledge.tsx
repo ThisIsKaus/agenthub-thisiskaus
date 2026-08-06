@@ -7,6 +7,7 @@ import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { Disclosure } from "@/components/Disclosure";
+import { Section } from "@/components/Section";
 
 export const Route = createFileRoute("/_authenticated/knowledge")({
   head: () => ({
@@ -43,6 +44,7 @@ function KnowledgePage() {
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+  const [filter, setFilter] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
