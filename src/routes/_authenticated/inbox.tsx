@@ -186,14 +186,10 @@ function TriageLane() {
 
                   {exit ? (
                     <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-copper">
-                      {exit === "dropped" ? "dropped" : `→ ${exit}`}
+                      → {exit}
                     </p>
                   ) : (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <ExitButton
-                        label="Drop"
-                        onClick={() => setTaken((current) => ({ ...current, [index]: "dropped" }))}
-                      />
                       <ExitButton label="Context" onClick={() => void toContext(index, item)} />
                       <ExitButton
                         label="Skill"
