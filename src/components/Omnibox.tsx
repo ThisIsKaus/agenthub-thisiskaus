@@ -116,7 +116,7 @@ export function Omnibox() {
       const target = forced ?? (local.available ? intent : "capture");
       setBusy(true);
       setStatus(null);
-      setAnswer(null);
+      setAsked(null);
       try {
         if (target === "capture") {
           const capture: PendingCapture = {
