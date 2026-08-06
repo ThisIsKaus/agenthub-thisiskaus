@@ -1,3 +1,4 @@
+import { SectionHeading } from "@/components/Section";
 import type { MachineBlock } from "@/lib/local-bridge";
 import { batteryLine, clockOf, holdersOf, type Plane } from "@/lib/machine-state";
 
@@ -69,7 +70,7 @@ export function MachineStatePanel({
     >
       <div className="flex items-center gap-2.5">
         <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${DOT[plane]}`} />
-        <h2 className="font-serif text-[25px] leading-[1.15] text-paper">{headline}</h2>
+        <SectionHeading>{headline}</SectionHeading>
       </div>
       <p className="mt-2 break-words font-mono text-[11px] leading-relaxed text-faint">{detail}</p>
       {amber && (

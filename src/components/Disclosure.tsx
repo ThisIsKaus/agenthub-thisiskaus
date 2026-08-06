@@ -43,16 +43,13 @@ export function Disclosure({
         </span>
         <span className="min-w-0 flex-1">{summary}</span>
       </button>
-      <div
-        id={id}
-        hidden={!open}
-        className="grid transition-[grid-template-rows] duration-150 ease-out motion-reduce:transition-none"
-        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
-      >
-        <div className="overflow-hidden">
-          <div className="pb-3 pl-4">{children}</div>
+      {open ? (
+        <div id={id} className="pb-3 pl-4">
+          {children}
         </div>
-      </div>
+      ) : (
+        <div id={id} hidden />
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { Disclosure } from "@/components/Disclosure";
+import { Section } from "@/components/Section";
 
 export const Route = createFileRoute("/_authenticated/knowledge")({
   head: () => ({
@@ -43,6 +44,7 @@ function KnowledgePage() {
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+  const [filter, setFilter] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,6 +103,12 @@ function KnowledgePage() {
       .sort((a, b) => b.ratio - a.ratio);
   })();
 
+  const query = filter.trim().toLowerCase();
+  const matches = query
+    ? sources.filter((source) => (source.file ?? "").toLowerCase().includes(query))
+    : sources;
+  const shown = query ? matches.slice(0, 100) : matches.slice(0, 50);
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -111,6 +119,7 @@ function KnowledgePage() {
         />
       </div>
 
+      <Section title="Readability">
       <Panel title="Readability">
         {loading ? (
           <div className="space-y-2">
@@ -172,14 +181,15 @@ function KnowledgePage() {
           reader failed — that is what a binary file read as text looks like.
         </p>
       </Panel>
+      </Section>
 
-
+      <Section title="Sources">
       <Panel title="Detail">
         <p className="mb-3 font-mono text-[10px] text-faint">Expand a source to see its chunks.</p>
         <Disclosure
           summary={
             <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
-              Sources by chunk count · {sources.length} indexed
+              Sources by chunk count · {sources.length.toLocaleString()} indexed
             </span>
           }
         >
@@ -192,29 +202,53 @@ function KnowledgePage() {
         ) : sources.length === 0 ? (
           <Empty>No sources indexed.</Empty>
         ) : (
-          <ul>
-            {sources.map((source) => (
-              <li
-                key={source.path}
-                className="flex items-baseline gap-3 border-b border-rule py-2 last:border-b-0"
-              >
-                <span className="min-w-0 flex-1 break-all text-[13px] text-paper">{source.file}</span>
-                <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
-                  {source.chunks.toLocaleString()}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void forget(source)}
-                  className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-risk"
-                >
-                  Forget
-                </button>
-              </li>
-            ))}
-          </ul>
+          <>
+            <label className="block">
+              <span className="sr-only">Search sources by filename</span>
+              <input
+                type="search"
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+                placeholder="Search by filename"
+                className="w-full border border-rule bg-panel2 px-3 py-2 font-mono text-[12px] text-paper placeholder:text-faint"
+              />
+            </label>
+            <p className="mt-2 font-mono text-[10px] text-faint">
+              {query
+                ? `${shown.length.toLocaleString()} of ${matches.length.toLocaleString()} matches`
+                : `${shown.length} of ${sources.length.toLocaleString()} sources — search to find a specific file.`}
+            </p>
+            {shown.length === 0 ? (
+              <Empty>No source matches that filename.</Empty>
+            ) : (
+              <ul className="mt-2">
+                {shown.map((source) => (
+                  <li
+                    key={source.path}
+                    className="group flex items-baseline gap-3 border-b border-rule py-2 last:border-b-0"
+                  >
+                    <span className="min-w-0 flex-1 break-all text-[13px] text-paper">
+                      {source.file}
+                    </span>
+                    <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                      {source.chunks.toLocaleString()}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void forget(source)}
+                      className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint opacity-0 transition-opacity focus:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 hover:text-risk"
+                    >
+                      Forget
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
         </Disclosure>
       </Panel>
+      </Section>
 
       <Panel title="Ingest">
         <button

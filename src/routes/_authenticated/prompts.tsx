@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Empty, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
@@ -121,6 +122,7 @@ function PromptsPage() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <Section title="Canon files" flush>
         <Panel title="Prompts">
           {loading ? (
             <div className="space-y-2">
@@ -153,7 +155,9 @@ function PromptsPage() {
             </ul>
           )}
         </Panel>
+        </Section>
 
+        <Section title="Editor" flush>
         <Panel title={active?.name ?? active?.path ?? "Editor"}>
           {!active ? (
             <Empty>Choose a prompt.</Empty>
@@ -179,6 +183,7 @@ function PromptsPage() {
             </>
           )}
         </Panel>
+        </Section>
       </div>
 
           </div>
