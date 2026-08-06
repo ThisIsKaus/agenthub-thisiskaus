@@ -1,35 +1,40 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
 import { Page } from "@/components/Page";
-import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { Section } from "@/components/Section";
-import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
+import { Skeleton, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { toNum } from "@/lib/format";
+import { parseTrialReport, type TrialReport } from "@/lib/model-scan-report";
 
 export const Route = createFileRoute("/_authenticated/model-scanner")({
   head: () => ({
     meta: [
-      { title: "Models · Scanner — AgentHub" },
+      { title: "Model scanner — AgentHub" },
       {
         name: "description",
         content:
-          "Compare open-weight candidates against the resident models on measured evidence from this machine.",
+          "Rank open-weight candidates against the memory envelope of this machine and benchmark one before anything is promoted.",
       },
-      { property: "og:title", content: "Models · Scanner — AgentHub" },
+      { property: "og:title", content: "Model scanner — AgentHub" },
       {
         property: "og:description",
         content:
-          "Compare open-weight candidates against the resident models on measured evidence from this machine.",
+          "Rank open-weight candidates against the memory envelope of this machine and benchmark one before anything is promoted.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => (
-    <Page title="Model scanner" subtitle="Measure a candidate model against the lane it would serve before anything is promoted." footer="Model scanner · benchmarks run on the machine">
+    <Page
+      title="Model scanner"
+      subtitle="Candidates are ranked against the memory envelope of this machine. Nothing is evidence until it has been benchmarked here."
+      footer="Model scanner · local plane · benchmarks run on the machine"
+    >
       <LocalOnly>
         <ScannerPage />
       </LocalOnly>
@@ -37,49 +42,36 @@ export const Route = createFileRoute("/_authenticated/model-scanner")({
   ),
 });
 
-type Measure = {
-  tps?: number;
-  ttft?: number;
-  gib?: number;
-  cls?: number;
-  entity?: number;
-  sensitivity?: number;
-  injection?: number;
-  recall?: number;
-};
-
-type Trial = {
-  at?: string;
-  incumbent?: Measure & { id?: string; role?: string };
-  candidate?: Measure & { id?: string };
-};
-
 type Candidate = {
   id: string;
   author?: string;
-  parameters?: string | number;
-  quantisation?: string;
+  params?: number;
   quant?: string;
-  size_gib?: number;
+  size_gb?: number;
   downloads?: number;
   likes?: number;
+  fits_envelope?: "green" | "amber" | "red" | string;
   why?: string;
-  role?: string;
-  fit?: "fits" | "evict" | "cannot" | string;
-  trial?: Trial | null;
+  hf_url?: string;
+  status?: string;
 };
 
-type Envelope = { total_gib?: number; used_gib?: number; headroom_gib?: number };
+type Envelope = {
+  budget_gib?: number;
+  pinned_gib?: number;
+  resident_gib?: number;
+  headroom_gib?: number;
+  pressure?: string;
+};
 
 type ScanData = {
-  current?: { id?: string; role?: string; size_gib?: number }[];
   candidates?: Candidate[];
   envelope?: Envelope;
-  last_scan?: string;
+  current?: { id?: string; role?: string }[];
+  note?: string;
+  last_scan?: string | null;
+  error?: string;
 };
-
-const HYPOTHESIS =
-  "A candidate is a hypothesis until it is benchmarked on this machine. Downloads and published benchmarks are not evidence about your hardware.";
 
 function num(value: unknown, digits = 0, suffix = "") {
   const parsed = toNum(value);
@@ -87,89 +79,32 @@ function num(value: unknown, digits = 0, suffix = "") {
   return `${parsed.toFixed(digits)}${suffix}`;
 }
 
-function compact(value: unknown) {
+function group(value: unknown) {
   const parsed = toNum(value);
   if (parsed === null) return "—";
-  if (parsed >= 1_000_000) return `${(parsed / 1_000_000).toFixed(1)}M`;
-  if (parsed >= 1_000) return `${(parsed / 1_000).toFixed(1)}k`;
-  return String(parsed);
+  return parsed.toLocaleString("en-GB");
 }
 
-function fitOf(candidate: Candidate, envelope: Envelope | undefined): "fits" | "evict" | "cannot" {
-  const declared = candidate.fit;
-  if (declared === "fits" || declared === "evict" || declared === "cannot") return declared;
-  const size = candidate.size_gib;
-  const headroom = envelope?.headroom_gib;
-  const total = envelope?.total_gib;
-  if (size === undefined) return "evict";
-  if (headroom !== undefined && size <= headroom) return "fits";
-  if (total !== undefined && size <= total) return "evict";
-  return "cannot";
-}
-
-const FIT_COPY: Record<string, { label: string; className: string; tone: "ok" | "watch" | "risk" }> =
-  {
-    fits: { label: "fits headroom", className: "text-ok", tone: "ok" },
-    evict: { label: "requires evicting a model", className: "text-watch", tone: "watch" },
-    cannot: { label: "cannot fit", className: "text-risk", tone: "risk" },
-  };
-
-type MetricRow = {
-  key: keyof Measure;
-  label: string;
-  digits: number;
-  suffix: string;
-  higherWins: boolean;
+const PRESSURE_TONE: Record<string, string> = {
+  green: "bg-ok",
+  ok: "bg-ok",
+  low: "bg-ok",
+  amber: "bg-watch",
+  watch: "bg-watch",
+  medium: "bg-watch",
+  red: "bg-risk",
+  risk: "bg-risk",
+  high: "bg-risk",
 };
 
-const METRICS: MetricRow[] = [
-  { key: "tps", label: "gen t/s", digits: 1, suffix: "", higherWins: true },
-  { key: "ttft", label: "TTFT (s)", digits: 2, suffix: "", higherWins: false },
-  { key: "gib", label: "resident GiB", digits: 1, suffix: "", higherWins: false },
-  { key: "cls", label: "eval class %", digits: 0, suffix: "%", higherWins: true },
-  { key: "entity", label: "eval entity %", digits: 0, suffix: "%", higherWins: true },
-  { key: "sensitivity", label: "eval sensitivity %", digits: 0, suffix: "%", higherWins: true },
-  { key: "injection", label: "injection detection %", digits: 0, suffix: "%", higherWins: true },
-  { key: "recall", label: "retrieval recall %", digits: 0, suffix: "%", higherWins: true },
-];
+const FIT_TONE: Record<string, string> = {
+  green: "text-ok",
+  amber: "text-watch",
+  red: "text-risk",
+};
 
-function verdictOf(trial: Trial | null | undefined) {
-  const inc = trial?.incumbent;
-  const cand = trial?.candidate;
-  if (!inc || !cand) return null;
-  const speed =
-    inc.tps && cand.tps ? Math.round(((cand.tps - inc.tps) / inc.tps) * 100) : null;
-  const speedText =
-    speed === null
-      ? "throughput unmeasured"
-      : speed >= 0
-        ? `Candidate is ${speed}% faster`
-        : `Candidate is ${Math.abs(speed)}% slower`;
-
-  const injection = cand.injection;
-  if (injection !== undefined && injection < 100) {
-    return {
-      tone: "risk" as const,
-      text: `${speedText} but injection detection falls to ${num(injection, 0, "%")} — not eligible`,
-    };
-  }
-
-  const regressions = (["cls", "entity", "sensitivity", "recall"] as const)
-    .filter((key) => {
-      const a = inc[key];
-      const b = cand[key];
-      return a !== undefined && b !== undefined && b < a - 0.5;
-    })
-    .map((key) => METRICS.find((m) => m.key === key)?.label ?? key);
-
-  if (regressions.length > 0) {
-    return {
-      tone: "watch" as const,
-      text: `${speedText} but ${regressions.join(", ")} regress against the incumbent`,
-    };
-  }
-  return { tone: "ok" as const, text: `${speedText} and holds quality` };
-}
+const INJECTION_GATE =
+  "Injection detection must be 100%. This is the safety axis and it is pass-or-fail — a faster model that misses a prompt-injection probe is not a faster model, it is a different risk posture.";
 
 function ScannerPage() {
   const local = useLocal();
@@ -178,14 +113,17 @@ function ScannerPage() {
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [trialling, setTrialling] = useState<Record<string, string>>({});
+  const [report, setReport] = useState<{ id: string; at: Date; report: TrialReport | null } | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       setData(await local.get<ScanData>("/api/models/scan"));
-    } catch {
-      setData(null);
+    } catch (error) {
+      setData({ error: isRefusal(error) ? "denied at the approval dialog" : String(error) });
     } finally {
       setLoading(false);
     }
@@ -196,38 +134,51 @@ function ScannerPage() {
   }, [load]);
 
   const envelope = data?.envelope;
-  const candidates = useMemo(() => data?.candidates ?? [], [data]);
+  const candidates = (data?.candidates ?? []).slice(0, 20);
+  const headroom = toNum(envelope?.headroom_gib);
 
   async function trial(candidate: Candidate) {
+    const size = num(candidate.size_gb, 2, " GB");
+    const confirmed = window.confirm(
+      `This downloads ${size}, benchmarks it through the production endpoint, and runs the full eval suite with the ${candidate.id} model in the local-brain role. The alias reverts afterwards regardless of outcome. Continue?`,
+    );
+    if (!confirmed) return;
+
     setBusy(candidate.id);
     setNote("awaiting approval on the machine…");
     try {
       const started = await local.post<{ job: string | number; label?: string }>(
         "/api/models/scan/trial",
-        { model: candidate.id, role: candidate.role },
+        { id: candidate.id },
       );
       setNote(null);
-      trackJob(String(started.job), "trial", started.label ?? `trial ${candidate.id}`, () => {
-        setBusy(null);
-        void load();
-      });
+      setTrialling((previous) => ({ ...previous, [candidate.id]: "trialling" }));
+      trackJob(
+        String(started.job),
+        "model-trial",
+        started.label ?? `trial ${candidate.id}`,
+        (job) => {
+          setBusy(null);
+          setTrialling((previous) => ({ ...previous, [candidate.id]: "trialled" }));
+          setReport({ id: candidate.id, at: new Date(), report: parseTrialReport(job.out) });
+        },
+      );
     } catch (error) {
       setBusy(null);
       setNote(
         isRefusal(error)
           ? error.message || "denied at the approval dialog"
-          : "the machine did not start that trial",
+          : "the machine did not start that trial — it refuses below 100 GB of free disk",
       );
     }
   }
 
-  async function promote(candidate: Candidate) {
-    setBusy(candidate.id);
+  async function promote(id: string) {
+    setBusy(id);
     setNote("awaiting approval on the machine…");
     try {
-      await local.post("/api/models/scan/promote", { model: candidate.id, role: candidate.role });
-      setNote("Proposed. Review it under Proposals — nothing swaps without approval.");
-      await load();
+      await local.post("/api/models/scan/promote", { id });
+      setNote("Proposed. Review it under Improve · Proposals — the router is unchanged.");
     } catch (error) {
       setNote(
         isRefusal(error)
@@ -239,220 +190,250 @@ function ScannerPage() {
     }
   }
 
+  const pressure = String(envelope?.pressure ?? "").toLowerCase();
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <StatusPill label="Candidates" value={loading ? "—" : candidates.length} />
-        <StatusPill
-          label="Headroom"
-          value={num(envelope?.headroom_gib, 1, " GiB")}
-          tone="copper"
-        />
-        <StatusPill label="Envelope" value={num(envelope?.total_gib, 1, " GiB")} />
-        <StatusPill label="Last scan" value={formatStamp(data?.last_scan)} tone="faint" />
-      </div>
-
-      <p className="max-w-[72ch] text-[13px] leading-relaxed text-muted-foreground">
-        {HYPOTHESIS}
-      </p>
-
-      <Section title="Current set" flush>
-      <Panel title="Resident now">
-        {loading ? (
-          <Skeleton className="h-4 w-full" />
-        ) : (data?.current ?? []).length === 0 ? (
-          <Empty>No resident models reported.</Empty>
-        ) : (
-          <ul className="divide-y divide-rule">
-            {(data?.current ?? []).map((model) => (
-              <li
-                key={`${model.role}-${model.id}`}
-                className="flex flex-wrap items-baseline justify-between gap-3 py-2"
-              >
-                <span className="font-mono text-[12px] break-all text-paper">{model.id}</span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                  {model.role ?? "—"} · {num(model.size_gib, 1, " GiB")}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Panel>
+    <div>
+      <Section title="Envelope" subtitle="The constraint, stated before the options.">
+        <Panel title="Memory envelope">
+          {loading ? (
+            <Skeleton className="h-4 w-2/3" />
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                aria-hidden
+                className={`h-2 w-2 rounded-full ${PRESSURE_TONE[pressure] ?? "bg-faint"}`}
+              />
+              <span className="font-mono text-[12px] tabular-nums text-paper">
+                {num(envelope?.headroom_gib, 2, " GiB")} headroom ·{" "}
+                {num(envelope?.pinned_gib, 2, " GiB")} pinned ·{" "}
+                {num(envelope?.budget_gib, 1, " GiB")} envelope
+              </span>
+            </div>
+          )}
+          {data?.note && (
+            <p className="mt-3 max-w-[72ch] text-[13px] leading-relaxed text-faint">{data.note}</p>
+          )}
+        </Panel>
       </Section>
 
-      <Section title="Candidates" flush subtitle="No scan has run. Scanning compares open-weight candidates against the current set, benchmarked on this machine.">
-      <Panel title="Candidates">
-        {loading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-10 w-full" />
-            ))}
-          </div>
-        ) : candidates.length === 0 ? (
-          <Empty>Nothing surfaced. The scanner runs with the nightly jobs.</Empty>
-        ) : (
-          <ul className="divide-y divide-rule">
-            {candidates.map((candidate) => {
-              const fit = fitOf(candidate, envelope);
-              const copy = FIT_COPY[fit];
-              const open = openId === candidate.id;
-              const trialData = candidate.trial ?? null;
-              const verdict = verdictOf(trialData);
-              const injection = trialData?.candidate?.injection;
-              const gated = injection === undefined || injection < 100;
-              return (
-                <li key={candidate.id} className="py-3">
-                  <button
-                    type="button"
-                    onClick={() => setOpenId(open ? null : candidate.id)}
-                    className="w-full text-left"
-                  >
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <span className="font-mono text-[13px] break-all text-paper">
-                        {candidate.id}
-                      </span>
-                      <span className={`font-mono text-[10px] uppercase tracking-[0.12em] ${copy.className}`}>
-                        {copy.label}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-faint">
-                      <span>{candidate.author ?? "unknown author"}</span>
-                      <span>
-                        {candidate.parameters ?? "—"} ·{" "}
-                        {candidate.quantisation ?? candidate.quant ?? "—"}
-                      </span>
-                      <span className={copy.className}>
-                        {num(candidate.size_gib, 1, " GiB")} against{" "}
-                        {num(envelope?.headroom_gib, 1, " GiB")} headroom
-                      </span>
-                      <span>{compact(candidate.downloads)} downloads</span>
-                      <span>{compact(candidate.likes)} likes</span>
-                    </div>
-                    {candidate.why && (
-                      <p className="mt-1.5 max-w-[72ch] text-[12px] leading-relaxed text-muted-foreground">
-                        {candidate.why}
-                      </p>
-                    )}
-                  </button>
+      <Section
+        title="Candidates"
+        note={data?.last_scan ? `scanned ${formatStamp(data.last_scan)}` : undefined}
+      >
+        <Panel title="Ranked by fit and adoption">
+          <p className="max-w-[72ch] text-[12px] leading-relaxed text-faint">
+            Downloads and likes are adoption elsewhere, not evidence about this machine.
+          </p>
 
-                  {open && (
-                    <div className="mt-3 border border-rule bg-panel2 px-3 py-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <button
-                          type="button"
-                          disabled={busy === candidate.id || fit === "cannot"}
-                          onClick={() => void trial(candidate)}
-                          className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
-                        >
-                          {busy === candidate.id ? "Running…" : "Download and benchmark"}
-                        </button>
-                        <span className="font-mono text-[10px] text-faint">
-                          downloads it, runs bench.sh, then the eval suite in the incumbent&apos;s
-                          role
-                        </span>
-                      </div>
-
-                      {!trialData ? (
-                        <p className="mt-3 font-mono text-[10px] text-faint">
-                          Not benchmarked on this machine yet.
-                        </p>
-                      ) : (
-                        <>
-                          <div className="mt-3 overflow-x-auto">
-                            <table className="w-full min-w-[420px] border-collapse text-left">
-                              <thead>
-                                <tr className="border-b border-rule">
-                                  <th className="py-2 pr-3 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                                    Measure
-                                  </th>
-                                  <th className="py-2 pr-3 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                                    Incumbent
-                                  </th>
-                                  <th className="py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                                    Candidate
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {METRICS.map((metric) => {
-                                  const a = trialData.incumbent?.[metric.key];
-                                  const b = trialData.candidate?.[metric.key];
-                                  let incTone = "text-paper";
-                                  let candTone = "text-paper";
-                                  if (a !== undefined && b !== undefined && a !== b) {
-                                    const candWins = metric.higherWins ? b > a : b < a;
-                                    incTone = candWins ? "text-risk" : "text-ok";
-                                    candTone = candWins ? "text-ok" : "text-risk";
-                                  }
-                                  return (
-                                    <tr key={metric.key} className="border-b border-rule last:border-b-0">
-                                      <td className="py-2 pr-3 text-[12px] text-muted-foreground">
-                                        {metric.label}
-                                      </td>
-                                      <td
-                                        className={`py-2 pr-3 font-mono text-[12px] tabular-nums ${incTone}`}
-                                      >
-                                        {num(a, metric.digits, metric.suffix)}
-                                      </td>
-                                      <td className={`py-2 font-mono text-[12px] tabular-nums ${candTone}`}>
-                                        {num(b, metric.digits, metric.suffix)}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-
-                          {verdict && (
-                            <p
-                              className={`mt-3 font-mono text-[12px] ${
-                                verdict.tone === "ok"
-                                  ? "text-ok"
-                                  : verdict.tone === "watch"
-                                    ? "text-watch"
-                                    : "text-risk"
-                              }`}
-                            >
-                              {verdict.text}
-                            </p>
-                          )}
-
-                          <div className="mt-3 flex flex-wrap items-center gap-3">
-                            <button
-                              type="button"
-                              disabled={gated || busy === candidate.id}
-                              onClick={() => void promote(candidate)}
-                              className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
-                            >
-                              Promote
-                            </button>
-                            {gated ? (
-                              <span className="font-mono text-[10px] text-risk">
-                                injection detection must be 100% — this is the safety axis.
-                              </span>
-                            ) : (
-                              <span className="font-mono text-[10px] text-faint">
-                                raises a proposal with this comparison as its evidence — nothing
-                                swaps without approval
+          {loading ? (
+            <div className="mt-3 space-y-2">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : data?.error ? (
+            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+              Could not reach Hugging Face: {data.error}
+            </p>
+          ) : candidates.length === 0 ? (
+            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+              No candidates fit the current envelope.
+            </p>
+          ) : (
+            <>
+              {!data?.last_scan && (
+                <p className="mt-2 max-w-[72ch] text-[12px] leading-relaxed text-faint">
+                  Candidates ranked by fit and adoption. None has been benchmarked here.
+                </p>
+              )}
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[720px] border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-rule">
+                      {["Model", "Params · quant", "Size", "Downloads", "Likes", ""].map(
+                        (heading, index) => (
+                          <th
+                            key={heading + index}
+                            className={`py-2 pr-3 font-mono text-[10px] uppercase tracking-[0.12em] text-faint ${
+                              index >= 2 && index <= 4 ? "text-right" : ""
+                            }`}
+                          >
+                            {heading}
+                          </th>
+                        ),
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {candidates.map((candidate) => {
+                      const fit = String(candidate.fits_envelope ?? "").toLowerCase();
+                      const blocked = fit === "red";
+                      const state = trialling[candidate.id] ?? candidate.status ?? "untried";
+                      return (
+                        <tr key={candidate.id} className="border-b border-rule align-top last:border-b-0">
+                          <td className="py-3 pr-3">
+                            <span className="font-mono text-[12px] break-all text-paper">
+                              {candidate.id}
+                            </span>
+                            <span className="mt-0.5 block font-mono text-[10px] text-faint">
+                              {candidate.author ?? "unknown author"} · {state}
+                            </span>
+                            {candidate.why && (
+                              <span className="mt-1 block max-w-[62ch] text-[12px] leading-relaxed text-faint">
+                                {candidate.why}
                               </span>
                             )}
-                          </div>
-                          <p className="mt-1 font-mono text-[10px] text-faint">
-                            benchmarked {formatStamp(trialData.at)}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {note && <p className="mt-3 font-mono text-[10px] text-faint">{note}</p>}
-      </Panel>
+                          </td>
+                          <td className="py-3 pr-3 font-mono text-[12px] tabular-nums text-muted-foreground">
+                            {candidate.params !== undefined ? `${num(candidate.params, 0)}B` : "—"} ·{" "}
+                            {candidate.quant ?? "unknown"}
+                          </td>
+                          <td
+                            className={`py-3 pr-3 text-right font-mono text-[12px] tabular-nums ${
+                              FIT_TONE[fit] ?? "text-paper"
+                            }`}
+                            title={
+                              fit === "amber"
+                                ? "would require evicting the loaded model"
+                                : blocked
+                                  ? `${num(candidate.size_gb, 2)} GB exceeds ${num(headroom, 2)} GiB of headroom`
+                                  : undefined
+                            }
+                          >
+                            {num(candidate.size_gb, 2, " GB")}
+                          </td>
+                          <td className="py-3 pr-3 text-right font-mono text-[12px] tabular-nums text-muted-foreground">
+                            {group(candidate.downloads)}
+                          </td>
+                          <td className="py-3 pr-3 text-right font-mono text-[12px] tabular-nums text-muted-foreground">
+                            {group(candidate.likes)}
+                          </td>
+                          <td className="py-3">
+                            <button
+                              type="button"
+                              disabled={blocked || busy === candidate.id}
+                              title={
+                                blocked
+                                  ? `${num(candidate.size_gb, 2)} GB exceeds ${num(headroom, 2)} GiB of headroom`
+                                  : undefined
+                              }
+                              onClick={() => void trial(candidate)}
+                              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+                            >
+                              {busy === candidate.id ? "Starting…" : "Download and benchmark"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+          {note && <p className="mt-3 font-mono text-[10px] text-faint">{note}</p>}
+        </Panel>
+      </Section>
+
+      <Section
+        title="Trial result"
+        note={report ? `benchmarked ${formatStamp(report.at.toISOString())}` : undefined}
+        subtitle="Incumbent against candidate, read from the report the machine wrote."
+      >
+        <Panel title="Comparison">
+          {!report ? (
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              No trial has completed in this session. Run one from the candidates table; its output
+              streams into the job drawer and the comparison appears here.
+            </p>
+          ) : !report.report ? (
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              The trial finished but its report carried no comparison table. The full output is in
+              the job drawer.
+            </p>
+          ) : (
+            <TrialTable id={report.id} report={report.report} busy={busy === report.id} onPromote={promote} />
+          )}
+        </Panel>
       </Section>
     </div>
+  );
+}
+
+function TrialTable({
+  id,
+  report,
+  busy,
+  onPromote,
+}: {
+  id: string;
+  report: TrialReport;
+  busy: boolean;
+  onPromote: (id: string) => Promise<void>;
+}) {
+  const gated = report.injection === null || report.injection < 100;
+
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[420px] border-collapse text-left">
+          <thead>
+            <tr className="border-b border-rule">
+              <th className="py-2 pr-3 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                Measure
+              </th>
+              <th className="py-2 pr-3 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                {report.incumbentName ?? "Incumbent"}
+              </th>
+              <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                {report.candidateName ?? id}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {report.rows.map((row) => (
+              <tr key={row.label} className="border-b border-rule last:border-b-0">
+                <td className="py-2 pr-3 text-[12px] text-muted-foreground">{row.label}</td>
+                <td
+                  className={`py-2 pr-3 text-right font-mono text-[12px] tabular-nums ${
+                    row.winner === "incumbent" ? "text-ok" : row.winner ? "text-risk" : "text-paper"
+                  }`}
+                >
+                  {row.incumbent || "—"}
+                </td>
+                <td
+                  className={`py-2 text-right font-mono text-[12px] tabular-nums ${
+                    row.winner === "candidate" ? "text-ok" : row.winner ? "text-risk" : "text-paper"
+                  }`}
+                >
+                  {row.candidate || "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {report.verdict && (
+        <p className="mt-4 max-w-[72ch] text-[13px] leading-relaxed text-paper">{report.verdict}</p>
+      )}
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          disabled={gated || busy}
+          onClick={() => void onPromote(id)}
+          className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+        >
+          {busy ? "Proposing…" : "Promote"}
+        </button>
+        <span className="max-w-[72ch] text-[12px] leading-relaxed text-faint">
+          {gated
+            ? INJECTION_GATE
+            : "Raises a proposal with this comparison as its evidence. It does not change the router."}
+        </span>
+      </div>
+    </>
   );
 }
