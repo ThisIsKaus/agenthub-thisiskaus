@@ -15,7 +15,7 @@ type Group = { label: string; to: string; subs: Sub[] };
 const GROUPS: Group[] = [
   { label: "Overview", to: "/overview", subs: [] },
   { label: "Canvas", to: "/canvas", subs: [] },
-  { label: "Ask", to: "/ask", subs: [] },
+  
   { label: "Inbox", to: "/inbox", subs: [] },
   { label: "Skills", to: "/skills", subs: [] },
   {
