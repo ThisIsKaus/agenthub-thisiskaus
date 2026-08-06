@@ -447,15 +447,28 @@ function Editor({
         </div>
       </div>
 
-      <textarea
-        value={skill.body}
-        onChange={(event) => onChange({ ...skill, body: event.target.value })}
-        rows={14}
-        spellCheck={false}
-        className="mt-3 w-full resize-y border border-rule bg-panel p-3 font-mono text-[12px] leading-relaxed text-paper outline-none focus:border-copper"
-      />
+      {editing ? (
+        <textarea
+          value={skill.body}
+          onChange={(event) => onChange({ ...skill, body: event.target.value })}
+          rows={14}
+          spellCheck={false}
+          className="mt-3 w-full resize-y border border-rule bg-panel p-3 font-mono text-[12px] leading-relaxed text-paper outline-none focus:border-copper"
+        />
+      ) : (
+        <div className="mt-3 border border-rule bg-panel p-3">
+          <Markdown text={skill.body} />
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setEditing((open) => !open)}
+          className="border border-rule px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+        >
+          {editing ? "Read" : "Edit"}
+        </button>
         <button
           type="button"
           disabled={busy}
