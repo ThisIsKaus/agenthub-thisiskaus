@@ -898,7 +898,26 @@ def cascade_stats():
                    else (attempts[-1]["result"] if attempts else "no attempts"))
         recent.append({"intent": r.get("intent", ""), "tier": r.get("resolved_at_tier"),
                        "seconds": sum(a.get("seconds", 0) for a in attempts), "outcome": outcome})
-    return {"by_tier": by_tier, "mean_seconds": mean, "runs": recent}
+        # A run that failed the gate had its branch discarded, so a Merge control over it acts on
+    # nothing. Report whether the branch still exists so the interface can offer review only
+    # where there is something to review.
+    import subprocess as _sp
+    def _branch_exists(name):
+        if not name:
+            return False
+        r = _sp.run(f"git -C {Path.home()}/Workspace rev-parse --verify {name}",
+                    shell=True, capture_output=True)
+        return r.returncode == 0
+
+    for _r in recent:
+        _b = _r.get("branch")
+        _r["branch_exists"] = _branch_exists(_b)
+        # Reviewable means: a tier resolved it AND the branch survived. A run that failed
+        # the gate is history, not a decision awaiting you.
+        _r["reviewable"] = bool(_r.get("resolved_at_tier")) and _r["branch_exists"]
+    return {"by_tier": by_tier, "mean_seconds": mean, "runs": recent,
+                "reviewable": sum(1 for r in recent if r.get("reviewable")),
+                "discarded": sum(1 for r in recent if not r.get("reviewable"))}
 
 
 @app.get("/api/skills")

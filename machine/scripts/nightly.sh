@@ -42,7 +42,7 @@ fi
 python3 ~/AgentHub/scripts/selftest.py --quiet
 SELFTEST_STATUS=$?
 if [[ $SELFTEST_STATUS -eq 0 ]]; then
-  ~/AgentHub/build/diagnose.py
+  /opt/homebrew/bin/uv run --project ~/AgentHub/console python ~/AgentHub/build/diagnose.py
 else
   echo "skipped diagnose: self-test failed"
 fi
