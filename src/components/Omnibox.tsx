@@ -165,6 +165,11 @@ export function Omnibox() {
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     const meta = event.metaKey || event.ctrlKey;
+    if (event.key === "Escape" && asked) {
+      event.preventDefault();
+      setAsked(null);
+      return;
+    }
     if (meta && /^[1-4]$/.test(event.key)) {
       event.preventDefault();
       setOverridden(true);
