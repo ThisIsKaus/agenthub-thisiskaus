@@ -8,6 +8,8 @@ import { Page } from "@/components/Page";
 import { Empty, Skeleton } from "@/components/data";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { emptyBlock, emptyDoc } from "@/lib/canvas-types";
+import { writeCanvas } from "@/lib/canvas-store";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   head: () => ({
@@ -110,6 +112,26 @@ function TriageLane() {
     }
   }
 
+  /** Saved on the machine first, then opened — a canvas that is never saved is a dead control. */
+  async function toCanvas(index: number, item: DigestItem) {
+    const text = item.one ?? "";
+    setNote("opening a canvas on the machine…");
+    const fresh = emptyDoc(text.slice(0, 60) || "Untitled canvas");
+    fresh.blocks = [{ ...emptyBlock("note"), text }, ...fresh.blocks];
+    try {
+      await writeCanvas(local, fresh);
+      setTaken((current) => ({ ...current, [index]: "canvas" }));
+      setNote(null);
+      void navigate({ to: "/canvas", search: { id: fresh.id } });
+    } catch (error) {
+      setNote(
+        isRefusal(error)
+          ? "denied at the approval dialog"
+          : "the machine did not save that canvas",
+      );
+    }
+  }
+
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border border-rule bg-panel px-4 py-2.5">
@@ -200,10 +222,7 @@ function TriageLane() {
                       />
                       <ExitButton
                         label="Canvas"
-                        onClick={() => {
-                          setTaken((current) => ({ ...current, [index]: "canvas" }));
-                          void navigate({ to: "/canvas", search: { seed: item.one ?? "" } });
-                        }}
+                        onClick={() => void toCanvas(index, item)}
                       />
                       <button
                         type="button"
