@@ -205,10 +205,11 @@ function ProposalsPage() {
         </Panel>
       ) : (
         <div className="border border-rule bg-panel">
-          {proposals.map((proposal) => (
+          {proposals.map((proposal, index) => (
             <ProposalRow
               key={proposal.id}
               proposal={proposal}
+              hint={index === 0}
               open={openId === proposal.id}
               onToggle={() => setOpenId(openId === proposal.id ? null : proposal.id)}
               onAct={act}
