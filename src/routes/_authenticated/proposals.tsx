@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { ChevronDown } from "lucide-react";
 import { Section } from "@/components/Section";
 import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
@@ -205,10 +206,11 @@ function ProposalsPage() {
         </Panel>
       ) : (
         <div className="border border-rule bg-panel">
-          {proposals.map((proposal) => (
+          {proposals.map((proposal, index) => (
             <ProposalRow
               key={proposal.id}
               proposal={proposal}
+              hint={index === 0}
               open={openId === proposal.id}
               onToggle={() => setOpenId(openId === proposal.id ? null : proposal.id)}
               onAct={act}
@@ -223,11 +225,13 @@ function ProposalsPage() {
 
 function ProposalRow({
   proposal,
+  hint = false,
   open,
   onToggle,
   onAct,
 }: {
   proposal: Proposal;
+  hint?: boolean;
   open: boolean;
   onToggle: () => void;
   onAct: (id: string, action: string, note: string) => Promise<void>;
@@ -267,11 +271,23 @@ function ProposalRow({
             {controls.length > 0 && <span className="text-watch">control</span>}
           </span>
         </span>
-        <span className="shrink-0 font-mono text-lg tabular-nums text-copper" title="score">
-          {typeof proposal.score === "number" ? proposal.score.toFixed(2) : (proposal.score ?? "—")}
+        <span className="flex shrink-0 items-center gap-3">
+          <span className="font-mono text-lg tabular-nums text-copper" title="score">
+            {typeof proposal.score === "number" ? proposal.score.toFixed(2) : (proposal.score ?? "—")}
+          </span>
+          <ChevronDown
+            aria-hidden
+            className={`h-4 w-4 text-faint transition-transform ${open ? "rotate-180" : ""}`}
+          />
         </span>
 
       </button>
+
+      {hint && !open && (
+        <p className="px-4 pb-3 text-[12px] leading-relaxed text-faint">
+          Expand to see the evidence, the change and what it cost.
+        </p>
+      )}
 
       {open && (
         <div className="space-y-5 border-t border-rule px-4 py-5">
