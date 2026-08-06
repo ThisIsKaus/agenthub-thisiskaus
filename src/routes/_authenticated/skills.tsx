@@ -354,7 +354,7 @@ function Editor({
   const [busy, setBusy] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   // A skill is read by default; editing is a deliberate step.
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(() => !skill.raw.trim());
   const [diff, setDiff] = useState<{ stamp: string; parts: ReturnType<typeof wordDiff> } | null>(null);
 
   const versions = useQuery({
