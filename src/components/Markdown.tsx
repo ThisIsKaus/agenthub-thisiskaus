@@ -47,6 +47,7 @@ export function Markdown({ text }: { text: string }) {
   const blocks: ReactNode[] = [];
   let list: string[] = [];
   let code: string[] | null = null;
+  const codeLines = () => code as string[];
 
   const flushList = (key: string) => {
     if (!list.length) return;
@@ -69,7 +70,7 @@ export function Markdown({ text }: { text: string }) {
             key={key}
             className="max-w-full overflow-x-auto border border-rule bg-panel p-3 font-mono text-[11px] leading-relaxed text-paper"
           >
-            {code.join("\n")}
+            {codeLines().join("\n")}
           </pre>,
         );
         code = null;
@@ -117,7 +118,7 @@ export function Markdown({ text }: { text: string }) {
   if (code) {
     blocks.push(
       <pre key="tail-code" className="overflow-x-auto border border-rule bg-panel p-3 font-mono text-[11px] text-paper">
-        {code.join("\n")}
+        {codeLines().join("\n")}
       </pre>,
     );
   }
