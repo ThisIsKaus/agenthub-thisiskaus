@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
+import { Markdown } from "@/components/Markdown";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
@@ -352,6 +353,8 @@ function Editor({
   const local = useLocal();
   const [busy, setBusy] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  // A skill is read by default; editing is a deliberate step.
+  const [editing, setEditing] = useState(false);
   const [diff, setDiff] = useState<{ stamp: string; parts: ReturnType<typeof wordDiff> } | null>(null);
 
   const versions = useQuery({
