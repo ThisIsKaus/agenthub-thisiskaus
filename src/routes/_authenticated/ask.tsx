@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Page } from "@/components/Page";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal, LOCAL_BASE } from "@/lib/local-bridge";
@@ -166,6 +167,7 @@ function AskPage() {
 
   return (
     <div className="space-y-4">
+      <Section title="Question" flush>
       <Panel title="Ask">
         <textarea
           ref={box}
@@ -249,8 +251,10 @@ function AskPage() {
           </div>
         )}
       </Panel>
+      </Section>
 
       {sources.length > 0 && (
+        <Section title="Sources" flush>
         <Panel title="Sources">
           <ul>
             {groupSources(sources).map((source) => {
@@ -280,9 +284,11 @@ function AskPage() {
             found_by retrieval · {sources.length} of {askedK} requested
           </p>
         </Panel>
+        </Section>
       )}
 
       {answer && (
+        <Section title="Answer" flush>
         <Panel title="Answer">
           {refused ? (
             <>
@@ -311,6 +317,7 @@ function AskPage() {
           </div>
           {saved && <p className="mt-2 font-mono text-[10px] text-faint">{saved}</p>}
         </Panel>
+        </Section>
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import { Page } from "@/components/Page";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Empty, Skeleton, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
@@ -165,8 +166,11 @@ function SkillsPage() {
   return (
     <div className="space-y-4">
 
-      <LoopBoard counts={counts} />
+      <Section title="Evergreen loop">
+        <LoopBoard counts={counts} />
+      </Section>
 
+      <Section title="Library">
       <section className="border border-rule bg-panel">
         <div className="flex flex-wrap items-center gap-2 border-b border-rule px-4 py-2.5">
           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">show</span>
@@ -264,7 +268,9 @@ function SkillsPage() {
           </ul>
         )}
       </section>
+      </Section>
 
+      <Section title="Editor">
       {active && !list.some((skill) => skill.path === active.path) && (
         <Panel title="Draft">
           <Editor
@@ -327,6 +333,7 @@ function SkillsPage() {
       )}
 
       {note && <p className="font-mono text-[10px] text-copper">{note}</p>}
+      </Section>
     </div>
   );
 }

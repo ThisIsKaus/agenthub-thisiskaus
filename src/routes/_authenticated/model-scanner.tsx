@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
@@ -255,6 +256,7 @@ function ScannerPage() {
         {HYPOTHESIS}
       </p>
 
+      <Section title="Current set" flush>
       <Panel title="Resident now">
         {loading ? (
           <Skeleton className="h-4 w-full" />
@@ -276,7 +278,9 @@ function ScannerPage() {
           </ul>
         )}
       </Panel>
+      </Section>
 
+      <Section title="Candidates" flush subtitle="No scan has run. Scanning compares open-weight candidates against the current set, benchmarked on this machine.">
       <Panel title="Candidates">
         {loading ? (
           <div className="space-y-2">
@@ -448,6 +452,7 @@ function ScannerPage() {
         )}
         {note && <p className="mt-3 font-mono text-[10px] text-faint">{note}</p>}
       </Panel>
+      </Section>
     </div>
   );
 }

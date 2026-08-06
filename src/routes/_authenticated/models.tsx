@@ -407,11 +407,11 @@ function ModelsPage() {
           </ul>
           <button
             type="button"
-            disabled={disabled}
+            disabled={busy === "clear duplicates"}
             onClick={() => void clearDuplicates()}
             className="mt-2 border border-watch px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-watch disabled:opacity-50"
           >
-            {busy === "clear duplicates" ? "…" : "Clear duplicates"}
+            {busy === "clear duplicates" ? "Clearing…" : "Clear duplicates"}
           </button>
         </section>
       )}
@@ -503,7 +503,7 @@ function ModelsPage() {
                       onClick={() => void act("load", row.id, `load ${row.id}`)}
                       className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
                     >
-                      {busy === `load ${row.id}` ? "…" : "Load"}
+                      {busy === `load ${row.id}` ? "Loading…" : "Load"}
                     </button>
                   </td>
                 </tr>
@@ -728,7 +728,7 @@ function RetrievalProof({
         onClick={() => void prove()}
         className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
       >
-        {proving ? "…" : "Probe retrieval"}
+        {proving ? "Probing…" : "Probe retrieval"}
       </button>
     </div>
   );

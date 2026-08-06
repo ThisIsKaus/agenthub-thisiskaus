@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Empty, Skeleton, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
@@ -185,6 +186,7 @@ function BuildPage() {
 
   return (
     <div className="space-y-6">
+      <Section title="New build">
       <Panel title="Intent">
         <ul className="space-y-1">
           {CASCADE_LINES.map((line) => (
@@ -264,7 +266,9 @@ function BuildPage() {
           )}
         </Panel>
       )}
+      </Section>
 
+      <Section title="History">
       <Panel title="History">
         {loadingHistory ? (
           <div className="space-y-2">
@@ -316,6 +320,7 @@ function BuildPage() {
           </div>
         )}
       </Panel>
+      </Section>
     </div>
   );
 }

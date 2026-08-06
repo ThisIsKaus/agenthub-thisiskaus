@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Disclosure } from "@/components/Disclosure";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Page } from "@/components/Page";
 
 import { Empty, Skeleton } from "@/components/data";
@@ -64,8 +65,12 @@ const STATE_STYLE: Record<CaptureRow["state"], string> = {
 function InboxPage() {
   return (
     <div className="space-y-4">
-      <CaptureLane />
-      <TriageLane />
+      <Section title="Capture">
+        <CaptureLane />
+      </Section>
+      <Section title="Digest">
+        <TriageLane />
+      </Section>
     </div>
   );
 }

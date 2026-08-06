@@ -8,6 +8,7 @@ import { CascadePanel } from "@/components/CascadePanel";
 import { Disclosure } from "@/components/Disclosure";
 import { useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
+import { Section } from "@/components/Section";
 
 export const Route = createFileRoute("/_authenticated/health")({
   head: () => ({
@@ -110,8 +111,16 @@ function HealthPage() {
 
   const worst = failed > 0 ? "text-risk" : warnings > 0 ? "text-watch" : "text-ok";
 
+  const groupOrder = ["foundation", "services", "models", "memory", "pipeline", "safety", "schedule", "hygiene"];
+  const groups = groupOrder
+    .map((group) => ({ group, rows: rows.filter((row) => (row.group ?? "").toLowerCase() === group) }))
+    .filter((entry) => entry.rows.length > 0);
+  const ungrouped = rows.filter((row) => !groupOrder.includes((row.group ?? "").toLowerCase()));
+  if (ungrouped.length > 0) groups.push({ group: "other", rows: ungrouped });
+
   return (
     <div className="space-y-4">
+      <Section title="Self-test">
       <Panel title="Self-test">
         {loading ? (
           <Skeleton className="h-6 w-64" />
@@ -151,69 +160,68 @@ function HealthPage() {
           </button>
         </div>
       </Panel>
+      </Section>
 
-      <Panel title={`Checks · as of ${stamp(at)}`}>
-        {loading ? (
+      {loading ? (
+        <Panel title={`Checks · as of ${stamp(at)}`}>
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, index) => (
               <Skeleton key={index} className="h-4 w-full" />
             ))}
           </div>
-        ) : rows.length === 0 ? (
+        </Panel>
+      ) : rows.length === 0 ? (
+        <Panel title={`Checks · as of ${stamp(at)}`}>
           <Empty>No checks reported.</Empty>
-        ) : (
-          <Disclosure
-            summary={
-              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
-                {rows.length} checks in {new Set(rows.map((row) => row.group ?? "—")).size} groups
-              </span>
-            }
-            defaultOpen={failed > 0}
-          >
-            <ul>
-              {rows.map((row, index) => (
-                <li key={`${row.group}-${row.name}-${index}`} className="border-b border-rule last:border-b-0">
-                  <Disclosure
-                    tone="quiet"
-                    summary={
-                      <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <span className="w-full shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint sm:w-28">
-                          {row.group ?? "—"}
+        </Panel>
+      ) : (
+        groups.map(({ group, rows: groupRows }) => (
+          <Section key={group} title={group} note={`as of ${stamp(at)}`}>
+            <Panel title={`${groupRows.length} checks`}>
+              <ul>
+                {groupRows.map((row, index) => (
+                  <li key={`${row.group}-${row.name}-${index}`} className="border-b border-rule last:border-b-0">
+                    <Disclosure
+                      tone="quiet"
+                      summary={
+                        <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <span className="min-w-0 flex-1 text-[13px] text-paper">{row.name ?? "—"}</span>
+                          <span
+                            className={`shrink-0 border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${stateTone(row.state)}`}
+                          >
+                            {row.state ?? "—"}
+                          </span>
                         </span>
-                        <span className="min-w-0 flex-1 text-[13px] text-paper">{row.name ?? "—"}</span>
-                        <span
-                          className={`shrink-0 border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${stateTone(row.state)}`}
-                        >
-                          {row.state ?? "—"}
-                        </span>
-                      </span>
-                    }
-                    defaultOpen={isFailed(row.state)}
-                  >
-                    {row.detail && (
-                      <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
-                        {row.detail}
-                      </p>
-                    )}
-                    {row.fix ? (
-                      <pre className="mt-2 whitespace-pre-wrap break-words border border-rule bg-panel2 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
-                        {row.fix}
-                      </pre>
-                    ) : (
-                      !row.detail && (
-                        <p className="font-mono text-[11px] text-faint">Nothing further recorded.</p>
-                      )
-                    )}
-                  </Disclosure>
-                </li>
-              ))}
-            </ul>
-          </Disclosure>
-        )}
-      </Panel>
+                      }
+                      defaultOpen={isFailed(row.state)}
+                    >
+                      {row.detail && (
+                        <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+                          {row.detail}
+                        </p>
+                      )}
+                      {row.fix ? (
+                        <pre className="mt-2 whitespace-pre-wrap break-words border border-rule bg-panel2 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
+                          {row.fix}
+                        </pre>
+                      ) : (
+                        !row.detail && (
+                          <p className="font-mono text-[11px] text-faint">Nothing further recorded.</p>
+                        )
+                      )}
+                    </Disclosure>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          </Section>
+        ))
+      )}
 
       <LocalOnly>
-        <CascadePanel />
+        <Section title="Cascade">
+          <CascadePanel />
+        </Section>
       </LocalOnly>
     </div>
   );

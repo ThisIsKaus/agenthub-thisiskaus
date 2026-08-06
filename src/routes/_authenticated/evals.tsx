@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "@/components/AppShell";
+import { Section } from "@/components/Section";
 import { Empty, Figure, Skeleton } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { useLocal } from "@/lib/local-bridge";
@@ -103,6 +104,7 @@ function EvalsPage() {
         />
       </div>
 
+      <Section title="Current" flush subtitle="Four axes scored on the golden set. Run an eval to add a row to the history.">
       <Panel title="Current scores">
         {loading ? (
           <Skeleton className="h-6 w-72" />
@@ -121,7 +123,9 @@ function EvalsPage() {
           <p className="mt-1 font-mono text-[10px] text-faint">scored {latest.date}</p>
         )}
       </Panel>
+      </Section>
 
+      <Section title="History" flush>
       <Panel title="Detail">
         <Disclosure
           summary={
@@ -192,6 +196,7 @@ function EvalsPage() {
         )}
         </Disclosure>
       </Panel>
+      </Section>
 
       <Panel title="Score">
         <button
