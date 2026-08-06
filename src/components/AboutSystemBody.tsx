@@ -1,12 +1,14 @@
 import { useHubState } from "@/hooks/use-realtime-state";
 import { formatStamp } from "@/components/data";
+import { SectionHeading } from "@/components/Section";
+import { FieldHeading } from "@/components/Field";
 
 
 
 function SecHead({ title, note }: { title: string; note: string }) {
   return (
     <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-      <h2 className="font-serif text-[25px] leading-[1.15] text-paper">{title}</h2>
+      <SectionHeading>{title}</SectionHeading>
       <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">{note}</span>
     </div>
   );
@@ -46,7 +48,7 @@ function Dot({ tone }: { tone: "ok" | "watch" | "risk" | "faint" }) {
 function Card({ title, items }: { title: string; items: [string, string][] }) {
   return (
     <div className="border border-rule bg-panel p-5">
-      <h3 className="mb-3 font-serif text-[15px] leading-tight text-paper">{title}</h3>
+      <div className="mb-3"><FieldHeading>{title}</FieldHeading></div>
       <ul className="m-0 list-none p-0">
         {items.map(([b, rest]) => (
           <li key={b} className="border-b border-rule py-2.5 text-sm text-muted-foreground last:border-b-0">
