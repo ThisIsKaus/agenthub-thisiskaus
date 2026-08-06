@@ -215,7 +215,7 @@ function StreamRow({
             true,
           ),
       },
-      { label: "Reject", run: () => setAskReason((open) => !open) },
+      { label: "Reject", run: () => setAskReason((shown) => !shown) },
       {
         label: "Defer",
         run: () =>
