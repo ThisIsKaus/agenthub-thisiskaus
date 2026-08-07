@@ -11,6 +11,7 @@ Doctrine:
 """
 
 import shlex
+import time
 import json, os, re, shutil, subprocess, sys, threading, uuid
 import datetime as dt
 from pathlib import Path
@@ -837,29 +838,73 @@ def proposals():
         d["last_diagnosed"] = (H / "state" / "last-diagnosed.txt").read_text().strip()
     except Exception:
         d["last_diagnosed"] = None
+    # A proposal that was approved and is building should say so, and should carry the job
+    # so the interface can show progress rather than leaving it looking untouched.
+    for pr in d.get("proposals", []):
+        jid = pr.get("job")
+        if jid and pr.get("status") == "building":
+            jd = JOBS.get(jid) or {}
+            if jd and not jd.get("running"):
+                pr["status"] = "built" if jd.get("code") == 0 else "build failed"
+                pr["job_result"] = (jd.get("out") or "")[-400:]
+                fp = H / "state" / "proposals" / f"{pr['id']}.json"
+                if fp.exists():
+                    _d = json.loads(fp.read_text())
+                    _d["status"] = pr["status"]
+                    fp.write_text(json.dumps(_d, indent=2))
+            elif jd:
+                pr["job_running"] = True
     counts = {}
     for pr in d.get("proposals", []):
         counts[pr.get("status", "open")] = counts.get(pr.get("status", "open"), 0) + 1
     d["counts"] = counts
+    d["open"] = [p for p in d.get("proposals", []) if p.get("status", "open") == "open"]
     return d
 @app.post("/api/proposals/act")
 def proposals_act(id: str = Form(...), action: str = Form(...), note: str = Form("")):
-    if action not in ("approve", "reject", "defer"):
-        raise HTTPException(400, "action not permitted")
-    if action == "reject" and not note.strip():
-        raise HTTPException(400, "a note is required to reject a proposal")
-    if not re.fullmatch(r"[\w.-]+", id):
-        raise HTTPException(400, "invalid proposal id")
-    p = H / "state" / "proposals" / f"{id}.json"
-    if not p.exists():
-        raise HTTPException(404, "no such proposal")
-    data = json.loads(p.read_text())
-    data["status"] = {"approve": "approved", "reject": "rejected", "defer": "deferred"}[action]
-    data["note"] = note
-    p.write_text(json.dumps(data, indent=2))
-    audit(f"proposal {action} {id}")
-    return data
+    """Approve, reject or defer — and for approve, actually build the thing.
 
+    Approve previously set a status field and stopped. The loop was specified as diagnose →
+    propose → approve → build, and the last arrow was never wired: an approved proposal sat in
+    the queue looking identical to an unapproved one, with no way to tell whether the work had
+    happened. That is worse than no approval control, because it implies an action it does not
+    take.
+    """
+    if action not in ("approve", "reject", "defer"):
+        raise HTTPException(422, "action must be approve, reject or defer")
+    if action == "reject" and not note.strip():
+        raise HTTPException(422, "a reason is required to reject — it is how the "
+                                 "diagnostician stops re-proposing the same thing")
+
+    f = H / "state" / "proposals" / f"{id}.json"
+    if not f.exists():
+        raise HTTPException(404, "no such proposal")
+    d = json.loads(f.read_text())
+
+    # Idempotent: approving twice must not queue two builds.
+    if action == "approve" and d.get("job"):
+        return {"ok": True, "status": d.get("status"), "job": d["job"],
+                "note": "already queued — watch the job for progress"}
+
+    d["status"] = {"approve": "building", "reject": "rejected", "defer": "deferred"}[action]
+    d["note"] = note
+    d["acted_at"] = dt.datetime.now().isoformat(timespec="seconds")
+
+    result = {"ok": True, "status": d["status"]}
+    if action == "approve":
+        intent = d.get("change") or d.get("title", "")
+        files = ", ".join(d.get("files", [])[:3])
+        if files:
+            intent += f"  Files likely involved: {files}."
+        job = run_job("build", f"{H}/console/.venv/bin/python {H}/build/cascade.py "
+                               f"{shlex.quote(intent)}")
+        d["job"] = job.get("job") if isinstance(job, dict) else None
+        d["intent_sent"] = intent[:300]
+        result.update(job if isinstance(job, dict) else {})
+        result["note"] = "queued as a build — the diff comes back for review before it merges"
+
+    f.write_text(json.dumps(d, indent=2))
+    return result
 
 @app.post("/api/build")
 def build(intent: str = Form(...), scope: str = Form("")):
@@ -1072,8 +1117,29 @@ def canvas_handover(id: str = Form(...)):
 
 
 
+SCAN_CACHE = H / "state" / "model-scan.json"
+
+
 @app.get("/api/models/scan")
-def models_scan():
+def models_scan(refresh: bool = False):
+    """Cached. The per-model safetensors fetch is twenty sequential HTTP calls, which made
+    this endpoint slow enough to hang the page that loads it. Candidate lists change daily at
+    most; a six-hour cache costs nothing and removes the stall."""
+    if not refresh and SCAN_CACHE.exists():
+        age = time.time() - SCAN_CACHE.stat().st_mtime
+        if age < 6 * 3600:
+            try:
+                c = json.loads(SCAN_CACHE.read_text())
+                c["last_scan"] = dt.datetime.fromtimestamp(
+                    SCAN_CACHE.stat().st_mtime).isoformat(timespec="minutes")
+                c["cached"] = True
+                return c
+            except Exception:
+                pass
+    return _models_scan_fresh()
+
+
+def _models_scan_fresh():
     """Candidates from Hugging Face, filtered to what fits alongside the pinned core.
 
     Nothing here is evidence. Downloads measure popularity and published benchmarks measure
@@ -1092,6 +1158,13 @@ def models_scan():
             (H / "docs" / "bench.json").read_text()) if (H / "docs" / "bench.json").exists() else []
     except Exception:
         d["current"] = []
+    d["last_scan"] = dt.datetime.now().isoformat(timespec="minutes")
+    d["cached"] = False
+    try:
+        SCAN_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        SCAN_CACHE.write_text(json.dumps(d))
+    except Exception:
+        pass
     return d
 
 

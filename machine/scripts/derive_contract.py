@@ -68,9 +68,17 @@ for r in rows:
         if any(k.startswith("__err") for k in sup):
             gaps.append(f"{p} UNREACHABLE")
             continue
+        # A view calling five endpoints reads fields from all five. Checking every field
+        # against every endpoint reported 97 gaps of which most were fields supplied by a
+        # sibling call — a check that cries wolf gets ignored, which is the failure this tool
+        # exists to prevent. A field is missing only if NO endpoint the view calls supplies it.
+        supplied_anywhere = set()
+        for q in r["paths"]:
+            supplied_anywhere |= seen.get(q, set())
         for fld in r["reads"]:
-            if fld not in sup:
-                gaps.append(f"{p} lacks .{fld}")
+            if fld not in supplied_anywhere:
+                gaps.append(f"no endpoint supplies .{fld}")
+        break   # the check is per-view, not per-path
     gaps_total += len(gaps)
     if gaps or not missing_only:
         print(f"  {r['view']}")

@@ -322,6 +322,8 @@ Return ONLY a JSON array, no prose, no markdown fences:
 def propose(signals, model="local-brain"):
     import requests
     recent = sh("git log --since='7 days ago' --pretty=format:'%s' -- machine | head -25")
+    already = "\n".join(f"- {t}  [{st}]" + (f" — {n[:60]}" if n else "")
+                        for t, st, n in decided[:12])
     ev = "\n".join(f"[{s['kind']}, weight {s['weight']}] {s['title']}\n    {s['evidence']}"
                    for s in sorted(signals, key=lambda x: -x["weight"])[:18])
     body = {"model": model, "temperature": 0, "max_tokens": 6000,
@@ -329,7 +331,10 @@ def propose(signals, model="local-brain"):
                          {"role": "user", "content":
                           "Evidence from the running system:\n\n" + ev +
                           "\n\n## Already shipped in the last week — do NOT propose these again\n"
-                          + (recent or "(nothing)")}]}
+                          + (recent or "(nothing)") +
+                          "\n\n## Already decided — do NOT propose these again\n"
+                          "A rejection reason is a judgement about the idea, not just this "
+                          "instance of it.\n" + (already or "(none)")}]}
     r = requests.post(ROUTER, json=body, timeout=900)
     r.raise_for_status()
     m = r.json()["choices"][0]["message"]
@@ -378,7 +383,20 @@ def main():
         print(f"diagnosis failed: {type(e).__name__}: {e}")
         return 1
 
-    existing = {json.loads(p.read_text()).get("title", "") for p in OUT.glob("*.json")}
+    # A proposal that was approved, built, rejected or deferred is a decision already taken.
+    # Re-proposing it is how a queue becomes noise: the 29-misrouted-skills item reappeared
+    # after being approved because only the title was compared, not the outcome.
+    existing, decided = set(), []
+    for f in OUT.glob("*.json"):
+        try:
+            d = json.loads(f.read_text())
+        except Exception:
+            continue
+        existing.add(d.get("title", ""))
+        if d.get("status") in ("approved", "building", "built", "rejected", "deferred"):
+            decided.append((d.get("title", ""), d.get("status"), d.get("note", "")))
+    if decided:
+        print(f"  {len(decided)} proposal(s) already decided — not re-proposing")
     written = 0
     for p in proposals:
         if p.get("title", "") in existing:
