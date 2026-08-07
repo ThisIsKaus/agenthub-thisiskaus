@@ -340,8 +340,16 @@ PROPOSAL_SCHEMA = {"type": "json_schema", "json_schema": {"name": "proposals", "
 def propose(signals, model="local-brain"):
     import requests
     recent = sh("git log --since='7 days ago' --pretty=format:'%s' -- machine | head -25")
+    _decided = []
+    for _f in OUT.glob("*.json"):
+        try:
+            _d = json.loads(_f.read_text())
+        except Exception:
+            continue
+        if _d.get("status") in ("approved", "building", "built", "rejected", "deferred"):
+            _decided.append((_d.get("title", ""), _d.get("status"), _d.get("note", "")))
     already = "\n".join(f"- {t}  [{st}]" + (f" — {n[:60]}" if n else "")
-                        for t, st, n in decided[:12])
+                        for t, st, n in _decided[:12])
     ev = "\n".join(f"[{s['kind']}, weight {s['weight']}] {s['title']}\n    {s['evidence']}"
                    for s in sorted(signals, key=lambda x: -x["weight"])[:18])
     body = {"model": model, "temperature": 0, "response_format": PROPOSAL_SCHEMA, "max_tokens": 6000,
