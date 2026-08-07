@@ -8,6 +8,7 @@ import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { toNum } from "@/lib/format";
+import { relativeTime } from "@/lib/captures";
 import { parseTrialReport, type TrialReport } from "@/lib/model-scan-report";
 
 export const Route = createFileRoute("/_authenticated/model-scanner")({
@@ -68,9 +69,11 @@ type ScanData = {
   envelope?: Envelope;
   current?: { id?: string; role?: string }[];
   note?: string;
+  cached?: boolean;
   last_scan?: string | null;
   error?: string;
 };
+
 
 function num(value: unknown, digits = 0, suffix = "") {
   const parsed = toNum(value);
@@ -117,6 +120,12 @@ function ScannerPage() {
     null,
   );
 
+  const [scanning, setScanning] = useState(false);
+
+  /**
+   * The cached scan only. A fresh scan makes twenty sequential Hugging Face calls,
+   * so it never happens on load — only when the user asks for it.
+   */
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -127,6 +136,29 @@ function ScannerPage() {
       setLoading(false);
     }
   }, [local]);
+
+  const rescan = useCallback(async () => {
+    setScanning(true);
+    setNote(null);
+    try {
+      let fresh: ScanData;
+      try {
+        fresh = await local.post<ScanData>("/api/models/scan?refresh=true", {});
+      } catch {
+        fresh = await local.get<ScanData>("/api/models/scan", { refresh: "true" });
+      }
+      setData(fresh);
+    } catch (error) {
+      setNote(
+        isRefusal(error)
+          ? error.message || "denied at the approval dialog"
+          : "the machine could not reach Hugging Face for a fresh scan",
+      );
+    } finally {
+      setScanning(false);
+    }
+  }, [local]);
+
 
   useEffect(() => {
     void load();
@@ -218,12 +250,27 @@ function ScannerPage() {
 
       <Section
         title="Candidates"
-        note={data?.last_scan ? `scanned ${formatStamp(data.last_scan)}` : undefined}
+        note={
+          data?.last_scan
+            ? `scanned ${relativeTime(String(data.last_scan))}${data.cached ? " · from cache" : ""}`
+            : undefined
+        }
       >
         <Panel title="Ranked by fit and adoption">
-          <p className="max-w-[72ch] text-[12px] leading-relaxed text-faint">
-            Downloads and likes are adoption elsewhere, not evidence about this machine.
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="max-w-[72ch] text-[12px] leading-relaxed text-faint">
+              Downloads and likes are adoption elsewhere, not evidence about this machine.
+            </p>
+            <button
+              type="button"
+              disabled={scanning}
+              onClick={() => void rescan()}
+              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+            >
+              {scanning ? "Scanning Hugging Face…" : "Scan now"}
+            </button>
+          </div>
+
 
           {loading ? (
             <div className="mt-3 space-y-2">
