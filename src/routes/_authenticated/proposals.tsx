@@ -52,17 +52,24 @@ type Proposal = {
   score?: number;
   status?: string;
   created?: string;
+  note?: string;
+  reason?: string;
+  job?: string | number | null;
+  job_running?: boolean;
+  job_result?: string | null;
 };
 
 type ProposalsData = {
   proposals?: Proposal[];
+  open?: Proposal[];
   counts?: Record<string, unknown>;
   last_diagnosed?: string | null;
   stats?: Record<string, unknown> & { last_diagnosed?: string; diagnosed?: string };
 };
 
 /** The statuses the queue speaks in, in the order they are worth reading. */
-const STATUS_ORDER = ["open", "approved", "rejected", "deferred"];
+const STATUS_ORDER = ["open", "building", "built", "build failed", "rejected", "deferred"];
+
 
 
 const PROTECTED: { match: (path: string) => boolean; control: string }[] = [
