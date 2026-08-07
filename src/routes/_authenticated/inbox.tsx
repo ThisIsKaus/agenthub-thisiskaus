@@ -221,6 +221,12 @@ function TriageLane() {
   const record = useCallback(
     async (index: number, action: string, actionNote = "") => {
       setNote("recording on the machine…");
+      setFailures((current) => {
+        if (!(index in current)) return current;
+        const next = { ...current };
+        delete next[index];
+        return next;
+      });
       try {
         await local.post("/api/digest/decide", {
           date: day ?? "",
@@ -235,11 +241,17 @@ function TriageLane() {
         setNote(null);
         return true;
       } catch (error) {
-        setNote(
-          isRefusal(error)
-            ? error.message || "denied at the approval dialog"
-            : "the machine did not record that decision",
-        );
+        // A write that fails silently is indistinguishable from a control that was never
+        // wired. Status and detail go on the row, verbatim.
+        const line = isRefusal(error)
+          ? `refused — ${error.message || "denied at the approval dialog"}`
+          : error instanceof LocalError
+            ? `${error.status} · ${error.message || "no detail returned"}`
+            : `the machine did not record that decision — ${
+                error instanceof Error ? error.message : String(error)
+              }`;
+        setFailures((current) => ({ ...current, [index]: line }));
+        setNote(null);
         return false;
       }
     },
