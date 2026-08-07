@@ -199,3 +199,36 @@ the opposite direction: a check that cries wolf gets ignored, and an ignored che
 than an absent one.
 Defensive fallbacks that swallow a missing dependency are deferred failure with the evidence
 removed. A missing input is loud.
+
+## Measure the thing, not a proxy for it (v2.8, 7 Aug 2026)
+
+Five times in this build a proxy was constructed, trusted, and found to be lying. Each cost
+between an hour and a week, and each felt like rigour at the time.
+
+- A backup reported success for a day while archiving a symlink: 205 files where 17,015 were
+  expected. The check asserted a snapshot existed, not that it held anything.
+- A retrieval golden set of twelve invented questions scored 91% against a corpus of three
+  thousand real documents it did not resemble. Regenerated from the corpus itself, the true
+  figure was 76%, and the work to reach 90% only became visible once the instrument was honest.
+- A consumer contract reported 100% coverage while five capabilities did not exist, because
+  its declarations were written from the same design document that produced the interface.
+  A check authored by the party that wrote the specification tests the specification against
+  itself.
+- A model size was estimated four times in four different ways, each plausible, each wrong.
+  What settled it was reading the safetensors index and comparing against a model already
+  benchmarked on this machine.
+- A triage classifier was pursued as a regression for four rounds on the strength of a
+  variety heuristic. One direct call to the function exonerated it in seconds: the classifier
+  was correct and the mail was genuinely quiet. The heuristic could not distinguish a working
+  system from a broken one during a quiet period, and was withdrawn.
+
+The rule that follows: when a measurement already exists, an estimate is not redundant, it is
+an opportunity to contradict the truth. Before building an instrument, ask what real artefact
+could be read instead — a bench result, a lockfile, a repository, the function itself.
+
+And when a check fires, run the underlying code on real input before believing it. A proxy
+that agrees with you is worth nothing; a proxy that disagrees is a hypothesis, not a finding.
+
+Corollary: `except Exception: pass` around a lookup is how a proxy becomes permanent. The
+lockfile lookup that would have settled the model size failed silently for an hour because it
+parsed YAML as JSON. A missing input must be loud.
