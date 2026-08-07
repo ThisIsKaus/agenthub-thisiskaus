@@ -9,6 +9,16 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { emptyBlock, emptyDoc } from "@/lib/canvas-types";
 import { writeCanvas } from "@/lib/canvas-store";
+import {
+  dayHeadline,
+  daySubline,
+  groupRows,
+  recurrenceMap,
+  recurrenceNote,
+  sortGroups,
+  subjectKey,
+  type Lane as InboxLane,
+} from "@/lib/inbox-digest";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   head: () => ({
