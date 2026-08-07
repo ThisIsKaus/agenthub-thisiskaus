@@ -119,6 +119,12 @@ function ScannerPage() {
     null,
   );
 
+  const [scanning, setScanning] = useState(false);
+
+  /**
+   * The cached scan only. A fresh scan makes twenty sequential Hugging Face calls,
+   * so it never happens on load — only when the user asks for it.
+   */
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -129,6 +135,29 @@ function ScannerPage() {
       setLoading(false);
     }
   }, [local]);
+
+  const rescan = useCallback(async () => {
+    setScanning(true);
+    setNote(null);
+    try {
+      let fresh: ScanData;
+      try {
+        fresh = await local.post<ScanData>("/api/models/scan?refresh=true", {});
+      } catch {
+        fresh = await local.get<ScanData>("/api/models/scan", { refresh: "true" });
+      }
+      setData(fresh);
+    } catch (error) {
+      setNote(
+        isRefusal(error)
+          ? error.message || "denied at the approval dialog"
+          : "the machine could not reach Hugging Face for a fresh scan",
+      );
+    } finally {
+      setScanning(false);
+    }
+  }, [local]);
+
 
   useEffect(() => {
     void load();
