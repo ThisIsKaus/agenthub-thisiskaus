@@ -1,5 +1,5 @@
 # AgentHub local API — contract for Lovable
-_Generated from console.py by AST parse, 2026-08-06T22:13. Do not edit by hand._
+_Generated from console.py by AST parse, 2026-08-07T19:08. Do not edit by hand._
 
 ## How to call it
 
@@ -33,7 +33,7 @@ Every POST takes **multipart form fields**, not a JSON body. Sending JSON will
 return HTTP 422. A 403 means the path was outside the allowlist or an approval
 dialog was denied — surface it as a refusal, never as an error.
 
-## Endpoints (44)
+## Endpoints (45)
 
 | Method | Path | Parameters | Purpose |
 |---|---|---|---|
@@ -51,6 +51,7 @@ dialog was denied — surface it as a refusal, never as an error.
 | POST | `/api/classify` | form: { text: string } | Route omnibox input to one of four intents. |
 | GET | `/api/cost` | query: { days?: number } | cost |
 | GET | `/api/digest` | query: { date?: string } | digest |
+| POST | `/api/digest/decide` | form: { date: string, item: string, action: string, note?: string } | Record what was done with a digest item. |
 | POST | `/api/draft` | form: { title: string, body: string } | draft |
 | POST | `/api/eval/correct` | form: { text: string, cls: string, entity: string, sensitivity: string, injection?: string } | Append a real-world correction to the golden set. This is the learning loop. |
 | GET | `/api/evals` | no parameters | evals |
@@ -68,12 +69,12 @@ dialog was denied — surface it as a refusal, never as an error.
 | GET | `/api/memory` | query: { q?: string, n?: number } | memory |
 | GET | `/api/models` | no parameters | Residency, memory and the measured bench in one response. |
 | POST | `/api/models/action` | form: { action: string, model?: string } | models_action |
-| GET | `/api/models/scan` | no parameters | Candidates from Hugging Face, filtered to what fits alongside the pinned core. |
+| GET | `/api/models/scan` | query: { refresh?: boolean } | Cached. The per-model safetensors fetch is twenty sequential HTTP calls, which made |
 | POST | `/api/models/scan/trial` | form: { id: string } | Download, bench, and evaluate a candidate in the incumbent's role. |
 | GET | `/api/prompts` | no parameters | prompts |
 | POST | `/api/prompts/save` | form: { path: string, content: string } | prompts_save |
 | GET | `/api/proposals` | no parameters | Adds the run timestamp and per-status counts the queue needs. |
-| POST | `/api/proposals/act` | form: { id: string, action: string, note?: string } | proposals_act |
+| POST | `/api/proposals/act` | form: { id: string, action: string, note?: string } | Approve, reject or defer — and for approve, actually build the thing. |
 | GET | `/api/roots` | no parameters | roots |
 | POST | `/api/run` | form: { key: string } | run |
 | GET | `/api/selftest` | no parameters | selftest_last |

@@ -668,7 +668,26 @@ def digest(date: str = ""):
             f, src, cls, ent, sen, one = m.groups()
             items.append({"flag": bool(f), "src": src, "cls": cls.strip(), "ent": ent.strip(),
                           "sen": sen.strip(), "one": one.strip()})
-    return {"date": p.stem, "items": items,
+    # Decisions are stored but were never served back, so every item rendered as undecided
+    # forever and the count never fell. Storing without serving is the same defect as an
+    # approval that does not build: the action happens and the interface cannot say so.
+    _dec = _decisions().get(p.stem, {})
+    for _it in items:
+        _key = (_it.get('one') or '')[:80]
+        _it['key'] = _key
+        _d = _dec.get(_key)
+        _it['decision'] = _d
+    # Actions derive from the class — a newsletter does not become a skill.
+        _cls = 'flagged' if _it.get('flag') else (_it.get('cls') or 'noise')
+        _it['lane'] = _cls
+        _it['actions'] = {
+            'flagged': ['evidence', 'corrected'],
+            'task': ['context', 'draft', 'canvas', 'corrected'],
+            'signal': ['context', 'corrected'],
+        }.get(_cls, ['dismissed', 'corrected'])
+    _undecided = sum(1 for _it in items if not _it.get('decision'))
+    return {"date": p.stem, "items": items, "undecided": _undecided,
+                "decided": len(items) - _undecided,
             "dates": [x.stem for x in files[-14:]][::-1]}
 
 
@@ -1204,7 +1223,13 @@ def digest_decide(date: str = Form(...), item: str = Form(...), action: str = Fo
     indistinguishable from one that did nothing, which is the same defect the proposals queue
     had: a control that implies an outcome it does not record.
     """
-    if action not in ("context", "skill", "canvas", "corrected", "dismissed"):
+    if action == "undo":
+        d = _decisions()
+        d.get(date, {}).pop(item, None)
+        DECISIONS.write_text(json.dumps(d, indent=2))
+        return {"ok": True, "date": date, "item": item, "action": "undo"}
+    if action not in ("context", "skill", "canvas", "draft", "evidence",
+                      "corrected", "dismissed"):
         raise HTTPException(422, "unknown action")
     d = _decisions()
     d.setdefault(date, {})[item] = {
