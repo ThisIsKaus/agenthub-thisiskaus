@@ -71,8 +71,13 @@ def check(d):
         errs.append(f"description {len(desc)} characters, limit is 1024")
     elif len(desc) < 80:
         warns.append(f"description only {len(desc)} characters — a weak trigger")
-    elif not re.search(r"\buse (this |it )?when\b|\bwhen (kos|the user|a )",
-                       " ".join(desc.split()).lower()):
+    # The original test was right and only its input was wrong: the raw YAML block folds
+    # lines, so " when " becomes "\n  when" and the space check fails on a description that
+    # plainly says when. Normalise the whitespace and keep the original, permissive test —
+    # narrowing the phrasing at the same time took warnings from 7 to 9, which was me
+    # measuring my own preferred wording rather than whether a trigger exists.
+    elif " when " not in " ".join(desc.split()).lower() \
+            and "use this" not in desc.lower():
         warns.append("description says what but not when — triggering will be unreliable")
     n = len(body.splitlines())
     if n > 500:
