@@ -6,7 +6,7 @@ import { Page } from "@/components/Page";
 
 import { Empty, Skeleton } from "@/components/data";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { LocalError, isRefusal, useLocal } from "@/lib/local-bridge";
 import { emptyBlock, emptyDoc } from "@/lib/canvas-types";
 import { writeCanvas } from "@/lib/canvas-store";
 import {
@@ -81,6 +81,7 @@ function laneOf(item: DigestItem): Lane {
 const DONE_LABEL: Record<string, string> = {
   context: "filed as context",
   dismiss: "dismissed",
+  dismissed: "dismissed",
   canvas: "opened in Canvas",
   draft: "reply drafted",
   reclassified: "reclassified",
@@ -130,6 +131,8 @@ function TriageLane() {
   const [showEverything, setShowEverything] = useState(false);
   const [history, setHistory] = useState<Record<string, string[]>>({});
   const [note, setNote] = useState<string | null>(null);
+  /** Verbatim failure lines, keyed by item index — a failed write must be visible. */
+  const [failures, setFailures] = useState<Record<number, string>>({});
 
   const load = useCallback(
     async (target?: string) => {
@@ -221,6 +224,12 @@ function TriageLane() {
   const record = useCallback(
     async (index: number, action: string, actionNote = "") => {
       setNote("recording on the machine…");
+      setFailures((current) => {
+        if (!(index in current)) return current;
+        const next = { ...current };
+        delete next[index];
+        return next;
+      });
       try {
         await local.post("/api/digest/decide", {
           date: day ?? "",
@@ -235,11 +244,17 @@ function TriageLane() {
         setNote(null);
         return true;
       } catch (error) {
-        setNote(
-          isRefusal(error)
-            ? error.message || "denied at the approval dialog"
-            : "the machine did not record that decision",
-        );
+        // A write that fails silently is indistinguishable from a control that was never
+        // wired. Status and detail go on the row, verbatim.
+        const line = isRefusal(error)
+          ? `refused — ${error.message || "denied at the approval dialog"}`
+          : error instanceof LocalError
+            ? `${error.status} · ${error.message || "no detail returned"}`
+            : `the machine did not record that decision — ${
+                error instanceof Error ? error.message : String(error)
+              }`;
+        setFailures((current) => ({ ...current, [index]: line }));
+        setNote(null);
         return false;
       }
     },
@@ -248,9 +263,9 @@ function TriageLane() {
 
   /** One decision covers every arrival of the same subject. */
   const recordGroup = useCallback(
-    async (indices: number[], action: string) => {
+    async (indices: number[], action: string, actionNote = "") => {
       for (const index of indices) {
-        const ok = await record(index, action);
+        const ok = await record(index, action, actionNote);
         if (!ok) return false;
       }
       return true;
@@ -348,7 +363,7 @@ function TriageLane() {
         </p>
         {recurs && (
           <p className="mt-0.5 font-mono text-[10px] text-faint">
-            {recurs} — better filtered at source than dismissed daily
+            {recurs} · better suppressed than dismissed daily
           </p>
         )}
 
@@ -356,7 +371,13 @@ function TriageLane() {
           {lane === "noise" && indices.length > 0 && (
             <ExitButton
               label={count > 1 ? `Dismiss all ${count}` : "Dismiss"}
-              onClick={() => void recordGroup(indices, "dismiss")}
+              onClick={() => void recordGroup(indices, "dismissed")}
+            />
+          )}
+          {recurs && indices.length > 0 && (
+            <ExitButton
+              label="Always dismiss these"
+              onClick={() => void recordGroup(indices, "dismissed", "always")}
             />
           )}
           {(lane === "signal" || lane === "task") && indices.length > 0 && (
@@ -382,6 +403,14 @@ function TriageLane() {
             Wrong class?
           </button>
         </div>
+
+        {group.rows.some((row) => failures[row.index]) && (
+          <p className="mt-1 max-w-[72ch] break-words font-mono text-[11px] leading-relaxed text-risk">
+            {[...new Set(group.rows.map((row) => failures[row.index]).filter(Boolean))].join(" · ")}
+          </p>
+        )}
+
+
 
         {lane === "flagged" && openEvidence === index && expanded && (
           <div className="mt-2 border border-watch/40 bg-panel2 p-2">
