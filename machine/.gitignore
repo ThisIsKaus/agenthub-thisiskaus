@@ -31,3 +31,8 @@ report/state-history.jsonl
 
 # kb-skills is its own repository, cloned here as the skill library
 skills-lib/
+
+# Golden sets are the learning artefact, not logs. *.jsonl swept them up twice.
+!evals/intent_set.jsonl
+!evals/retrieval_golden.jsonl
+!contracts/*.json

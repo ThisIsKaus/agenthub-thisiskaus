@@ -1183,6 +1183,38 @@ def models_scan_trial(id: str = Form(...)):
     return run_job("trial", f"{H}/scripts/model-trial.sh {shlex.quote(id)}")
 
 
+
+DECISIONS = H / "state" / "digest-decisions.json"
+
+
+def _decisions():
+    try:
+        return json.loads(DECISIONS.read_text())
+    except Exception:
+        return {}
+
+
+@app.post("/api/digest/decide")
+def digest_decide(date: str = Form(...), item: str = Form(...), action: str = Form(...),
+                  note: str = Form("")):
+    """Record what was done with a digest item.
+
+    Decisions were never stored, so every visit showed every item as undecided — fourteen a
+    day, forever, with the count never falling. An action that leaves no trace is
+    indistinguishable from one that did nothing, which is the same defect the proposals queue
+    had: a control that implies an outcome it does not record.
+    """
+    if action not in ("context", "skill", "canvas", "corrected", "dismissed"):
+        raise HTTPException(422, "unknown action")
+    d = _decisions()
+    d.setdefault(date, {})[item] = {
+        "action": action, "note": note,
+        "at": dt.datetime.now().isoformat(timespec="seconds")}
+    DECISIONS.parent.mkdir(parents=True, exist_ok=True)
+    DECISIONS.write_text(json.dumps(d, indent=2))
+    return {"ok": True, "date": date, "item": item, "action": action}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=4100, log_level="warning")
