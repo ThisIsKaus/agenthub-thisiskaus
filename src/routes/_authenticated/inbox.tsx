@@ -362,7 +362,7 @@ function TriageLane() {
         </p>
         {recurs && (
           <p className="mt-0.5 font-mono text-[10px] text-faint">
-            {recurs} — better filtered at source than dismissed daily
+            {recurs} · better suppressed than dismissed daily
           </p>
         )}
 
@@ -370,7 +370,13 @@ function TriageLane() {
           {lane === "noise" && indices.length > 0 && (
             <ExitButton
               label={count > 1 ? `Dismiss all ${count}` : "Dismiss"}
-              onClick={() => void recordGroup(indices, "dismiss")}
+              onClick={() => void recordGroup(indices, "dismissed")}
+            />
+          )}
+          {recurs && indices.length > 0 && (
+            <ExitButton
+              label="Always dismiss these"
+              onClick={() => void recordGroup(indices, "dismissed", "always")}
             />
           )}
           {(lane === "signal" || lane === "task") && indices.length > 0 && (
