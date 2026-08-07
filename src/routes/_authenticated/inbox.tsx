@@ -81,6 +81,7 @@ function laneOf(item: DigestItem): Lane {
 const DONE_LABEL: Record<string, string> = {
   context: "filed as context",
   dismiss: "dismissed",
+  dismissed: "dismissed",
   canvas: "opened in Canvas",
   draft: "reply drafted",
   reclassified: "reclassified",
