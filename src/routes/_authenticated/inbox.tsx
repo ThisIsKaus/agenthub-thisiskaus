@@ -262,9 +262,9 @@ function TriageLane() {
 
   /** One decision covers every arrival of the same subject. */
   const recordGroup = useCallback(
-    async (indices: number[], action: string) => {
+    async (indices: number[], action: string, actionNote = "") => {
       for (const index of indices) {
-        const ok = await record(index, action);
+        const ok = await record(index, action, actionNote);
         if (!ok) return false;
       }
       return true;
