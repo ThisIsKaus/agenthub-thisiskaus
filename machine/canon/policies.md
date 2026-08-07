@@ -232,3 +232,17 @@ that agrees with you is worth nothing; a proxy that disagrees is a hypothesis, n
 Corollary: `except Exception: pass` around a lookup is how a proxy becomes permanent. The
 lockfile lookup that would have settled the model size failed silently for an hour because it
 parsed YAML as JSON. A missing input must be loud.
+
+## The discovery budget counts descriptions, not bodies (v2.9, 7 Aug 2026)
+
+`skills_lint` computes discovery as `(len(name) + len(description)) // 4`. The body is not
+counted. Two skills were retired to recover budget that trimming their bodies could never
+have touched — the lever was misread, and the correct action was tightening the four longest
+descriptions, which are domain skills padded with repeated framing rather than trigger terms.
+
+A description is written for a matcher, not a reader. "Use this skill when Kaustubh discusses"
+appearing three times costs budget and adds no trigger coverage.
+
+The retirements themselves did no harm — the content was folded into the surviving skills and
+routing improved both times — but the reasoning was wrong, and a decision that happens to work
+out on bad reasoning is still bad reasoning.
