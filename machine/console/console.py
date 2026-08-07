@@ -671,7 +671,12 @@ def digest(date: str = ""):
     # Decisions are stored but were never served back, so every item rendered as undecided
     # forever and the count never fell. Storing without serving is the same defect as an
     # approval that does not build: the action happens and the interface cannot say so.
-    _dec = _decisions().get(p.stem, {})
+    _all = _decisions()
+    _dec = dict(_all.get(p.stem, {}))
+    # Standing suppressions apply to every day, past and future — that is what "always" means.
+    for _k, _v in (_all.get("_always") or {}).items():
+        _dec.setdefault(_k, {"action": _v["action"], "note": "always",
+                             "at": _v["since"], "standing": True})
     for _it in items:
         _key = (_it.get('one') or '')[:80]
         _it['key'] = _key
@@ -1241,9 +1246,24 @@ def digest_decide(date: str = Form(...), item: str = Form(...), action: str = Fo
                                  "context, skill, canvas, draft, evidence, corrected, "
                                  "dismissed, undo")
     d = _decisions()
-    d.setdefault(date, {})[item] = {
-        "action": action, "note": note,
+    # An array index is not an identity. The digest is regenerated nightly, so index 0 refers
+    # to a different email tomorrow and a decision silently attaches to the wrong item. Resolve
+    # a numeric index to the item's subject key at write time, so the decision survives a
+    # regeneration and "always" can match across days.
+    key = item
+    if item.isdigit():
+        try:
+            items = digest(date).get("items", [])
+            key = items[int(item)]["key"]
+        except Exception:
+            raise HTTPException(422, f"index {item} does not resolve on {date}")
+    d.setdefault(date, {})[key] = {
+        "action": action, "note": note, "subject": key,
         "at": dt.datetime.now().isoformat(timespec="seconds")}
+    if note == "always":
+        # A standing suppression is not a fact about one day. Store it once, apply it forever.
+        d.setdefault("_always", {})[key] = {
+            "action": action, "since": dt.datetime.now().isoformat(timespec="seconds")}
     DECISIONS.parent.mkdir(parents=True, exist_ok=True)
     DECISIONS.write_text(json.dumps(d, indent=2))
     return {"ok": True, "date": date, "item": item, "action": action}
