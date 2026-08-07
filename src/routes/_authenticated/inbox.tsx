@@ -6,7 +6,7 @@ import { Page } from "@/components/Page";
 
 import { Empty, Skeleton } from "@/components/data";
 import { InstallPrompt } from "@/components/InstallPrompt";
-import { isRefusal, useLocal } from "@/lib/local-bridge";
+import { LocalError, isRefusal, useLocal } from "@/lib/local-bridge";
 import { emptyBlock, emptyDoc } from "@/lib/canvas-types";
 import { writeCanvas } from "@/lib/canvas-store";
 import {
