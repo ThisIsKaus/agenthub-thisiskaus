@@ -395,6 +395,17 @@ def pipeline():
         seen_cls.update(re.findall(r"\b(noise|signal|task)\b", f.read_text(errors="ignore")))
     total = sum(seen_cls.values())
     single = total >= 20 and len(seen_cls) == 1
+    real = H / "evals" / "triage_real.jsonl"
+    if real.exists():
+        rows = [json.loads(l) for l in real.read_text().splitlines() if l.strip()]
+        agree = sum(1 for r in rows if r.get("cls") == r.get("machine_said"))
+        pct = 100 * agree // max(len(rows), 1)
+        # Measured against real mail, not fifteen invented examples. The invented set scored
+        # 80% while production classified 52 consecutive items as one class.
+        rec(g, "triage matches real mail", pct >= 80,
+            f"{agree}/{len(rows)} ({pct}%) on items from actual digests",
+            "the classifier disagrees with your own labels on real mail")
+
     rec(g, "triage discriminates", not single,
         f"last 5 days: {dict(seen_cls)}" if total else "no digests yet",
         "every item is one class — the classifier has stopped discriminating")

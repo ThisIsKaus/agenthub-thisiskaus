@@ -18,19 +18,29 @@ OUT = H / "evals" / "triage_real.jsonl"
 n = int(sys.argv[sys.argv.index("--extract") + 1]) if "--extract" in sys.argv else 40
 rows, seen = [], set()
 for f in sorted((H / "digests").glob("*.md"), reverse=True):
-    for m in re.finditer(r"\*\*(.{5,90}?)\*\*\s*\n?\s*(.{0,140})", f.read_text(errors="ignore")):
-        subj = m.group(1).strip()
+    # Read the format before writing the pattern. Digest lines are:
+    #   - [FLAG] `src` [cls/entity/sensitivity] one-line summary
+    for m in re.finditer(r"^- (\[FLAG\] )?`([^`]+)` \[([a-z]+)/([^/]+)/([^\]]+)\] (.+)$",
+                         f.read_text(errors="ignore"), re.M):
+        subj = m.group(6).strip()
+        was = m.group(3)
         if subj in seen or len(subj) < 8:
             continue
         seen.add(subj)
-        rows.append({"id": f"r{len(rows)+1:03d}", "day": f.stem,
-                     "text": f"{subj}\n{m.group(2).strip()[:120]}",
-                     "cls": "", "note": "label as noise, signal or task"})
+        rows.append({"id": f"r{len(rows)+1:03d}", "day": f.stem, "text": subj,
+                     "src": m.group(2), "flagged": bool(m.group(1)),
+                     "machine_said": was, "cls": "",
+                     "note": "label cls yourself — machine_said is what it guessed"})
         if len(rows) >= n:
             break
     if len(rows) >= n:
         break
 
+# Writing an empty set is worse than failing: the eval would pass on nothing and report
+# healthy. A golden set with no items is not a golden set.
+if not rows:
+    sys.exit("extracted 0 items — the digest format does not match the pattern. "
+             "Read a digest before changing the regex.")
 OUT.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n")
 print(f"{len(rows)} real items -> {OUT}")
 print("Label the `cls` field, then the eval measures your mail rather than examples.")
