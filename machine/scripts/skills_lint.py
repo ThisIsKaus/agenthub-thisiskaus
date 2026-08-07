@@ -12,6 +12,7 @@ ceiling eventually crowds out the task.
   skills_lint.py --json     machine-readable
   skills_lint.py <dir>      lint one skill
 """
+import re
 import json, re, sys
 from pathlib import Path
 
@@ -70,7 +71,8 @@ def check(d):
         errs.append(f"description {len(desc)} characters, limit is 1024")
     elif len(desc) < 80:
         warns.append(f"description only {len(desc)} characters — a weak trigger")
-    elif " when " not in desc.lower() and "use this" not in desc.lower():
+    elif not re.search(r"\buse (this |it )?when\b|\bwhen (kos|the user|a )",
+                       " ".join(desc.split()).lower()):
         warns.append("description says what but not when — triggering will be unreliable")
     n = len(body.splitlines())
     if n > 500:
