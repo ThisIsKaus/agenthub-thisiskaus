@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { ChevronDown } from "lucide-react";
 import { Section } from "@/components/Section";
+import { Disclosure } from "@/components/Disclosure";
 import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { Field } from "@/components/Field";
@@ -99,7 +100,7 @@ function figure(value: string | number | undefined) {
 
 function ProposalsPage() {
   const local = useLocal();
-  const { runJob } = useJobDrawer();
+  const { runJob, trackJob } = useJobDrawer();
   const [data, setData] = useState<ProposalsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
