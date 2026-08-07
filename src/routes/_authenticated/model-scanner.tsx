@@ -68,9 +68,11 @@ type ScanData = {
   envelope?: Envelope;
   current?: { id?: string; role?: string }[];
   note?: string;
+  cached?: boolean;
   last_scan?: string | null;
   error?: string;
 };
+
 
 function num(value: unknown, digits = 0, suffix = "") {
   const parsed = toNum(value);
