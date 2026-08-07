@@ -8,6 +8,7 @@ import { LocalOnly } from "@/components/LocalOnly";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
 import { toNum } from "@/lib/format";
+import { relativeTime } from "@/lib/captures";
 import { parseTrialReport, type TrialReport } from "@/lib/model-scan-report";
 
 export const Route = createFileRoute("/_authenticated/model-scanner")({
