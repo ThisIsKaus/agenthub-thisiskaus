@@ -1228,9 +1228,18 @@ def digest_decide(date: str = Form(...), item: str = Form(...), action: str = Fo
         d.get(date, {}).pop(item, None)
         DECISIONS.write_text(json.dumps(d, indent=2))
         return {"ok": True, "date": date, "item": item, "action": "undo"}
+    # The interface sends `dismiss`; the enum listed `dismissed`. Every click returned 422
+    # and the page carried on as though nothing had happened — an action that fails validation
+    # silently is indistinguishable from one that was never wired. Accept both tenses and
+    # normalise, rather than making the caller guess which form a verb takes.
+    ALIASES = {"dismiss": "dismissed", "correct": "corrected", "file": "context",
+               "reclassify": "corrected", "wrong": "corrected", "undo": "undo"}
+    action = ALIASES.get(action, action)
     if action not in ("context", "skill", "canvas", "draft", "evidence",
-                      "corrected", "dismissed"):
-        raise HTTPException(422, "unknown action")
+                      "corrected", "dismissed", "undo"):
+        raise HTTPException(422, f"unknown action '{action}' — expected one of "
+                                 "context, skill, canvas, draft, evidence, corrected, "
+                                 "dismissed, undo")
     d = _decisions()
     d.setdefault(date, {})[item] = {
         "action": action, "note": note,
