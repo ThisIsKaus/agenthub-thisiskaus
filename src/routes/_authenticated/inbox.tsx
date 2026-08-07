@@ -57,9 +57,8 @@ const SENSITIVITIES = ["S0", "S1p", "S1c", "S2", "S3"];
 const INJECTIONS = ["none", "suspected", "confirmed"];
 
 /** The four lanes the actions derive from. Anything else is signal. */
-type Lane = "flagged" | "task" | "signal" | "noise";
+type Lane = InboxLane;
 
-const LANE_ORDER: Record<Lane, number> = { flagged: 0, task: 1, signal: 2, noise: 3 };
 
 function laneOf(item: DigestItem): Lane {
   if (item.flag) return "flagged";
