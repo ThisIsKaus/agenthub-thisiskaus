@@ -386,6 +386,19 @@ def pipeline():
             rec(g, "filter catches probes", False, str(e)[:80], "could not evaluate the pattern")
 
     today = H / "digests" / f"{dt.date.today().isoformat()}.md"
+    # 52 items across four days classified 100% noise while the eval reported 80% accuracy.
+    # The eval measured the eval set; nothing measured production. A classifier that returns
+    # one class for everything has stopped classifying, and it did so invisibly.
+    import collections
+    seen_cls = collections.Counter()
+    for f in sorted((H / "digests").glob("*.md"))[-5:]:
+        seen_cls.update(re.findall(r"\b(noise|signal|task)\b", f.read_text(errors="ignore")))
+    total = sum(seen_cls.values())
+    single = total >= 20 and len(seen_cls) == 1
+    rec(g, "triage discriminates", not single,
+        f"last 5 days: {dict(seen_cls)}" if total else "no digests yet",
+        "every item is one class — the classifier has stopped discriminating")
+
     rec(g, "digest today", today.exists(), str(today.name) if today.exists() else "none",
         "intake", warn=not today.exists())
 
