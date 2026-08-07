@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/AppShell";
 import { ChevronDown } from "lucide-react";
 import { Section } from "@/components/Section";
+import { Disclosure } from "@/components/Disclosure";
 import { Empty, Skeleton, StatusPill, formatStamp } from "@/components/data";
 import { LocalOnly } from "@/components/LocalOnly";
 import { Field } from "@/components/Field";
@@ -52,17 +53,24 @@ type Proposal = {
   score?: number;
   status?: string;
   created?: string;
+  note?: string;
+  reason?: string;
+  job?: string | number | null;
+  job_running?: boolean;
+  job_result?: string | null;
 };
 
 type ProposalsData = {
   proposals?: Proposal[];
+  open?: Proposal[];
   counts?: Record<string, unknown>;
   last_diagnosed?: string | null;
   stats?: Record<string, unknown> & { last_diagnosed?: string; diagnosed?: string };
 };
 
 /** The statuses the queue speaks in, in the order they are worth reading. */
-const STATUS_ORDER = ["open", "approved", "rejected", "deferred"];
+const STATUS_ORDER = ["open", "building", "built", "build failed", "rejected", "deferred"];
+
 
 
 const PROTECTED: { match: (path: string) => boolean; control: string }[] = [
@@ -92,7 +100,7 @@ function figure(value: string | number | undefined) {
 
 function ProposalsPage() {
   const local = useLocal();
-  const { runJob } = useJobDrawer();
+  const { runJob, trackJob } = useJobDrawer();
   const [data, setData] = useState<ProposalsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -113,10 +121,24 @@ function ProposalsPage() {
     void load();
   }, [load]);
 
-  const proposals = useMemo(
+  const all = useMemo(
     () => [...(data?.proposals ?? [])].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)),
     [data],
   );
+
+  /** The queue shows only what still needs a decision. */
+  const queue = useMemo(() => {
+    const reported = data?.open;
+    const rows = Array.isArray(reported)
+      ? [...reported]
+      : all.filter((proposal) => (proposal.status ?? "open").toLowerCase() === "open");
+    return rows.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  }, [data, all]);
+
+  const decided = useMemo(() => {
+    const openIds = new Set(queue.map((proposal) => proposal.id));
+    return all.filter((proposal) => !openIds.has(proposal.id));
+  }, [all, queue]);
 
   /**
    * One figure per status the machine reports, each labelled by its own status.
@@ -133,7 +155,7 @@ function ProposalsPage() {
       }
     }
     if (map.size === 0) {
-      for (const proposal of proposals) {
+      for (const proposal of all) {
         const key = proposal.status ?? "open";
         map.set(key, (map.get(key) ?? 0) + 1);
       }
@@ -143,18 +165,40 @@ function ProposalsPage() {
       const bi = STATUS_ORDER.indexOf(b[0]);
       return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
     });
-  }, [data, proposals]);
+  }, [data, all]);
 
   const lastDiagnosed =
     data?.last_diagnosed ?? data?.stats?.last_diagnosed ?? data?.stats?.diagnosed ?? null;
 
+  /** While a build is running the page refreshes itself; the user should not have to. */
+  const building = decided.some((proposal) => proposal.job_running === true);
+  useEffect(() => {
+    if (!building) return;
+    const timer = window.setInterval(() => void load(), 5000);
+    return () => window.clearInterval(timer);
+  }, [building, load]);
 
   async function act(id: string, action: string, actionNote: string) {
     setNote(null);
     try {
-      await local.post("/api/proposals/act", { id, action, note: actionNote });
+      const result = await local.post<{
+        ok?: boolean;
+        status?: string;
+        job?: string | number;
+        label?: string;
+      }>("/api/proposals/act", { id, action, note: actionNote });
       setOpenId(null);
+      if (result?.job) {
+        trackJob(String(result.job), "cascade", result.label ?? `build ${id}`, () => void load());
+      }
       await load();
+      if (action === "approve") {
+        setNote(
+          result?.job
+            ? `Approved — building as job ${result.job}. It is in Decided below and streaming into the drawer.`
+            : "Approved. It has moved to Decided below.",
+        );
+      }
     } catch (error) {
       setNote(
         isRefusal(error)
@@ -200,13 +244,13 @@ function ProposalsPage() {
           <Skeleton className="h-14 w-full" />
           <Skeleton className="h-14 w-full" />
         </div>
-      ) : proposals.length === 0 ? (
+      ) : queue.length === 0 ? (
         <Panel title="Queue">
-          <Empty>Nothing proposed. The diagnostician runs nightly.</Empty>
+          <Empty>Nothing awaiting a decision. The diagnostician runs nightly.</Empty>
         </Panel>
       ) : (
         <div className="border border-rule bg-panel">
-          {proposals.map((proposal, index) => (
+          {queue.map((proposal, index) => (
             <ProposalRow
               key={proposal.id}
               proposal={proposal}
@@ -219,9 +263,90 @@ function ProposalsPage() {
         </div>
       )}
       </Section>
+
+      {!loading && decided.length > 0 && (
+        <Section title="Decided">
+          <div className="border border-rule bg-panel px-4">
+            <Disclosure
+              summary={
+                <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                  {decided.length} acted on · what happened next
+                </span>
+              }
+            >
+              <div className="space-y-4">
+                {decided.map((proposal) => (
+                  <DecidedRow key={proposal.id} proposal={proposal} />
+                ))}
+              </div>
+            </Disclosure>
+          </div>
+        </Section>
+      )}
     </div>
   );
 }
+
+function Elapsed({ since }: { since?: string }) {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => tick((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const start = since ? new Date(since).getTime() : NaN;
+  if (!Number.isFinite(start)) return <>running</>;
+  const seconds = Math.max(0, Math.round((Date.now() - start) / 1000));
+  return <>{`${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, "0")}s elapsed`}</>;
+}
+
+function DecidedRow({ proposal }: { proposal: Proposal }) {
+  const status = (proposal.status ?? "").toLowerCase();
+  const tone =
+    status === "build failed" ? "text-risk" : status === "built" ? "text-ok" : "text-muted-foreground";
+
+  return (
+    <article className="space-y-1.5">
+      <p className="text-[14px] text-paper">{proposal.title ?? proposal.id}</p>
+      <p className={`font-mono text-[10px] uppercase tracking-[0.12em] ${tone}`}>
+        {proposal.status ?? "acted"}
+        {proposal.job ? ` · job ${proposal.job}` : ""}
+        {proposal.job_running ? (
+          <>
+            {" · "}
+            <Elapsed since={proposal.created} />
+          </>
+        ) : null}
+      </p>
+
+      {status === "building" && (
+        <p className="text-[12px] leading-relaxed text-faint">
+          Building. Its output is streaming into the job drawer.
+        </p>
+      )}
+      {status === "built" && (
+        <p className="text-[12px] leading-relaxed text-muted-foreground">
+          built — review the branch under Build before it merges
+        </p>
+      )}
+      {status === "build failed" && proposal.job_result && (
+        <pre className="max-w-[72ch] whitespace-pre-wrap break-words border border-rule bg-panel2 px-3 py-2 font-mono text-[11px] leading-relaxed text-muted-foreground">
+          {proposal.job_result.slice(-400)}
+        </pre>
+      )}
+      {status === "rejected" && (
+        <p className="max-w-[72ch] text-[13px] leading-relaxed text-paper">
+          {proposal.reason?.trim() || proposal.note?.trim() || "no reason recorded"}
+        </p>
+      )}
+      {status === "deferred" && (proposal.note?.trim() || proposal.reason?.trim()) && (
+        <p className="max-w-[72ch] text-[13px] leading-relaxed text-muted-foreground">
+          {proposal.note?.trim() || proposal.reason?.trim()}
+        </p>
+      )}
+    </article>
+  );
+}
+
 
 function ProposalRow({
   proposal,
