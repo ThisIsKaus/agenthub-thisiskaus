@@ -403,6 +403,14 @@ function TriageLane() {
           </button>
         </div>
 
+        {group.rows.some((row) => failures[row.index]) && (
+          <p className="mt-1 max-w-[72ch] break-words font-mono text-[11px] leading-relaxed text-risk">
+            {[...new Set(group.rows.map((row) => failures[row.index]).filter(Boolean))].join(" · ")}
+          </p>
+        )}
+
+
+
         {lane === "flagged" && openEvidence === index && expanded && (
           <div className="mt-2 border border-watch/40 bg-panel2 p-2">
             <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-watch">
