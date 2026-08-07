@@ -319,6 +319,24 @@ Return ONLY a JSON array, no prose, no markdown fences:
   "impact": "high|medium|low", "effort": "low|medium|high", "confidence": 0.0-1.0}]"""
 
 
+# The diagnostician parsed free-form JSON and failed on a malformed delimiter at char 179.
+# Three pipelines in this build have degraded the same way. A schema is not optional for any
+# model output that is parsed rather than read.
+PROPOSAL_SCHEMA = {"type": "json_schema", "json_schema": {"name": "proposals", "strict": True,
+  "schema": {"type": "object", "properties": {"proposals": {"type": "array", "items": {
+      "type": "object", "properties": {
+          "title": {"type": "string"}, "why": {"type": "string"},
+          "change": {"type": "string"},
+          "files": {"type": "array", "items": {"type": "string"}},
+          "category": {"type": "string"},
+          "impact": {"type": "integer"}, "effort": {"type": "integer"},
+          "confidence": {"type": "number"}},
+      "required": ["title", "why", "change", "files", "category",
+                   "impact", "effort", "confidence"],
+      "additionalProperties": False}}},
+    "required": ["proposals"], "additionalProperties": False}}}
+
+
 def propose(signals, model="local-brain"):
     import requests
     recent = sh("git log --since='7 days ago' --pretty=format:'%s' -- machine | head -25")
@@ -326,7 +344,7 @@ def propose(signals, model="local-brain"):
                         for t, st, n in decided[:12])
     ev = "\n".join(f"[{s['kind']}, weight {s['weight']}] {s['title']}\n    {s['evidence']}"
                    for s in sorted(signals, key=lambda x: -x["weight"])[:18])
-    body = {"model": model, "temperature": 0, "max_tokens": 6000,
+    body = {"model": model, "temperature": 0, "response_format": PROPOSAL_SCHEMA, "max_tokens": 6000,
             "messages": [{"role": "system", "content": SYSTEM},
                          {"role": "user", "content":
                           "Evidence from the running system:\n\n" + ev +
