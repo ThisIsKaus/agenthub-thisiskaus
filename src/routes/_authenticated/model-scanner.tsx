@@ -249,12 +249,27 @@ function ScannerPage() {
 
       <Section
         title="Candidates"
-        note={data?.last_scan ? `scanned ${formatStamp(data.last_scan)}` : undefined}
+        note={
+          data?.last_scan
+            ? `scanned ${relativeTime(String(data.last_scan))}${data.cached ? " · from cache" : ""}`
+            : undefined
+        }
       >
         <Panel title="Ranked by fit and adoption">
-          <p className="max-w-[72ch] text-[12px] leading-relaxed text-faint">
-            Downloads and likes are adoption elsewhere, not evidence about this machine.
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="max-w-[72ch] text-[12px] leading-relaxed text-faint">
+              Downloads and likes are adoption elsewhere, not evidence about this machine.
+            </p>
+            <button
+              type="button"
+              disabled={scanning}
+              onClick={() => void rescan()}
+              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+            >
+              {scanning ? "Scanning Hugging Face…" : "Scan now"}
+            </button>
+          </div>
+
 
           {loading ? (
             <div className="mt-3 space-y-2">
