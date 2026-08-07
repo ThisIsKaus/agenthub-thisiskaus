@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/inbox")({
   ),
 });
 
-type Decision = { action?: string; note?: string; at?: string } | string | null;
+type Decision = { action?: string; note?: string; at?: string } | string | null | undefined;
 
 type DigestItem = {
   flag?: string;
