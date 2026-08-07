@@ -9,6 +9,16 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { emptyBlock, emptyDoc } from "@/lib/canvas-types";
 import { writeCanvas } from "@/lib/canvas-store";
+import {
+  dayHeadline,
+  daySubline,
+  groupRows,
+  recurrenceMap,
+  recurrenceNote,
+  sortGroups,
+  subjectKey,
+  type Lane as InboxLane,
+} from "@/lib/inbox-digest";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   head: () => ({
@@ -57,9 +67,8 @@ const SENSITIVITIES = ["S0", "S1p", "S1c", "S2", "S3"];
 const INJECTIONS = ["none", "suspected", "confirmed"];
 
 /** The four lanes the actions derive from. Anything else is signal. */
-type Lane = "flagged" | "task" | "signal" | "noise";
+type Lane = InboxLane;
 
-const LANE_ORDER: Record<Lane, number> = { flagged: 0, task: 1, signal: 2, noise: 3 };
 
 function laneOf(item: DigestItem): Lane {
   if (item.flag) return "flagged";
@@ -118,6 +127,8 @@ function TriageLane() {
   const [openCorrect, setOpenCorrect] = useState<number | null>(null);
   const [openEvidence, setOpenEvidence] = useState<number | null>(null);
   const [showDecided, setShowDecided] = useState(false);
+  const [showEverything, setShowEverything] = useState(false);
+  const [history, setHistory] = useState<Record<string, string[]>>({});
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(
@@ -142,6 +153,34 @@ function TriageLane() {
 
   const items = useMemo(() => data?.items ?? [], [data]);
   const day = data?.date;
+  const dates = useMemo(() => data?.dates ?? [], [data]);
+
+  /** Recurrence needs the neighbouring days — subjects only, read on the machine. */
+  useEffect(() => {
+    if (!local.available || !day) return;
+    const window = [day, ...dates.filter((d) => d !== day)].slice(0, 7);
+    let cancelled = false;
+    void (async () => {
+      const collected: Record<string, string[]> = {};
+      await Promise.all(
+        window.map(async (target) => {
+          try {
+            const payload =
+              target === day
+                ? data
+                : await local.get<DigestData>("/api/digest", { date: target });
+            collected[target] = (payload?.items ?? []).map((item) => item.one ?? "");
+          } catch {
+            /* a missing day simply does not count towards recurrence */
+          }
+        }),
+      );
+      if (!cancelled) setHistory(collected);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [data, dates, day, local]);
 
   const rows = useMemo(
     () =>
@@ -160,14 +199,24 @@ function TriageLane() {
     [items, local_decisions],
   );
 
-  const undecided = useMemo(
-    () =>
-      rows
-        .filter((row) => !row.action)
-        .sort((a, b) => LANE_ORDER[a.lane] - LANE_ORDER[b.lane] || a.index - b.index),
-    [rows],
+  const groups = useMemo(() => sortGroups(groupRows(rows)), [rows]);
+  const recurrence = useMemo(() => recurrenceMap(history), [history]);
+  const historyWindow = Math.max(Object.keys(history).length, 1);
+
+  const needing = useMemo(
+    () => groups.filter((g) => (g.lane === "flagged" || g.lane === "task") && g.undecided.length > 0),
+    [groups],
   );
-  const decided = useMemo(() => rows.filter((row) => row.action), [rows]);
+  const informational = useMemo(
+    () => groups.filter((g) => g.lane === "signal" || g.lane === "noise"),
+    [groups],
+  );
+  const decidedRows = useMemo(() => rows.filter((row) => row.action), [rows]);
+  const needingCount = needing.reduce((total, g) => total + g.undecided.length, 0);
+  const flaggedCount = needing
+    .filter((g) => g.lane === "flagged")
+    .reduce((total, g) => total + g.undecided.length, 0);
+  const informationalCount = informational.reduce((total, g) => total + g.count, 0);
 
   const record = useCallback(
     async (index: number, action: string, actionNote = "") => {
@@ -195,6 +244,18 @@ function TriageLane() {
       }
     },
     [day, local],
+  );
+
+  /** One decision covers every arrival of the same subject. */
+  const recordGroup = useCallback(
+    async (indices: number[], action: string) => {
+      for (const index of indices) {
+        const ok = await record(index, action);
+        if (!ok) return false;
+      }
+      return true;
+    },
+    [record],
   );
 
   if (!local.available) {
@@ -251,8 +312,109 @@ function TriageLane() {
   }
 
   const arrived = items.length;
-  const taskCount = rows.filter((row) => row.lane === "task").length;
-  const flaggedCount = rows.filter((row) => row.lane === "flagged").length;
+
+  function renderGroup(group: (typeof groups)[number], expanded: boolean) {
+    const { head, count, lane } = group;
+    const item = head.item;
+    const index = head.index;
+    const indices = group.undecided.map((row) => row.index);
+    const recurs = recurrenceNote(
+      recurrence.get(`${subjectKey(item.one)}`),
+      historyWindow,
+    );
+    return (
+      <li key={group.key} className="border-t border-rule py-3 first:border-t-0">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span
+            className={`border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+              lane === "flagged"
+                ? "border-watch text-watch"
+                : lane === "task"
+                  ? "border-copper/60 text-copper"
+                  : "border-rule text-muted-foreground"
+            }`}
+          >
+            {lane === "flagged" ? "FLAG" : lane}
+          </span>
+          <span className="min-w-0 flex-1 text-[14px] leading-relaxed text-paper">
+            {item.one}
+            {count > 1 && (
+              <span className="ml-2 font-mono text-[11px] tabular-nums text-faint">×{count}</span>
+            )}
+          </span>
+        </div>
+        <p className="mt-1 break-all font-mono text-[10px] text-faint">
+          {[item.src, item.ent, item.sen].filter(Boolean).join(" · ")}
+        </p>
+        {recurs && (
+          <p className="mt-0.5 font-mono text-[10px] text-faint">
+            {recurs} — better filtered at source than dismissed daily
+          </p>
+        )}
+
+        <div className="mt-2 flex flex-wrap gap-2">
+          {lane === "noise" && indices.length > 0 && (
+            <ExitButton
+              label={count > 1 ? `Dismiss all ${count}` : "Dismiss"}
+              onClick={() => void recordGroup(indices, "dismiss")}
+            />
+          )}
+          {(lane === "signal" || lane === "task") && indices.length > 0 && (
+            <ExitButton label="File as context" onClick={() => void toContext(index, item)} />
+          )}
+          {lane === "task" && indices.length > 0 && (
+            <>
+              <ExitButton label="Draft reply" onClick={() => void toDraft(index, item)} />
+              <ExitButton label="Open in Canvas" onClick={() => void toCanvas(index, item)} />
+            </>
+          )}
+          {lane === "flagged" && (
+            <ExitButton
+              label={openEvidence === index ? "Hide evidence" : "Read the evidence"}
+              onClick={() => setOpenEvidence(openEvidence === index ? null : index)}
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => setOpenCorrect(openCorrect === index ? null : index)}
+            className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+          >
+            Wrong class?
+          </button>
+        </div>
+
+        {lane === "flagged" && openEvidence === index && expanded && (
+          <div className="mt-2 border border-watch/40 bg-panel2 p-2">
+            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-watch">
+              flagged {typeof item.flag === "string" ? `· ${item.flag}` : ""}
+            </p>
+            <p className="mt-1 max-w-[72ch] text-[12px] leading-relaxed text-paper">
+              {item.why ?? item.reason ?? item.one}
+            </p>
+            <button
+              type="button"
+              onClick={() => void record(index, "evidence")}
+              className="mt-2 border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+            >
+              Mark read
+            </button>
+          </div>
+        )}
+
+        {openCorrect === index && (
+          <CorrectRow
+            item={item}
+            onDone={async () => {
+              setOpenCorrect(null);
+              await record(index, "reclassified");
+              setNote("correction recorded as a golden eval item");
+            }}
+            onNote={setNote}
+          />
+        )}
+      </li>
+    );
+  }
 
   return (
     <section className="space-y-3">
@@ -261,13 +423,13 @@ function TriageLane() {
           Overnight · {day ?? "—"}
         </div>
         <span className="font-mono text-[10px] tabular-nums text-faint">
-          {undecided.length} undecided · {decided.length} decided
+          {needingCount} need you · {decidedRows.length} decided
         </span>
       </div>
 
-      {(data?.dates ?? []).length > 1 && (
+      {dates.length > 1 && (
         <div className="flex flex-wrap gap-2">
-          {(data?.dates ?? []).map((option) => (
+          {dates.map((option) => (
             <button
               key={option}
               type="button"
@@ -293,154 +455,73 @@ function TriageLane() {
           </div>
         ) : arrived === 0 ? (
           <Empty>Nothing was read overnight.</Empty>
-        ) : undecided.length === 0 && !showDecided ? (
-          <div className="space-y-2">
-            <p className="text-[14px] leading-relaxed text-paper">Nothing left from this day.</p>
-            {decided.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowDecided(true)}
-                className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
-              >
-                Show decided ({decided.length})
-              </button>
-            )}
-          </div>
         ) : (
           <div className="space-y-3">
+            <p className="max-w-[72ch] text-[14px] leading-relaxed text-paper">
+              {dayHeadline(needingCount, flaggedCount)}
+            </p>
             <p className="font-mono text-[10px] tabular-nums text-faint">
-              {arrived} arrived · {taskCount} tasks · {flaggedCount} flagged · {decided.length}{" "}
-              already decided
+              {daySubline(arrived, informationalCount, decidedRows.length)}
             </p>
 
-            <ul>
-              {undecided.map(({ item, index, lane }) => (
-                <li key={index} className="border-t border-rule py-3 first:border-t-0">
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <span
-                      className={`border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
-                        lane === "flagged"
-                          ? "border-watch text-watch"
-                          : lane === "task"
-                            ? "border-copper/60 text-copper"
-                            : "border-rule text-muted-foreground"
-                      }`}
-                    >
-                      {lane === "flagged" ? "FLAG" : lane}
-                    </span>
-                    <span className="min-w-0 flex-1 text-[14px] leading-relaxed text-paper">
-                      {item.one}
-                    </span>
-                  </div>
-                  <p className="mt-1 break-all font-mono text-[10px] text-faint">
-                    {[item.src, item.ent, item.sen].filter(Boolean).join(" · ")}
-                  </p>
+            {needing.length > 0 && <ul>{needing.map((group) => renderGroup(group, true))}</ul>}
 
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {lane === "noise" && (
-                      <ExitButton label="Dismiss" onClick={() => void record(index, "dismiss")} />
-                    )}
-                    {(lane === "signal" || lane === "task") && (
-                      <ExitButton
-                        label="File as context"
-                        onClick={() => void toContext(index, item)}
-                      />
-                    )}
-                    {lane === "task" && (
-                      <>
-                        <ExitButton label="Draft reply" onClick={() => void toDraft(index, item)} />
-                        <ExitButton
-                          label="Open in Canvas"
-                          onClick={() => void toCanvas(index, item)}
-                        />
-                      </>
-                    )}
-                    {lane === "flagged" && (
-                      <ExitButton
-                        label={openEvidence === index ? "Hide evidence" : "Read the evidence"}
-                        onClick={() => setOpenEvidence(openEvidence === index ? null : index)}
-                      />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setOpenCorrect(openCorrect === index ? null : index)}
-                      className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
-                    >
-                      Wrong class?
-                    </button>
-                  </div>
-
-                  {lane === "flagged" && openEvidence === index && (
-                    <div className="mt-2 border border-watch/40 bg-panel2 p-2">
-                      <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-watch">
-                        flagged {typeof item.flag === "string" ? `· ${item.flag}` : ""}
-                      </p>
-                      <p className="mt-1 max-w-[72ch] text-[12px] leading-relaxed text-paper">
-                        {item.why ?? item.reason ?? item.one}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => void record(index, "evidence")}
-                        className="mt-2 border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
-                      >
-                        Mark read
-                      </button>
-                    </div>
-                  )}
-
-                  {openCorrect === index && (
-                    <CorrectRow
-                      item={item}
-                      onDone={async () => {
-                        setOpenCorrect(null);
-                        await record(index, "reclassified");
-                        setNote("correction recorded as a golden eval item");
-                      }}
-                      onNote={setNote}
-                    />
-                  )}
-                </li>
-              ))}
-            </ul>
-
-            {decided.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowDecided((current) => !current)}
-                className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
-              >
-                {showDecided ? "Hide decided" : `Show decided (${decided.length})`}
-              </button>
+            {informational.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowEverything((current) => !current)}
+                  className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+                >
+                  {showEverything ? "Hide everything" : `Show everything (${informationalCount})`}
+                </button>
+                {showEverything && (
+                  <ul className="mt-2 border-t border-rule pt-2">
+                    {informational.map((group) => renderGroup(group, true))}
+                  </ul>
+                )}
+              </div>
             )}
 
-            {showDecided && decided.length > 0 && (
-              <ul className="border-t border-rule pt-2">
-                {decided.map(({ item, index, action, at }) => (
-                  <li
-                    key={index}
-                    className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule py-2 first:border-t-0"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
-                      {item.one}
-                    </span>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-copper">
-                      → {DONE_LABEL[action ?? ""] ?? action}
-                    </span>
-                    {shortTime(at) && (
-                      <span className="font-mono text-[10px] tabular-nums text-faint">
-                        {shortTime(at)}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => void record(index, "undo")}
-                      className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
-                    >
-                      Undo
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            {decidedRows.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowDecided((current) => !current)}
+                  className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+                >
+                  {showDecided ? "Hide decided" : `Show decided (${decidedRows.length})`}
+                </button>
+                {showDecided && (
+                  <ul className="mt-2 border-t border-rule pt-2">
+                    {decidedRows.map(({ item, index, action, at }) => (
+                      <li
+                        key={index}
+                        className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule py-2 first:border-t-0"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
+                          {item.one}
+                        </span>
+                        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-copper">
+                          → {DONE_LABEL[action ?? ""] ?? action}
+                        </span>
+                        {shortTime(at) && (
+                          <span className="font-mono text-[10px] tabular-nums text-faint">
+                            {shortTime(at)}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => void record(index, "undo")}
+                          className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+                        >
+                          Undo
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
           </div>
         )}
