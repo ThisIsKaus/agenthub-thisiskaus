@@ -130,6 +130,8 @@ function TriageLane() {
   const [showEverything, setShowEverything] = useState(false);
   const [history, setHistory] = useState<Record<string, string[]>>({});
   const [note, setNote] = useState<string | null>(null);
+  /** Verbatim failure lines, keyed by item index — a failed write must be visible. */
+  const [failures, setFailures] = useState<Record<number, string>>({});
 
   const load = useCallback(
     async (target?: string) => {
