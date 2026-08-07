@@ -33,6 +33,5 @@ report/state-history.jsonl
 skills-lib/
 
 # Golden sets are the learning artefact, not logs. *.jsonl swept them up twice.
-!evals/intent_set.jsonl
-!evals/retrieval_golden.jsonl
+!evals/*.jsonl
 !contracts/*.json
