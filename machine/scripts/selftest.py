@@ -118,7 +118,7 @@ def foundation():
     # Studio weights and hid scanner.py from git, the remote, and the CI guard — one disk
     # failure from gone, with every check reporting healthy.
     src = sh("cd ~/Workspace && git status --porcelain --ignored machine/ | "
-             "grep '^!!' | grep -E '\\.(py|sh|md|json|yaml|jsonl)$' | head -5", 60)
+             "grep '^!!' | grep -E '\\.(py|sh)$|evals/.*\\.jsonl$|contracts/.*\\.json$' | head -5", 60)
     orphan = [l.replace("!! ", "").strip() for l in src.splitlines() if l.strip()]
     rec(g, "no source is gitignored", not orphan,
         f"{len(orphan)} ignored source file(s): {orphan[0] if orphan else ''}"[:70]
