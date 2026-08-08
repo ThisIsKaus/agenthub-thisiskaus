@@ -192,7 +192,7 @@ export function Omnibox() {
             setText(event.target.value);
             setOverridden(false);
 
-            if (!event.target.value.trim()) setAsked(null);
+            }}
           }}
           onKeyDown={onKeyDown}
           disabled={busy}
