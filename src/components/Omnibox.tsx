@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
-import { AskSurface } from "@/components/AskSurface";
+
 import { useJobDrawer } from "@/lib/job-drawer";
 import { insertCaptureJob, queueCapture, type PendingCapture } from "@/lib/capture-queue";
 
@@ -136,8 +136,8 @@ export function Omnibox() {
           setText("");
           setOverridden(false);
         } else if (target === "ask") {
-          // Expand in place. The surface below owns lanes, sources and streaming.
-          setAsked(body);
+          // Ask is the unsaved case of Canvas; there is one surface for both.
+          await navigate({ to: "/canvas", search: { q: body } });
         } else if (target === "build") {
           const started = await local.post<{ job: string }>("/api/build", { intent: body });
           if (started?.job) {
@@ -249,7 +249,7 @@ export function Omnibox() {
         </p>
       )}
 
-      {asked && <AskSurface question={asked} onClose={() => setAsked(null)} />}
+
 
     </section>
   );
