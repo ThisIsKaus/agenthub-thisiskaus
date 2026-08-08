@@ -92,7 +92,8 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-weight: 300;
+    font-size: 15px;
+    font-weight: 400;
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
@@ -101,10 +102,38 @@
   h1,
   h2,
   h3 {
-    font-family: var(--font-serif);
-    font-weight: 400;
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.42px;
   }
 }
+
+/*
+ * Display and mono voice. Outside @layer base so these beat Tailwind utilities.
+ * Mono tracking is the signature of the system, measured on the live site:
+ * 0.48px at 12px, 1.04px at 13px, 2.7px on section labels.
+ */
+.font-serif,
+[class~="font-serif"] {
+  font-weight: 500;
+  letter-spacing: -0.42px;
+}
+
+.font-mono,
+[class~="font-mono"] {
+  font-weight: 400;
+  letter-spacing: 0.04em; /* 0.48px at 12px */
+}
+
+/* One label treatment: spaced small caps. */
+@utility mono-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2.7px;
+}
+
 
 /* The single page frame: 86vw — 7% clear each side at every viewport. */
 @utility page-container {
