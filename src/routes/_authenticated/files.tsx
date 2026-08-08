@@ -107,7 +107,7 @@ function trailOf(path: string, roots: { name: string; path: string }[]) {
   return [root?.name, ...parts].filter(Boolean).join(" / ");
 }
 
-export function FilesPage() {
+function FilesPage() {
   const local = useLocal();
   const mobile = useIsMobile();
   const [roots, setRoots] = useState<{ name: string; path: string }[]>([]);
