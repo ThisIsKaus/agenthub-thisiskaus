@@ -186,42 +186,37 @@ def read_text(p: Path) -> str:
 
 
 def context_label(path: Path) -> str:
-    """DISABLED — measured 8 Aug and reverted. Recall fell 87% to 81%, MRR 0.751 to 0.701.
+    """DISABLED. Twice measured, twice worse. Not called.
 
-    Two faults. The date regex matched inside digit runs: PaymentAdvice_22022019.pdf (22 Feb
-    2019) was labelled 2022-01, because "2022" appears inside "22022019". Every dated document
-    carried a fabricated date into its embedding, and false metadata is worse than none.
-    Second, the longer prefix changed dedup: chunks fell 50,017 to 38,766 and duplicate files
-    rose 417 to 1,195, so real content was dropped.
+    Attempt one added a parsed date and fabricated it: PaymentAdvice_22022019.pdf became
+    2022-01. Recall 87% to 81%.
 
-    The folder trail was correct and useful — "OpenClaw / 03-Knowledge-Base" does distinguish
-    one README from seventy. Re-enable that half only, with the date read from file mtime or
-    a parsed path segment rather than a regex over the whole string.
+    Attempt two used the folder trail only, validated across 3,384 paths with zero fabricated
+    dates — and still cost MRR 0.744 to 0.698, S3 87% to 81%. The diagnosis that four
+    unreachable sources are one README among seventy is correct; prepending the folder is not
+    the remedy. The prefix is prose the embedder weighs alongside the body, so on 50,000
+    chunks it adds more noise than the handful of README queries it helps.
 
-    A situating line for every chunk: where the file lives, and when it is about.
+    If this is revisited, the folder belongs in a metadata column filtered on, or in the BM25
+    side alone — not in the embedded text.
 
-    The chunker prepended the filename alone, which discriminates nothing when 286 payslips
-    share the name KaustubhBajpai_PaySlip.pdf and 70 files are called README.md. Seven of
-    twelve golden-set misses were documents identical but for a date the embedding never saw,
-    and three wanted one README among seventy.
+    Folder trail plus filename. No date parsing.
 
-    The folder trail and any date in the path go into both the vector and the BM25 index.
-    Deterministic, no model call — the cheap half of contextual retrieval, aimed at the
-    failure the golden set actually reports.
+    The first version scanned the whole path for anything resembling a year and labelled
+    PaymentAdvice_22022019.pdf (22 Feb 2019) as 2022-01, because "2022" sits inside
+    "22022019". Fabricated metadata is worse than none — recall fell 87% to 81%.
+
+    The folder half was correct and is what the golden set asks for: four of five unreachable
+    sources are one README among seventy, and the only thing distinguishing them is the
+    directory. This copies path segments; it parses nothing, so it cannot invent anything.
     """
     home = str(Path.home())
     rel = str(path).replace(home + "/", "")
     for noise in ("Library/CloudStorage/", "OneDrive-Personal/",
-                  "OneDrive-AgenticPersonalityPty.Ltd/", "AgentHub/"):
+                  "OneDrive-AgenticPersonalityPty.Ltd/", "AgentHub/", "Workspace/machine/"):
         rel = rel.replace(noise, "")
-    parts = [x for x in Path(rel).parts[:-1] if x not in (".", "")][-3:]
-    m = re.search(r"(20\d{2})[-_ ]?(0[1-9]|1[0-2])?[-_ ]?(0[1-9]|[12]\d|3[01])?", rel)
-    when = ""
-    if m:
-        when = m.group(1) + ("-" + m.group(2) if m.group(2) else "") + \
-               ("-" + m.group(3) if m.group(3) else "")
-    bits = [b for b in (when, " / ".join(parts), path.name) if b]
-    return " · ".join(bits)
+    parts = [x for x in Path(rel).parts[:-1] if x not in (".", "")][-2:]
+    return (" / ".join(parts) + " · " + path.name) if parts else path.name
 
 
 def chunks(text, name=""):

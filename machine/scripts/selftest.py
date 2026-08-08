@@ -313,10 +313,7 @@ def memory():
               "h=sum(1 for r in ans if r['source'] in [x['file'] for x in retrieve.search(r['q'],k=5)])\n"
               "print(f'{h}/{len(ans)}')\nEOF", 300)
     m2 = re.search(r"(\d+)/(\d+)", out2)
-    # 85%, not 80. The old floor had ten points of slack and noticed nothing when recall
-        # fell from 90 to 87. Note that the 90% was measured against a corpus missing 785
-        # documents that global dedup had discarded — a smaller corpus is an easier one.
-        ok2 = bool(m2) and int(m2.group(1)) / max(int(m2.group(2)), 1) >= 0.85
+    ok2 = bool(m2) and int(m2.group(1)) / max(int(m2.group(2)), 1) >= 0.85
     rec(g, "retrieval recall floor", ok2, (m2.group(0) if m2 else out2[-60:]) + " on a 25-question sample",
         "recall has fallen below 80% — a retrieval change regressed")
 
