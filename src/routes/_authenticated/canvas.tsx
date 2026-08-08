@@ -33,6 +33,7 @@ import {
   type Stage,
 } from "@/lib/canvas-types";
 import { listSkills, type Skill } from "@/lib/skills-store";
+import { toNum } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/canvas")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -221,6 +222,7 @@ function CanvasPage() {
 
   const [settings, setSettings] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [kindOpen, setKindOpen] = useState<Record<string, boolean>>({});
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [naming, setNaming] = useState(false);
   const [title, setTitle] = useState("");
@@ -459,7 +461,7 @@ function CanvasPage() {
    * does not know the reach of a query cannot tell a thin answer from a thin corpus.
    */
   const searched: string[] = [];
-  const kbDocs = num(kb.data?.documents);
+  const kbDocs = toNum(kb.data?.documents);
   if (kbDocs !== null) searched.push(`${kbDocs.toLocaleString()} documents`);
   if (skillFiles.data) searched.push(`${skillFiles.data.length} skills`);
   const proposalCount = proposals.data?.proposals?.length;
