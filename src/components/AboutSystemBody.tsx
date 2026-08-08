@@ -150,7 +150,7 @@ export function AboutSystemBody() {
         lede="Every request takes one of three lanes and the lane decides the cost. Two are already paid for. The third is metered, reserved for scheduled and programmatic work, and logged per request so the claim can be checked rather than believed."
       >
         <div className="border border-rule bg-panel p-2">
-          <svg
+          <svg style={{ letterSpacing: "0.48px" }}
             viewBox="0 0 1000 380"
             className="block h-auto w-full"
             role="img"

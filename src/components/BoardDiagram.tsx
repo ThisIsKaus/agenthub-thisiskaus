@@ -157,7 +157,7 @@ export function BoardDiagram({ zones, caption }: { zones: Zone[]; caption: React
   return (
     <div>
       <div className="hidden border border-rule bg-panel p-2.5 md:block">
-        <svg
+        <svg style={{ letterSpacing: "0.48px" }}
           viewBox="0 0 1120 620"
           className="block h-auto w-full"
           role="img"
