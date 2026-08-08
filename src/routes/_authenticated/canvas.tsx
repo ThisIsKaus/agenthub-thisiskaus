@@ -104,18 +104,46 @@ function stamp(iso: string | undefined) {
   return Number.isNaN(date.getTime()) ? "—" : date.toISOString().slice(0, 16).replace("T", " ");
 }
 
+/**
+ * What kind of evidence a source is, read off its path. A skill and a bank
+ * statement are not the same kind of evidence and should not read alike.
+ */
+const KIND_ORDER = ["Documents", "Skills", "Proposals", "Digest", "Sessions", "Canon"] as const;
+type SourceKind = (typeof KIND_ORDER)[number];
+
+function kindOf(path: string): SourceKind {
+  const p = path.toLowerCase();
+  if (p.includes("/skills/") || p.includes("skill.md")) return "Skills";
+  if (p.includes("proposal")) return "Proposals";
+  if (p.includes("digest")) return "Digest";
+  if (p.includes("session")) return "Sessions";
+  if (p.includes("/canon/") || p.includes("canon")) return "Canon";
+  return "Documents";
+}
+
+type SourceRow = {
+  name: string;
+  path: string;
+  best?: number;
+  passages: number;
+  cls?: string;
+  foundBy?: string;
+};
+
 /** One row per cited file: its best distance, and how many passages matched. */
-function groupSources(sources: AskSource[]) {
-  const byName = new Map<string, { name: string; best?: number; passages: number; cls?: string }>();
+function groupSources(sources: AskSource[]): SourceRow[] {
+  const byName = new Map<string, SourceRow>();
   for (const source of sources) {
     const name = source.file ?? source.path ?? "—";
     const row = byName.get(name);
     if (!row) {
       byName.set(name, {
         name,
+        path: source.path ?? source.file ?? "",
         best: source.distance,
         passages: 1,
         cls: source.sensitivity,
+        foundBy: source.found_by,
       });
       continue;
     }
@@ -124,8 +152,24 @@ function groupSources(sources: AskSource[]) {
       row.best = source.distance;
     }
     if (!row.cls) row.cls = source.sensitivity;
+    if (!row.foundBy) row.foundBy = source.found_by;
   }
   return [...byName.values()].sort((a, b) => (a.best ?? Infinity) - (b.best ?? Infinity));
+}
+
+/** Grouped by kind, kinds ordered, empty kinds dropped. */
+function byKind(rows: SourceRow[]): { kind: SourceKind; rows: SourceRow[] }[] {
+  const buckets = new Map<SourceKind, SourceRow[]>();
+  for (const row of rows) {
+    const kind = kindOf(row.path || row.name);
+    const list = buckets.get(kind);
+    if (list) list.push(row);
+    else buckets.set(kind, [row]);
+  }
+  return KIND_ORDER.filter((kind) => buckets.has(kind)).map((kind) => ({
+    kind,
+    rows: buckets.get(kind)!,
+  }));
 }
 
 function distanceTone(distance: number | undefined) {
