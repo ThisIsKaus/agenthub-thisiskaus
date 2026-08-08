@@ -33,6 +33,7 @@ import {
   type Stage,
 } from "@/lib/canvas-types";
 import { listSkills, type Skill } from "@/lib/skills-store";
+import { toNum } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/canvas")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -104,18 +105,46 @@ function stamp(iso: string | undefined) {
   return Number.isNaN(date.getTime()) ? "—" : date.toISOString().slice(0, 16).replace("T", " ");
 }
 
+/**
+ * What kind of evidence a source is, read off its path. A skill and a bank
+ * statement are not the same kind of evidence and should not read alike.
+ */
+const KIND_ORDER = ["Documents", "Skills", "Proposals", "Digest", "Sessions", "Canon"] as const;
+type SourceKind = (typeof KIND_ORDER)[number];
+
+function kindOf(path: string): SourceKind {
+  const p = path.toLowerCase();
+  if (p.includes("/skills/") || p.includes("skill.md")) return "Skills";
+  if (p.includes("proposal")) return "Proposals";
+  if (p.includes("digest")) return "Digest";
+  if (p.includes("session")) return "Sessions";
+  if (p.includes("/canon/") || p.includes("canon")) return "Canon";
+  return "Documents";
+}
+
+type SourceRow = {
+  name: string;
+  path: string;
+  best?: number;
+  passages: number;
+  cls?: string;
+  foundBy?: string;
+};
+
 /** One row per cited file: its best distance, and how many passages matched. */
-function groupSources(sources: AskSource[]) {
-  const byName = new Map<string, { name: string; best?: number; passages: number; cls?: string }>();
+function groupSources(sources: AskSource[]): SourceRow[] {
+  const byName = new Map<string, SourceRow>();
   for (const source of sources) {
     const name = source.file ?? source.path ?? "—";
     const row = byName.get(name);
     if (!row) {
       byName.set(name, {
         name,
+        path: source.path ?? source.file ?? "",
         best: source.distance,
         passages: 1,
         cls: source.sensitivity,
+        foundBy: source.found_by,
       });
       continue;
     }
@@ -124,8 +153,24 @@ function groupSources(sources: AskSource[]) {
       row.best = source.distance;
     }
     if (!row.cls) row.cls = source.sensitivity;
+    if (!row.foundBy) row.foundBy = source.found_by;
   }
   return [...byName.values()].sort((a, b) => (a.best ?? Infinity) - (b.best ?? Infinity));
+}
+
+/** Grouped by kind, kinds ordered, empty kinds dropped. */
+function byKind(rows: SourceRow[]): { kind: SourceKind; rows: SourceRow[] }[] {
+  const buckets = new Map<SourceKind, SourceRow[]>();
+  for (const row of rows) {
+    const kind = kindOf(row.path || row.name);
+    const list = buckets.get(kind);
+    if (list) list.push(row);
+    else buckets.set(kind, [row]);
+  }
+  return KIND_ORDER.filter((kind) => buckets.has(kind)).map((kind) => ({
+    kind,
+    rows: buckets.get(kind)!,
+  }));
 }
 
 function distanceTone(distance: number | undefined) {
@@ -153,6 +198,19 @@ function laneLabel(id: string) {
   return LANES.find((lane) => lane.id === id)?.label.toLowerCase() ?? id;
 }
 
+/**
+ * With nothing typed, the surface teaches its own range — sessions, skills and
+ * corpus — rather than its syntax. Clicking one fills the field.
+ */
+const EXAMPLES = [
+  { q: "what did I decide about model residency", reach: "sessions" },
+  { q: "which skill covers negotiating an offer", reach: "skills" },
+  { q: "what's my super balance", reach: "corpus, local only" },
+  { q: "what proposals am I sitting on", reach: "proposals" },
+  { q: "what kept flagging last week", reach: "digest" },
+  { q: "what does canon say about client context", reach: "canon" },
+] as const;
+
 /* ── page ────────────────────────────────────────────────────────────────── */
 
 function CanvasPage() {
@@ -177,6 +235,8 @@ function CanvasPage() {
 
   const [settings, setSettings] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [kindOpen, setKindOpen] = useState<Record<string, boolean>>({});
+  const [rotation, setRotation] = useState(0);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [naming, setNaming] = useState(false);
   const [title, setTitle] = useState("");
@@ -200,6 +260,35 @@ function CanvasPage() {
     enabled: local.available,
     queryFn: () => listSkills(local),
   });
+
+  // Reach, for the "searched …" line. Counts only — never text.
+  const kb = useQuery({
+    queryKey: ["canvas", "kb"],
+    enabled: local.available,
+    staleTime: 300_000,
+    retry: false,
+    queryFn: () => local.get<{ documents?: unknown; chunks?: unknown }>("/api/kb"),
+  });
+  const proposals = useQuery({
+    queryKey: ["canvas", "proposals"],
+    enabled: local.available,
+    staleTime: 300_000,
+    retry: false,
+    queryFn: () => local.get<{ proposals?: unknown[] }>("/api/proposals"),
+  });
+  const digestDates = useQuery({
+    queryKey: ["canvas", "digest-dates"],
+    enabled: local.available,
+    staleTime: 300_000,
+    retry: false,
+    queryFn: () => local.get<{ dates?: unknown[] }>("/api/digest"),
+  });
+
+  // Three examples at a time, rotating slowly through the pool.
+  useEffect(() => {
+    const timer = setInterval(() => setRotation((n) => n + 3), 7000);
+    return () => clearInterval(timer);
+  }, []);
 
   // The page opens on a cursor.
   useEffect(() => {
@@ -384,7 +473,22 @@ function CanvasPage() {
   const documents = library.data?.documents ?? [];
   const counts = library.data?.counts ?? {};
   const grouped = groupSources(sources);
+  const kinds = byKind(grouped);
   const lanes = localOnly ? LANES.filter((lane) => lane.id.startsWith("local-")) : LANES;
+
+  /**
+   * What was searched, in one line. Confidence, not configuration: a reader who
+   * does not know the reach of a query cannot tell a thin answer from a thin corpus.
+   */
+  const searched: string[] = [];
+  const kbDocs = toNum(kb.data?.documents);
+  if (kbDocs !== null) searched.push(`${kbDocs.toLocaleString()} documents`);
+  if (skillFiles.data) searched.push(`${skillFiles.data.length} skills`);
+  const proposalCount = proposals.data?.proposals?.length;
+  if (proposalCount != null) searched.push(`${proposalCount} proposals`);
+  const digestDays = digestDates.data?.dates?.length;
+  if (digestDays != null) searched.push(`${digestDays} digest days`);
+
 
   return (
     <div className="space-y-3" data-testid="canvas-page">
@@ -438,6 +542,27 @@ function CanvasPage() {
         )}
         {!asking && status && <span className="font-mono text-[11px] text-faint">{status}</span>}
       </div>
+
+      {!text.trim() && !answer && (
+        <div data-testid="canvas-examples">
+          {[0, 1, 2].map((slot) => {
+            const example = EXAMPLES[(rotation + slot) % EXAMPLES.length];
+            return (
+              <button
+                key={slot}
+                type="button"
+                onClick={() => {
+                  setText(example.q);
+                  area.current?.focus();
+                }}
+                className="block text-left text-[13px] leading-relaxed text-faint hover:text-copper"
+              >
+                “{example.q}” <span className="font-mono text-[10px]">← {example.reach}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {settings && (
         <section className="border border-rule bg-panel px-4 py-3" data-testid="canvas-settings">
@@ -515,6 +640,40 @@ function CanvasPage() {
         </p>
       )}
 
+      {answer && (
+        <section className="border border-rule bg-panel px-4 py-3" data-testid="answer">
+          <Markdown text={answer} />
+          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-rule pt-3">
+            <span className="font-mono text-[10px] text-faint">
+              {answeredBy ?? laneLabel(model)}
+            </span>
+            <button
+              type="button"
+              onClick={() => void keep()}
+              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+            >
+              Keep as document
+            </button>
+            <button
+              type="button"
+              data-testid="handover"
+              onClick={() => void handOver()}
+              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+            >
+              Hand over to inbox
+            </button>
+          </div>
+          {saveNote && <p className="mt-2 font-mono text-[10px] text-copper">{saveNote}</p>}
+          {handoverNote && <p className="mt-1 font-mono text-[10px] text-faint">{handoverNote}</p>}
+        </section>
+      )}
+
+      {answer && searched.length > 0 && (
+        <p className="font-mono text-[10px] leading-relaxed text-faint" data-testid="searched-line">
+          searched {searched.join(" · ")}
+        </p>
+      )}
+
       {grouped.length > 0 && (
         <section className="border border-rule bg-panel" data-testid="sources">
           <button
@@ -530,27 +689,60 @@ function CanvasPage() {
           </button>
           {sourcesOpen && (
             <div className="border-t border-rule px-4 py-2">
-              <ul>
-                {grouped.map((source) => (
-                  <li
-                    key={source.name}
-                    className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-rule py-2 first:border-t-0"
-                  >
-                    <span className="break-all font-mono text-[12px] text-paper">
-                      {source.name}
-                      {source.passages > 1 && (
-                        <span className="ml-2 text-faint">{source.passages} passages</span>
-                      )}
-                    </span>
-                    <span className="font-mono text-[10px] text-faint">{source.cls ?? "—"}</span>
-                    <span
-                      className={`font-mono text-[10px] tabular-nums ${distanceTone(source.best)}`}
+              {kinds.map((group, index) => {
+                const open = kindOpen[group.kind] ?? index < 2;
+                return (
+                  <div key={group.kind} className="border-t border-rule py-2 first:border-t-0">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setKindOpen((current) => ({ ...current, [group.kind]: !open }))
+                      }
+                      className="flex w-full items-baseline justify-between gap-3 text-left"
                     >
-                      {source.best != null ? source.best.toFixed(3) : "—"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                        {group.kind}{" "}
+                        <span className="tabular-nums text-faint">{group.rows.length}</span>
+                      </span>
+                      <span className="font-mono text-[10px] text-faint">
+                        {open ? "hide" : "show"}
+                      </span>
+                    </button>
+                    {open && (
+                      <ul className="mt-1">
+                        {group.rows.map((source) => (
+                          <li
+                            key={source.name}
+                            className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-1"
+                          >
+                            <span className="min-w-0 break-all text-[13px] leading-relaxed text-paper">
+                              {source.name}
+                              {source.passages > 1 && (
+                                <span className="ml-2 font-mono text-[10px] text-faint">
+                                  {source.passages} passages
+                                </span>
+                              )}
+                              {source.foundBy && (
+                                <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                                  {source.foundBy}
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-mono text-[10px] text-faint">
+                              {source.cls ?? "—"}
+                            </span>
+                            <span
+                              className={`font-mono text-[10px] tabular-nums ${distanceTone(source.best)}`}
+                            >
+                              {source.best != null ? source.best.toFixed(3) : "—"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
               <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-rule pt-2">
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
                   retrieve
@@ -584,34 +776,6 @@ function CanvasPage() {
               </div>
             </div>
           )}
-        </section>
-      )}
-
-      {answer && (
-        <section className="border border-rule bg-panel px-4 py-3" data-testid="answer">
-          <Markdown text={answer} />
-          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-rule pt-3">
-            <span className="font-mono text-[10px] text-faint">
-              {answeredBy ?? laneLabel(model)}
-            </span>
-            <button
-              type="button"
-              onClick={() => void keep()}
-              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
-            >
-              Keep as document
-            </button>
-            <button
-              type="button"
-              data-testid="handover"
-              onClick={() => void handOver()}
-              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
-            >
-              Hand over to inbox
-            </button>
-          </div>
-          {saveNote && <p className="mt-2 font-mono text-[10px] text-copper">{saveNote}</p>}
-          {handoverNote && <p className="mt-1 font-mono text-[10px] text-faint">{handoverNote}</p>}
         </section>
       )}
 
