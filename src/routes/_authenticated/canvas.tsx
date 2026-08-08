@@ -245,6 +245,29 @@ function CanvasPage() {
     queryFn: () => listSkills(local),
   });
 
+  // Reach, for the "searched …" line. Counts only — never text.
+  const kb = useQuery({
+    queryKey: ["canvas", "kb"],
+    enabled: local.available,
+    staleTime: 300_000,
+    retry: false,
+    queryFn: () => local.get<{ documents?: unknown; chunks?: unknown }>("/api/kb"),
+  });
+  const proposals = useQuery({
+    queryKey: ["canvas", "proposals"],
+    enabled: local.available,
+    staleTime: 300_000,
+    retry: false,
+    queryFn: () => local.get<{ proposals?: unknown[] }>("/api/proposals"),
+  });
+  const digestDates = useQuery({
+    queryKey: ["canvas", "digest-dates"],
+    enabled: local.available,
+    staleTime: 300_000,
+    retry: false,
+    queryFn: () => local.get<{ dates?: unknown[] }>("/api/digest"),
+  });
+
   // The page opens on a cursor.
   useEffect(() => {
     area.current?.focus();
