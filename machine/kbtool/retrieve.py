@@ -148,9 +148,12 @@ def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES, rerank
                    any(t in seg for seg in folder.split() if len(seg) > 4))
         return 1.0 + min(hits, 3) * 0.12
 
-    for e in fused.values():
-        e["path_bonus"] = _path_bonus(str(e["row"]["path"]))
-        e["score"] *= e["path_bonus"]
+    # DISABLED pending an honest measurement. It cost S3 87% to 83% and MRR 0.736 to 0.716
+    # while appearing to fix four README questions — which the corrected eval shows were never
+    # misses. Re-enable only if it wins on a golden set that compares paths.
+    # for e in fused.values():
+    #     e["path_bonus"] = _path_bonus(str(e["row"]["path"]))
+    #     e["score"] *= e["path_bonus"]
 
     # Source authority. Adding sessions, digests and logs to the index cost 3 points of
     # recall and 10 on S1p: a transcript discussing the autonomy tiers outranked the canon
