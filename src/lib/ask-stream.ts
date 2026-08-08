@@ -17,7 +17,6 @@ import { loopbackFetch } from "./local-bridge";
 export type { AskSource } from "./canvas-types";
 import type { AskSource } from "./canvas-types";
 
-
 export type AskStreamResult = {
   answer: string;
   model?: string;
@@ -60,7 +59,6 @@ async function tryStream(
   let response: Response;
   try {
     response = await loopbackFetch(`${base}/api/ask/stream`, { method: "POST", body });
-
   } catch {
     return null;
   }

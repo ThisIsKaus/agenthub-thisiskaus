@@ -150,7 +150,10 @@ export function Omnibox() {
         setStatus(
           isRefusal(error)
             ? { tone: "muted", text: "Denied at the approval dialog on the machine." }
-            : { tone: "risk", text: error instanceof Error ? error.message : "That did not go through." },
+            : {
+                tone: "risk",
+                text: error instanceof Error ? error.message : "That did not go through.",
+              },
         );
       } finally {
         setBusy(false);
@@ -191,7 +194,6 @@ export function Omnibox() {
           onChange={(event) => {
             setText(event.target.value);
             setOverridden(false);
-
           }}
           onKeyDown={onKeyDown}
           disabled={busy}
@@ -230,19 +232,19 @@ export function Omnibox() {
         ))}
       </div>
 
-
       {status && (
         <p
           className={`font-mono text-[11px] ${
-            status.tone === "risk" ? "text-risk" : status.tone === "copper" ? "text-copper" : "text-faint"
+            status.tone === "risk"
+              ? "text-risk"
+              : status.tone === "copper"
+                ? "text-copper"
+                : "text-faint"
           }`}
         >
           {status.text}
         </p>
       )}
-
-
-
     </section>
   );
 }

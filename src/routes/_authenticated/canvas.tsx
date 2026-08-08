@@ -60,7 +60,10 @@ export const Route = createFileRoute("/_authenticated/canvas")({
     ],
   }),
   component: () => (
-    <Page title="Canvas" footer="Canvas · documents live on the machine; every save keeps the previous version">
+    <Page
+      title="Canvas"
+      footer="Canvas · documents live on the machine; every save keeps the previous version"
+    >
       <LocalOnly>
         <CanvasPage />
       </LocalOnly>
@@ -78,7 +81,9 @@ function derivedClass(sources: AskSource[]): { cls: string | null; because: stri
   let best = -1;
   let because: string | null = null;
   for (const source of sources) {
-    const index = CLASS_ORDER.indexOf(String(source.sensitivity ?? "") as (typeof CLASS_ORDER)[number]);
+    const index = CLASS_ORDER.indexOf(
+      String(source.sensitivity ?? "") as (typeof CLASS_ORDER)[number],
+    );
     if (index > best) {
       best = index;
       because = source.file ?? source.path ?? null;
@@ -286,7 +291,9 @@ function CanvasPage() {
       const versions = await writeCanvas(local, doc);
       setDocId(doc.id);
       setTitle(doc.title);
-      setSaveNote(`kept as “${doc.title}” · ${versions} ${versions === 1 ? "version" : "versions"}`);
+      setSaveNote(
+        `kept as “${doc.title}” · ${versions} ${versions === 1 ? "version" : "versions"}`,
+      );
       void queryClient.invalidateQueries({ queryKey: ["canvas", "library"] });
     } catch (error) {
       setSaveNote(
@@ -411,9 +418,7 @@ function CanvasPage() {
         placeholder=""
       />
 
-      <p className="font-mono text-[11px] text-faint">
-        ⏎ ask · ⌘⏎ ask and keep · ⌘S name it
-      </p>
+      <p className="font-mono text-[11px] text-faint">⏎ ask · ⌘⏎ ask and keep · ⌘S name it</p>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <button
@@ -443,10 +448,13 @@ function CanvasPage() {
                 type="button"
                 onClick={() => setModel(lane.id)}
                 className={`border px-2 py-1 font-mono text-[10px] ${
-                  lane.id === model ? "border-copper text-copper" : "border-rule text-muted-foreground"
+                  lane.id === model
+                    ? "border-copper text-copper"
+                    : "border-rule text-muted-foreground"
                 }`}
               >
-                {lane.label} <span className={lane.cost === "$0" ? "text-ok" : "text-copper"}>{lane.cost}</span>
+                {lane.label}{" "}
+                <span className={lane.cost === "$0" ? "text-ok" : "text-copper"}>{lane.cost}</span>
               </button>
             ))}
           </div>
@@ -456,7 +464,9 @@ function CanvasPage() {
             </p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">skills</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
+              skills
+            </span>
             {skillsLoaded.length === 0 && (
               <span className="font-mono text-[10px] text-faint">none matched yet</span>
             )}
@@ -479,14 +489,15 @@ function CanvasPage() {
 
       {skillsLoaded.length > 0 && (
         <p className="font-mono text-[10px] leading-relaxed text-faint" data-testid="skills-loaded">
-          {skillsLoaded
-            .map((skill) => `${skill.name} · matched on “${skill.trigger}”`)
-            .join(" · ")}
+          {skillsLoaded.map((skill) => `${skill.name} · matched on “${skill.trigger}”`).join(" · ")}
         </p>
       )}
 
       {cls && (
-        <p className="font-mono text-[11px] leading-relaxed text-paper" data-testid="sensitivity-line">
+        <p
+          className="font-mono text-[11px] leading-relaxed text-paper"
+          data-testid="sensitivity-line"
+        >
           <span className={localOnly ? "text-watch" : "text-ok"}>{cls}</span>{" "}
           {localOnly ? "— local only" : "— cloud lane available"}
           {derived.because ? `, because you cited ${derived.because}` : ""}
@@ -512,7 +523,8 @@ function CanvasPage() {
             className="flex w-full items-baseline justify-between gap-3 px-4 py-2 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-copper"
           >
             <span>
-              Sources · <span className="tabular-nums text-paper">{grouped.length}</span> of {k} requested
+              Sources · <span className="tabular-nums text-paper">{grouped.length}</span> of {k}{" "}
+              requested
             </span>
             <span className="text-faint">{sourcesOpen ? "hide" : "show"}</span>
           </button>
@@ -531,14 +543,18 @@ function CanvasPage() {
                       )}
                     </span>
                     <span className="font-mono text-[10px] text-faint">{source.cls ?? "—"}</span>
-                    <span className={`font-mono text-[10px] tabular-nums ${distanceTone(source.best)}`}>
+                    <span
+                      className={`font-mono text-[10px] tabular-nums ${distanceTone(source.best)}`}
+                    >
                       {source.best != null ? source.best.toFixed(3) : "—"}
                     </span>
                   </li>
                 ))}
               </ul>
               <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-rule pt-2">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">retrieve</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
+                  retrieve
+                </span>
                 {SOURCE_COUNTS.map((count) => (
                   <button
                     key={count}
@@ -548,7 +564,9 @@ function CanvasPage() {
                       void ask(model, count);
                     }}
                     className={`border px-2 py-1 font-mono text-[10px] tabular-nums ${
-                      count === k ? "border-copper text-copper" : "border-rule text-muted-foreground"
+                      count === k
+                        ? "border-copper text-copper"
+                        : "border-rule text-muted-foreground"
                     }`}
                   >
                     {count}
@@ -573,7 +591,9 @@ function CanvasPage() {
         <section className="border border-rule bg-panel px-4 py-3" data-testid="answer">
           <Markdown text={answer} />
           <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-rule pt-3">
-            <span className="font-mono text-[10px] text-faint">{answeredBy ?? laneLabel(model)}</span>
+            <span className="font-mono text-[10px] text-faint">
+              {answeredBy ?? laneLabel(model)}
+            </span>
             <button
               type="button"
               onClick={() => void keep()}
@@ -597,7 +617,9 @@ function CanvasPage() {
 
       {docId && (
         <div className="flex flex-wrap items-center gap-2" data-testid="state-bar">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">state</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
+            state
+          </span>
           {STAGES.map((entry) => (
             <button
               key={entry}
