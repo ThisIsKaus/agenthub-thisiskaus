@@ -513,6 +513,19 @@ def safety():
             continue
         if first.startswith("/") and not Path(first).exists():
             missing.append(first)
+    # Every job key an endpoint can start must exist. `build` was called by the approval path
+    # and was not in COMMANDS, so approve raised KeyError inside a worker thread while the
+    # endpoint returned 200 — the failure was invisible from outside for two days.
+    src = (H / "console" / "console.py").read_text(errors="ignore")
+    called = set(re.findall(r'run_job\(\s*["\']([a-z_]+)["\']', src)) | \
+             set(re.findall(r'JOBS\[\w+\]\s*=\s*\{"key":\s*"([a-z_]+)"', src))
+    known = set(re.findall(r'^\s*"([a-z_]+)":\s*\{"argv"', src, re.M)) | {"build"}
+    orphan = sorted(called - known)
+    rec(g, "every job key resolves", not orphan,
+        f"unregistered job key(s): {', '.join(orphan)}" if orphan else
+        f"{len(known)} keys, all resolvable",
+        "an endpoint starts a job the registry does not know — it will raise in a thread")
+
     rec(g, "console commands resolvable", not missing, ", ".join(missing[:2]) or "all present",
         "a whitelisted command points at a binary that does not exist")
 

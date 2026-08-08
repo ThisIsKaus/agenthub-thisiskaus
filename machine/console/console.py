@@ -920,8 +920,11 @@ def proposals_act(id: str = Form(...), action: str = Form(...), note: str = Form
         files = ", ".join(d.get("files", [])[:3])
         if files:
             intent += f"  Files likely involved: {files}."
-        job = run_job("build", f"{H}/console/.venv/bin/python {H}/build/cascade.py "
-                               f"{shlex.quote(intent)}")
+        # Reuse /api/build rather than a second implementation. The first attempt called
+        # run_job("build", ...) — but `build` was never in COMMANDS and run_job takes an argv
+        # list, not a shell string, so every approve raised KeyError. The endpoint returned
+        # 200 because the exception was inside the thread the response never waited for.
+        job = build(intent=intent, scope="")
         d["job"] = job.get("job") if isinstance(job, dict) else None
         d["intent_sent"] = intent[:300]
         result.update(job if isinstance(job, dict) else {})
