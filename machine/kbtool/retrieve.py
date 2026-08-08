@@ -125,6 +125,29 @@ def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES, rerank
 
     if not fused:
         return []
+    # Source authority. Adding sessions, digests and logs to the index cost 3 points of
+    # recall and 10 on S1p: a transcript discussing the autonomy tiers outranked the canon
+    # entry that defines them. Derivative material is worth retrieving and worth ranking
+    # below its own source — an original beats a conversation about it.
+    AUTHORITY = (
+        ("/canon/", 1.30),          # the definitions themselves
+        ("/skills-lib/", 1.20),     # instructions, authored deliberately
+        ("/contracts/", 1.15),
+        ("/docs/sessions/", 0.75),  # conversations about the above
+        ("/digests/", 0.80),
+        ("/logs/", 0.70),
+        ("/state/builds/", 0.85),
+    )
+
+    def _weight(path):
+        for frag, w in AUTHORITY:
+            if frag in path:
+                return w
+        return 1.0
+
+    for e in fused.values():
+        e["authority"] = _weight(str(e["row"]["path"]))
+        e["score"] *= e["authority"]
     ranked = sorted(fused.values(), key=lambda e: -e["score"])
     if rerank and len(ranked) > k:
         ranked = _rerank(query, ranked[:CANDIDATES], k)
