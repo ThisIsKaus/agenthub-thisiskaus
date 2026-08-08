@@ -224,8 +224,8 @@ function FilesPage() {
         ))}
       </div>
 
+      <Section title="Tree" flush>
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section title="Tree" flush>
         <section
           onDragOver={(event) => {
             event.preventDefault();
@@ -326,9 +326,6 @@ function FilesPage() {
             Drop files here to add them to this folder.
           </p>
         </section>
-        </Section>
-
-        <Section title="Contents" flush>
         <Panel title={file?.name ?? "Viewer"}>
           {!file ? (
             <Empty>Select a file to read it</Empty>
@@ -370,8 +367,8 @@ function FilesPage() {
             </>
           )}
         </Panel>
-        </Section>
       </div>
+      </Section>
 
       {note && <p className="font-mono text-[10px] text-faint">{note}</p>}
     </div>

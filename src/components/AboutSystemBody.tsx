@@ -256,7 +256,7 @@ export function AboutSystemBody() {
                   {state}
                 </span>
               </summary>
-              <p className="px-4 pb-4 pl-[64px] max-w-[68ch] text-[13px] leading-relaxed text-muted-foreground">{ev}</p>
+              <p className="px-4 pb-4 text-[13px] leading-relaxed text-muted-foreground">{ev}</p>
             </details>
           ))}
         </div>

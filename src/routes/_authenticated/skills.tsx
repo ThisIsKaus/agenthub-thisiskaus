@@ -60,45 +60,6 @@ export const Route = createFileRoute("/_authenticated/skills")({
   ),
 });
 
-const LOOP = [
-  { n: "01", label: "Mine", detail: "repetition the machine already recorded" },
-  { n: "02", label: "Review", detail: "keep · modify · reject" },
-  { n: "03", label: "Version", detail: "every save snapshots the last" },
-  { n: "04", label: "Load", detail: "on trigger, or by hand" },
-  { n: "05", label: "Retire", detail: "watch → deprecate → archive" },
-];
-
-function LoopBoard({ counts }: { counts: Record<SkillState, number> }) {
-  return (
-    <section className="border border-rule bg-panel">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-rule px-4 py-2.5">
-        <p className="font-mono text-[10px] uppercase tracking-[0.27em] text-copper">
-          Evergreen loop
-        </p>
-        <p className="font-mono text-[10px] text-faint">
-          {SKILL_STATES.map((state) => `${counts[state] ?? 0} ${state}`).join(" · ")}
-        </p>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-5">
-        {LOOP.map((stage) => (
-          <div
-            key={stage.n}
-            className="border-b border-rule px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
-          >
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-[9px] text-copper">{stage.n}</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-paper">
-                {stage.label}
-              </span>
-            </div>
-            <p className="mt-1 font-mono text-[9.5px] leading-relaxed text-faint">{stage.detail}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function SkillsPage() {
   const local = useLocal();
   const queryClient = useQueryClient();
@@ -163,16 +124,35 @@ function SkillsPage() {
   }
 
   const visible = filter === "all" ? list : list.filter((skill) => skill.state === filter);
+  const countLine = SKILL_STATES.flatMap((state) =>
+    counts[state] > 0 ? [`${counts[state]} ${state}`] : [],
+  );
 
   return (
     <div className="space-y-4">
 
-      <Section title="Evergreen loop">
-        <LoopBoard counts={counts} />
-      </Section>
-
       <Section title="Library">
       <section className="border border-rule bg-panel">
+        <div className="flex flex-wrap items-center gap-3 border-b border-rule px-4 py-3">
+          <p className="mr-auto font-mono text-[11px] tabular-nums text-paper">
+            {countLine.length > 0 ? countLine.join(" · ") : "no skills"}
+          </p>
+          <button
+            type="button"
+            onClick={() => setActive(draftSkill(root, "new skill"))}
+            className="border border-rule px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
+          >
+            + draft
+          </button>
+          <button
+            type="button"
+            onClick={() => void mine()}
+            disabled={mining}
+            className="border border-copper px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-copper disabled:opacity-50"
+          >
+            {mining ? "Mining…" : "Mine today"}
+          </button>
+        </div>
         <div className="flex flex-wrap items-center gap-2 border-b border-rule px-4 py-2.5">
           <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">show</span>
           {(["all", ...SKILL_STATES] as const).map((option) => (
@@ -192,21 +172,6 @@ function SkillsPage() {
               )}
             </button>
           ))}
-          <button
-            type="button"
-            onClick={() => setActive(draftSkill(root, "new skill"))}
-            className="ml-auto border border-rule px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
-          >
-            + draft
-          </button>
-          <button
-            type="button"
-            onClick={() => void mine()}
-            disabled={mining}
-            className="border border-copper px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-copper disabled:opacity-50"
-          >
-            {mining ? "Mining…" : "Mine today"}
-          </button>
         </div>
 
         {skills.isLoading ? (
@@ -243,7 +208,7 @@ function SkillsPage() {
                     </span>
                   </div>
                   {skill.description && (
-                    <p className="mt-1 max-w-[72ch] text-[12.5px] leading-relaxed text-faint">
+                    <p data-measure="skill-description" className="mt-1 w-full text-[12.5px] leading-relaxed text-faint">
                       {skill.description.split("\n")[0]}
                     </p>
                   )}

@@ -326,7 +326,7 @@ function ScannerPage() {
                               {candidate.author ?? "—"} · {state}
                             </span>
                             {candidate.why && (
-                              <span className="mt-1 block max-w-[62ch] text-[12px] leading-relaxed text-faint">
+                              <span className="mt-1 block text-[12px] leading-relaxed text-faint">
                                 {candidate.why}
                               </span>
                             )}

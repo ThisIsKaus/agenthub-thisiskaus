@@ -64,18 +64,17 @@ export function MachineStatePanel({
   }
 
   return (
-    <section
-      className={`border border-l-2 border-rule bg-panel px-4 py-4 ${BORDER[plane]}`}
-      aria-label="Machine state"
-    >
-      <div className="flex items-center gap-2.5">
-        <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${DOT[plane]}`} />
+    <section aria-label="Machine state">
+      <div className="relative">
         <SectionHeading>{headline}</SectionHeading>
+        <span aria-hidden className={`absolute right-0 top-2 h-2 w-2 rounded-full ${DOT[plane]}`} />
       </div>
-      <p className="mt-2 break-words font-mono text-[11px] leading-relaxed text-faint">{detail}</p>
-      {amber && (
-        <p className="mt-2 break-words font-mono text-[11px] leading-relaxed text-watch">{amber}</p>
-      )}
+      <div className={`mt-3 border border-l-2 border-rule bg-panel px-4 py-4 ${BORDER[plane]}`}>
+        <p className="break-words font-mono text-[11px] leading-relaxed text-faint">{detail}</p>
+        {amber && (
+          <p className="mt-2 break-words font-mono text-[11px] leading-relaxed text-watch">{amber}</p>
+        )}
+      </div>
     </section>
   );
 }
