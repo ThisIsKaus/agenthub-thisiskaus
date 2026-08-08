@@ -121,8 +121,8 @@ function PromptsPage() {
         </div>
       )}
 
+      <Section title="Canon files" flush>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <Section title="Canon files" flush>
         <Panel title="Prompts">
           {loading ? (
             <div className="space-y-2">
@@ -155,9 +155,6 @@ function PromptsPage() {
             </ul>
           )}
         </Panel>
-        </Section>
-
-        <Section title="Editor" flush>
         <Panel title={active?.name ?? active?.path ?? "Editor"}>
           {!active ? (
             <Empty>Choose a prompt.</Empty>
@@ -183,8 +180,8 @@ function PromptsPage() {
             </>
           )}
         </Panel>
-        </Section>
       </div>
+      </Section>
 
           </div>
   );

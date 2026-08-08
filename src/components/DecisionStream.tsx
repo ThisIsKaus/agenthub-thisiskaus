@@ -260,7 +260,7 @@ function StreamRow({
           {item.pill}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="max-w-[72ch] break-words text-[13px] leading-relaxed text-paper">{item.what}</p>
+          <p className="break-words text-[13px] leading-relaxed text-paper">{item.what}</p>
           <p className="mt-0.5 max-w-[72ch] break-words text-[12px] leading-relaxed text-faint">
             {item.why}
           </p>

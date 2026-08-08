@@ -381,11 +381,11 @@ function ProposalRow({
     <article className="border-t border-rule first:border-t-0">
       <button
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-panel2"
+        className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-panel2"
         aria-expanded={open}
       >
-        <span className="min-w-0">
-          <span className="block truncate text-[14px] text-paper">{proposal.title ?? proposal.id}</span>
+        <span className="min-w-0 w-full">
+          <span data-measure="proposal-title" className="block w-full text-[14px] leading-relaxed text-paper">{proposal.title ?? proposal.id}</span>
           <span className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
             {proposal.category && (
               <span className="border border-rule px-1.5 py-0.5 text-muted-foreground">
@@ -433,7 +433,7 @@ function ProposalRow({
 
           <section>
             <h3 className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">What</h3>
-            <p className="mt-2 max-w-[72ch] text-[13px] leading-relaxed text-paper">
+            <p className="mt-2 text-[13px] leading-relaxed text-paper">
               {proposal.change?.trim() || "—"}
             </p>
             {files.length > 0 && (

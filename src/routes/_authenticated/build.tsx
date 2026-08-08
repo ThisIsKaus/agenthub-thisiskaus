@@ -251,7 +251,7 @@ function BuildPage() {
                   <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                     {stage.label}
                   </div>
-                  <pre className="mt-1 max-w-[72ch] whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
+                  <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
                     {stage.detail || "—"}
                   </pre>
                 </div>
@@ -292,7 +292,7 @@ function BuildPage() {
               <tbody>
                 {history.map((run, index) => (
                   <tr key={index} className="border-t border-rule align-top">
-                    <td className="max-w-[36ch] py-2 pr-4 text-[13px] text-paper">
+                    <td className="py-2 pr-4 text-[13px] text-paper">
                       {run.intent ?? "—"}
                     </td>
                     <td className="py-2 pr-4 font-mono text-[11px] tabular-nums text-muted-foreground">

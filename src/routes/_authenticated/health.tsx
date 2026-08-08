@@ -196,7 +196,7 @@ function HealthPage() {
                       defaultOpen={isFailed(row.state)}
                     >
                       {row.detail && (
-                        <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+                        <p data-measure="health-detail" className="w-full font-mono text-[11px] leading-relaxed text-muted-foreground">
                           {row.detail}
                         </p>
                       )}
