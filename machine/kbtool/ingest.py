@@ -393,7 +393,13 @@ def main():
             failed += 1
             print(f"  ! unreadable {p.name[:44]}: {type(e).__name__}")
             continue
-        digest = hashlib.sha256(text.encode("utf-8", "ignore")).hexdigest()
+        # Dedup was global: one `seen` set across the whole corpus. Payslips share an
+        # employer block, an address and column headers, so the first month won the hash and
+        # every later month's matching chunk was discarded — 286 payslip files collapsed to
+        # 155, and 11,251 chunks vanished corpus-wide. Two documents that share boilerplate
+        # are not duplicates of each other; the same chunk twice within one file is.
+        digest = hashlib.sha256(
+            (str(p) + "\x00" + text).encode("utf-8", "ignore")).hexdigest()
         if digest in seen:
             duped += 1
             continue
