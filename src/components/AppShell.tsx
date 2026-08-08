@@ -8,6 +8,7 @@ import { JobDrawer } from "@/components/JobDrawer";
 import { CommandHint, CommandPalette } from "@/components/CommandPalette";
 import { fixed } from "@/lib/format";
 import { servingLabel } from "@/lib/state";
+import { useTheme } from "@/lib/theme";
 
 type Sub = { to: string; label: string };
 type Group = { label: string; to: string; subs: Sub[] };
