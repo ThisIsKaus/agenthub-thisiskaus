@@ -120,6 +120,16 @@ def foundation():
     src = sh("cd ~/Workspace && git status --porcelain --ignored machine/ | "
              "grep '^!!' | grep -E '\\.(py|sh)$|evals/.*\\.jsonl$|contracts/.*\\.json$' | head -5", 60)
     orphan = [l.replace("!! ", "").strip() for l in src.splitlines() if l.strip()]
+    dg = sh(f"/usr/bin/python3 {H}/scripts/design_gate.py --json", 60)
+    try:
+        d_ = json.loads(dg)
+    except Exception:
+        d_ = {}
+    rec(g, "design tokens pass contrast", d_.get("ok", False),
+        f"{d_.get('pairs_checked','?')} pairs, {len(d_.get('fails',[]))} failing"
+        + (f" — {d_['fails'][0][:44]}" if d_.get("fails") else ""),
+        "a colour pair is under AA or the accent is indistinguishable from a status colour")
+
     rec(g, "no source is gitignored", not orphan,
         f"{len(orphan)} ignored source file(s): {orphan[0] if orphan else ''}"[:70]
         if orphan else "clean",
