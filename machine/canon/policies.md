@@ -246,3 +246,29 @@ appearing three times costs budget and adds no trigger coverage.
 The retirements themselves did no harm — the content was folded into the surviving skills and
 routing improved both times — but the reasoning was wrong, and a decision that happens to work
 out on bad reasoning is still bad reasoning.
+
+## Retrieval: the prefix is not the lever (v3.0, 8 Aug 2026)
+
+Four of five unreachable golden-set sources are one README among seventy, distinguished only
+by directory. The diagnosis is right. Two remedies were measured and both made retrieval
+worse.
+
+Prepending a folder-and-date label fabricated dates — PaymentAdvice_22022019.pdf was labelled
+2022-01 because "2022" sits inside "22022019" — and recall fell 87% to 81%. Prepending the
+folder alone, validated across 3,384 paths with zero fabricated dates, still cost MRR 0.744 to
+0.698 and S3 87% to 81%.
+
+The reason is structural: a prefix is embedded text. The embedder weighs it against the body,
+so across 50,000 chunks the noise it adds exceeds the discrimination it buys for a handful of
+queries. Path context belongs in a metadata column that retrieval filters or boosts on, or in
+the BM25 side alone — never in the embedded text.
+
+The session's real finding was elsewhere. Content-hash deduplication was global: one `seen`
+set across the whole corpus, so a payslip sharing an employer block with an earlier month was
+discarded as a duplicate. 286 payslip files had collapsed to 155, and 785 documents corpus-wide
+had never been retrievable. Scoping the hash per file recovered them. Two documents that share
+boilerplate are not duplicates; the same chunk twice within one file is.
+
+Note on the baseline: the 90% recall measured before this fix was taken against a corpus
+missing those 785 files. A smaller corpus is an easier one. 87% against the complete corpus is
+the better system, and the floor is set at 85%.

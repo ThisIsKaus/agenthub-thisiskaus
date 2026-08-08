@@ -315,7 +315,7 @@ def memory():
     m2 = re.search(r"(\d+)/(\d+)", out2)
     ok2 = bool(m2) and int(m2.group(1)) / max(int(m2.group(2)), 1) >= 0.85
     rec(g, "retrieval recall floor", ok2, (m2.group(0) if m2 else out2[-60:]) + " on a 25-question sample",
-        "recall has fallen below 80% — a retrieval change regressed")
+        "recall has fallen below the 85% floor — a retrieval change regressed")
 
     rec(g, "hybrid retrieval live", "bm25" in out.lower(),
         "bm25 path active" if "bm25" in out.lower() else "dense only — FTS index missing",
