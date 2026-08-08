@@ -24,7 +24,13 @@ export type CanvasRef = {
 
 export type BlockKind = "prompt" | "note" | "job" | "capture";
 
-export type AskSource = { file?: string; path?: string; distance?: number };
+/** `sensitivity` is the machine's classification of the cited document. */
+export type AskSource = {
+  file?: string;
+  path?: string;
+  distance?: number;
+  sensitivity?: string;
+};
 
 export type RunStatus = "running" | "ok" | "failed" | "refused";
 
@@ -120,8 +126,24 @@ export type CanvasBlock = PromptBlock | NoteBlock | JobBlock | CaptureBlock;
  * Every canvas is also a project. A thought and a shipped thing are the same
  * document at different stages, so there is no second place to look.
  */
-export const STAGES = ["idea", "shaping", "wip", "review", "shipped", "parked"] as const;
+export const STAGES = ["draft", "done", "parked"] as const;
 export type Stage = (typeof STAGES)[number];
+
+/** Six states over five documents was a taxonomy with no population. */
+const LEGACY_STAGES: Record<string, Stage> = {
+  idea: "draft",
+  shaping: "draft",
+  wip: "draft",
+  review: "draft",
+  shipped: "done",
+  parked: "parked",
+};
+
+export function toStage(value: unknown): Stage {
+  const raw = typeof value === "string" ? value : "";
+  if ((STAGES as readonly string[]).includes(raw)) return raw as Stage;
+  return LEGACY_STAGES[raw] ?? "draft";
+}
 
 export type CanvasDoc = {
   version: 2;
