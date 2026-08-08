@@ -341,7 +341,7 @@ function TriageLane() {
       <li key={group.key} className="border-t border-rule py-3 first:border-t-0">
         <div className="flex flex-wrap items-baseline gap-2">
           <span
-            className={`border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+            className={`border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.27em] ${
               lane === "flagged"
                 ? "border-watch text-watch"
                 : lane === "task"
@@ -398,7 +398,7 @@ function TriageLane() {
           <button
             type="button"
             onClick={() => setOpenCorrect(openCorrect === index ? null : index)}
-            className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+            className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint hover:text-copper"
           >
             Wrong class?
           </button>
@@ -414,7 +414,7 @@ function TriageLane() {
 
         {lane === "flagged" && openEvidence === index && expanded && (
           <div className="mt-2 border border-watch/40 bg-panel2 p-2">
-            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-watch">
+            <p className="font-mono text-[10px] uppercase tracking-[0.27em] text-watch">
               flagged {typeof item.flag === "string" ? `· ${item.flag}` : ""}
             </p>
             <p className="mt-1 max-w-[72ch] text-[12px] leading-relaxed text-paper">
@@ -423,7 +423,7 @@ function TriageLane() {
             <button
               type="button"
               onClick={() => void record(index, "evidence")}
-              className="mt-2 border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+              className="mt-2 border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
             >
               Mark read
             </button>
@@ -448,7 +448,7 @@ function TriageLane() {
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border border-rule bg-panel px-4 py-2.5">
-        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
+        <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-copper">
           Overnight · {day ?? "—"}
         </div>
         <span className="font-mono text-[10px] tabular-nums text-faint">
@@ -500,7 +500,7 @@ function TriageLane() {
                 <button
                   type="button"
                   onClick={() => setShowEverything((current) => !current)}
-                  className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+                  className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint hover:text-copper"
                 >
                   {showEverything ? "Hide everything" : `Show everything (${informationalCount})`}
                 </button>
@@ -517,7 +517,7 @@ function TriageLane() {
                 <button
                   type="button"
                   onClick={() => setShowDecided((current) => !current)}
-                  className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+                  className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint hover:text-copper"
                 >
                   {showDecided ? "Hide decided" : `Show decided (${decidedRows.length})`}
                 </button>
@@ -531,7 +531,7 @@ function TriageLane() {
                         <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
                           {item.one}
                         </span>
-                        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-copper">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-copper">
                           → {DONE_LABEL[action ?? ""] ?? action}
                         </span>
                         {shortTime(at) && (
@@ -542,7 +542,7 @@ function TriageLane() {
                         <button
                           type="button"
                           onClick={() => void record(index, "undo")}
-                          className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+                          className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint hover:text-copper"
                         >
                           Undo
                         </button>
@@ -570,7 +570,7 @@ function ExitButton({ label, onClick }: { label: string; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="border border-rule px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+      className="border border-rule px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
     >
       {label}
     </button>
@@ -590,7 +590,7 @@ function Select({
 }) {
   return (
     <label className="block">
-      <span className="block font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+      <span className="block font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
         {label}
       </span>
       <select
@@ -663,7 +663,7 @@ function CorrectRow({
         type="button"
         disabled={busy}
         onClick={() => void submit()}
-        className="mt-3 border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-50"
+        className="mt-3 border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.27em] text-copper disabled:opacity-50"
       >
         {busy ? "Adding…" : "Add to eval set"}
       </button>

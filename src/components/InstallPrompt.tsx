@@ -29,7 +29,7 @@ export function InstallPrompt() {
 
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border border-rule bg-panel2 px-4 py-3">
-      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+      <p className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
         Add AgentHub to the home screen
       </p>
       <div className="flex gap-2">
@@ -39,13 +39,13 @@ export function InstallPrompt() {
             await event.userChoice;
             dismiss();
           }}
-          className="border border-copper px-3 py-1 font-mono text-[11px] uppercase tracking-[0.14em] text-copper transition-colors hover:bg-copper hover:text-ink"
+          className="border border-copper px-3 py-1 font-mono text-[11px] uppercase tracking-[0.245em] text-copper transition-colors hover:bg-copper hover:text-ink"
         >
           Install
         </button>
         <button
           onClick={dismiss}
-          className="px-2 font-mono text-[11px] uppercase tracking-[0.14em] text-faint transition-colors hover:text-paper"
+          className="px-2 font-mono text-[11px] uppercase tracking-[0.245em] text-faint transition-colors hover:text-paper"
         >
           Not now
         </button>

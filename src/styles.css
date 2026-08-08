@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "./styles/tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -19,8 +20,12 @@
   --radius-3xl: 2px;
   --radius-4xl: 2px;
 
-  --font-serif: "Instrument Serif", Georgia, serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Display face. `font-serif` is kept as the class name only for continuity —
+     the family is Bricolage Grotesque, matching the studio site. The fallback is
+     a sans, never a serif, so an unloaded display face cannot flash as Georgia. */
+  --font-serif: "Bricolage Grotesque", "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-background: var(--background);
@@ -52,50 +57,14 @@
   --color-copper: var(--copper);
   --color-paper: var(--paper);
   --color-faint: var(--faint);
+  --color-dek: var(--dek);
   --color-ok: var(--ok);
   --color-watch: var(--watch);
   --color-risk: var(--risk);
 }
 
-:root {
-  --radius: 2px;
+/* All colour values live in src/styles/tokens.css, keyed by data-theme. */
 
-  --ink: #0b0b0d;
-  --panel: #141416;
-  --panel2: #191919;
-  --rule: #26262a;
-  --copper: #c8744a;
-  --paper: #ecebe8;
-  --faint: #6e6e78;
-  --ok: #7fa88c;
-  --watch: #c9a227;
-  --risk: #b5544a;
-
-  --background: #0b0b0d;
-  --foreground: #ecebe8;
-  --card: #141416;
-  --card-foreground: #ecebe8;
-  --popover: #141416;
-  --popover-foreground: #ecebe8;
-  --primary: #c8744a;
-  --primary-foreground: #0b0b0d;
-  --secondary: #191919;
-  --secondary-foreground: #ecebe8;
-  --muted: #191919;
-  --muted-foreground: #8e8e96;
-  --accent: #191919;
-  --accent-foreground: #ecebe8;
-  --destructive: #b5544a;
-  --destructive-foreground: #ecebe8;
-  --border: #26262a;
-  --input: #26262a;
-  --ring: #c8744a;
-}
-
-.dark {
-  --background: #0b0b0d;
-  --foreground: #ecebe8;
-}
 
 @layer base {
   * {
@@ -105,6 +74,11 @@
   html {
     color-scheme: dark;
   }
+
+  html[data-theme="paper"] {
+    color-scheme: light;
+  }
+
 
   table,
   svg text,
@@ -119,7 +93,8 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-weight: 300;
+    font-size: 15px;
+    font-weight: 400;
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
@@ -128,15 +103,47 @@
   h1,
   h2,
   h3 {
-    font-family: var(--font-serif);
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.42px;
+  }
+
+  /*
+   * Display and mono voice. In @layer base so a route's explicit tracking-*
+   * utility still wins. Mono tracking is the signature of the system, measured
+   * on the live site: 0.48px at 12px, 1.04px at 13px, 2.7px on section labels.
+   */
+  .font-serif {
+    font-weight: 500;
+    letter-spacing: -0.42px;
+  }
+
+  .font-mono,
+  svg text {
     font-weight: 400;
+    letter-spacing: max(0.48px, 0.04em); /* floor 0.48px; 0.48px at 12px */
+  }
+
+  .font-mono.text-\[13px\] {
+    letter-spacing: 0.08em; /* 1.04px at 13px */
   }
 }
 
-/* The single page frame: 86vw — 7% clear each side at every viewport. */
+
+/* One label treatment: spaced small caps. */
+@utility mono-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2.7px;
+}
+
+
+/* The single page frame: 92.6vw — 3.7% clear each side at every viewport. */
 @utility page-container {
-  width: 86vw;
-  max-width: 1240px;
+  width: 92.6vw;
+  max-width: 1392px;
   margin-inline: auto;
   padding-block: 40px 56px;
   display: flex;
@@ -145,8 +152,8 @@
 }
 
 @utility page-width {
-  width: 86vw;
-  max-width: 1240px;
+  width: 92.6vw;
+  max-width: 1392px;
   margin-inline: auto;
 }
 
@@ -159,7 +166,7 @@
 @media (max-width: 900px) {
   .page-container,
   .page-width {
-    width: 86vw;
+    width: 92.6vw;
     padding-block: 28px 40px;
     gap: 40px;
   }

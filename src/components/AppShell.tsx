@@ -8,6 +8,7 @@ import { JobDrawer } from "@/components/JobDrawer";
 import { CommandHint, CommandPalette } from "@/components/CommandPalette";
 import { fixed } from "@/lib/format";
 import { servingLabel } from "@/lib/state";
+import { useTheme } from "@/lib/theme";
 
 type Sub = { to: string; label: string };
 type Group = { label: string; to: string; subs: Sub[] };
@@ -73,7 +74,7 @@ export function Pill({
   className?: string;
 }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px] tracking-tight">
+    <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px]">
       <span className="text-faint uppercase">{label}</span>
       <span className={className ?? "text-paper"}>{value}</span>
     </span>
@@ -87,7 +88,7 @@ function PlanePill() {
     <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px]">
       <span
         aria-hidden
-        className={`h-1.5 w-1.5 rounded-full ${available ? "bg-copper" : "bg-faint"}`}
+        className={`h-1.5 w-1.5 rounded-full ${available ? "bg-ok" : "bg-faint"}`}
       />
       <span className={available ? "text-paper" : "text-faint"}>
         {available ? (posture ? `local · ${posture}` : "local") : "remote"}
@@ -96,6 +97,19 @@ function PlanePill() {
   );
 }
 
+
+function ThemeSwitch() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <button
+      onClick={() => setTheme(theme === "ember" ? "paper" : "ember")}
+      aria-label={`Theme: ${theme}. Switch to ${theme === "ember" ? "paper" : "ember"}.`}
+      className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint transition-colors hover:text-copper"
+    >
+      {theme}
+    </button>
+  );
+}
 
 export function AppShell() {
   const hub = useHubStateValue();
@@ -132,14 +146,15 @@ export function AppShell() {
             <div className="flex items-center gap-3">
               <CommandHint />
               <PlanePill />
+              <ThemeSwitch />
               {!online && (
-                <span className="border border-watch/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-watch">
+                <span className="border border-watch/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-watch">
                   Offline
                 </span>
               )}
               <button
                 onClick={signOut}
-                className="font-mono text-[11px] uppercase tracking-wide text-faint transition-colors hover:text-copper"
+                className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint transition-colors hover:text-copper"
               >
                 Sign out
               </button>
@@ -178,7 +193,7 @@ export function AppShell() {
                 <Link
                   key={sub.to}
                   to={sub.to}
-                  className={`shrink-0 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors hover:text-paper ${
+                  className={`shrink-0 font-mono text-[11px] uppercase tracking-[0.245em] transition-colors hover:text-paper ${
                     sub.to === pathname ? "text-copper" : "text-faint"
                   }`}
                 >
@@ -204,7 +219,7 @@ export function AppShell() {
 export function Panel({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
     <section className="border border-rule bg-panel p-5">
-      <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">{title}</div>
+      <div className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">{title}</div>
       <div className="mt-4 text-sm text-muted-foreground">{children}</div>
     </section>
   );

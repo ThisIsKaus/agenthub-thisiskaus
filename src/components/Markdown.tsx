@@ -99,7 +99,7 @@ export function Markdown({ text }: { text: string }) {
           className={
             level <= 2
               ? "font-serif text-[15px] font-medium text-paper"
-              : "font-mono text-[10px] uppercase tracking-[0.14em] text-faint"
+              : "font-mono text-[10px] uppercase tracking-[0.27em] text-faint"
           }
         >
           {heading[2]}

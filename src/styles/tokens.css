@@ -1,0 +1,75 @@
+/*
+ * AgentHub tokens — Agenticality design system.
+ * Read from the live site's CSS custom properties on 8 August 2026; two values
+ * adjusted for AA contrast (noted inline). No component may hold a hex.
+ *
+ * THEME IS ONE ATTRIBUTE: data-theme on the document root, "ember" or "paper".
+ */
+
+:root,
+:root[data-theme="ember"] {
+  --bg: #101115;
+  --fg: #f4efe5;
+  --haze: #1b1c22;
+  --graphite: #8a8c95; /* raised from #6e7078 — 3.82:1 fails AA at 11px */
+  --dek: #c9c4b8;
+  --accent: #e8903a;
+  --accent-strong: #e26030;
+  --cta-text: #101115;
+  --ok: #7fa88c;
+  --warn: #c9b227;
+  --fail: #d4574e;
+  --rule: #26262a;
+  --radius: 2px;
+}
+
+:root[data-theme="paper"] {
+  --bg: #faf9f5;
+  --fg: #101115;
+  --haze: #f0ede4;
+  --graphite: #5c5e66;
+  --dek: #30302e;
+  --accent: #a8431a; /* #c2601f is 4.0:1 on cream — under AA */
+  --accent-strong: #8a3414;
+  --cta-text: #faf9f5;
+  --ok: #3f7a55;
+  --warn: #8a6d0f;
+  --fail: #b02f26;
+  --rule: #ddd8cc;
+  --radius: 2px;
+}
+
+/*
+ * shadcn aliases, mapped exactly as the studio site does.
+ * Defined once — they follow whichever theme block is active.
+ */
+:root {
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--bg);
+  --card-foreground: var(--fg);
+  --popover: var(--bg);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent);
+  --primary-foreground: var(--cta-text);
+  --secondary: var(--haze);
+  --secondary-foreground: var(--fg);
+  --muted: var(--graphite);
+  --muted-foreground: var(--dek);
+  --accent-foreground: var(--cta-text);
+  --destructive: var(--fail);
+  --destructive-foreground: var(--cta-text);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--accent);
+
+  /* AgentHub palette names, kept as aliases so no route needs editing */
+  --ink: var(--bg);
+  --panel: var(--haze);
+  --panel2: var(--haze);
+  --copper: var(--accent);
+  --paper: var(--fg);
+  --faint: var(--graphite);
+  --risk: var(--fail);
+  --watch: var(--warn);
+}

@@ -109,7 +109,7 @@ export function CascadePanel() {
                   title={`Tier ${entry.tier} · ${entry.count}`}
                   style={{
                     width: `${(entry.count / total) * 100}%`,
-                    backgroundColor: entry.tier >= 4 ? "#C8744A" : "#7FA88C",
+                    backgroundColor: entry.tier >= 4 ? "var(--warn)" : "var(--ok)",
                   }}
                 />
               ))}
@@ -123,7 +123,7 @@ export function CascadePanel() {
                   <span
                     aria-hidden
                     className="h-1.5 w-1.5"
-                    style={{ backgroundColor: entry.tier >= 4 ? "#C8744A" : "#7FA88C" }}
+                    style={{ backgroundColor: entry.tier >= 4 ? "var(--warn)" : "var(--ok)" }}
                   />
                   tier {entry.tier} · {entry.count} · {Math.round((entry.count / total) * 100)}%
                 </span>
@@ -141,7 +141,7 @@ export function CascadePanel() {
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3 border-t border-rule pt-3 sm:grid-cols-3">
               <div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   verify first attempt
                 </div>
                 <div className="mt-1 font-mono text-sm tabular-nums text-paper">
@@ -149,13 +149,13 @@ export function CascadePanel() {
                 </div>
               </div>
               <div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   proposals approved
                 </div>
                 <div className="mt-1 font-mono text-sm tabular-nums text-ok">{approved ?? "—"}</div>
               </div>
               <div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   proposals rejected
                 </div>
                 <div className="mt-1 font-mono text-sm tabular-nums text-risk">
@@ -185,7 +185,7 @@ export function CascadePanel() {
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                  <tr className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                     <th className="py-2 pr-4 font-normal">Intent</th>
                     <th className="py-2 pr-4 font-normal">Tier</th>
                     <th className="py-2 pr-4 font-normal">Duration</th>

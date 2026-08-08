@@ -114,7 +114,7 @@ function MemoryPage() {
         />
         <button
           type="submit"
-          className="border border-copper px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-copper"
+          className="border border-copper px-3 py-2 font-mono text-[10px] uppercase tracking-[0.27em] text-copper"
         >
           Search
         </button>
@@ -125,7 +125,7 @@ function MemoryPage() {
             setMode("recent");
             void load();
           }}
-          className="border border-rule px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+          className="border border-rule px-3 py-2 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
         >
           Recent
         </button>
@@ -154,7 +154,7 @@ function MemoryPage() {
           <ol className="space-y-4">
             {events.map((event, index) => (
               <li key={`${event.ts ?? index}-${index}`} className="border-b border-rule pb-4 last:border-b-0 last:pb-0">
-                <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   {stamp(event.ts)}
                   {event.kind ? ` · ${event.kind}` : ""}
                   {event.model ? ` · ${event.model}` : ""}

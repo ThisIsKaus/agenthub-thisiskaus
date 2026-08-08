@@ -215,11 +215,11 @@ function BuildPage() {
           <button
             onClick={() => void submit()}
             disabled={!intent.trim() || running}
-            className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-copper transition-colors hover:bg-copper/10 disabled:opacity-40"
+            className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper transition-colors hover:bg-copper/10 disabled:opacity-40"
           >
             {running ? "Building…" : "Build"}
           </button>
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+          <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
             ⌘/Ctrl + Enter
           </span>
           {running && (
@@ -248,7 +248,7 @@ function BuildPage() {
                   }`}
                 />
                 <div className="min-w-0">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                     {stage.label}
                   </div>
                   <pre className="mt-1 max-w-[72ch] whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
@@ -281,7 +281,7 @@ function BuildPage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <tr className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   <th className="py-2 pr-4 font-normal">Intent</th>
                   <th className="py-2 pr-4 font-normal">Tier</th>
                   <th className="py-2 pr-4 font-normal">Duration</th>

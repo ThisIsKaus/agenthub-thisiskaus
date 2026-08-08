@@ -133,16 +133,16 @@ function KnowledgePage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-rule">
-                <th className="py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                <th className="py-2 text-left font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   Extension
                 </th>
-                <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   Chunks
                 </th>
-                <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   Documents
                 </th>
-                <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   Chunks / doc
                 </th>
               </tr>
@@ -188,7 +188,7 @@ function KnowledgePage() {
         <p className="mb-3 font-mono text-[10px] text-faint">Expand a source to see its chunks.</p>
         <Disclosure
           summary={
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+            <span className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
               Sources by chunk count · {sources.length.toLocaleString()} indexed
             </span>
           }
@@ -236,7 +236,7 @@ function KnowledgePage() {
                     <button
                       type="button"
                       onClick={() => void forget(source)}
-                      className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint opacity-0 transition-opacity focus:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 hover:text-risk"
+                      className="shrink-0 font-mono text-[10px] uppercase tracking-[0.27em] text-faint opacity-0 transition-opacity focus:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 hover:text-risk"
                     >
                       Forget
                     </button>
@@ -255,7 +255,7 @@ function KnowledgePage() {
           type="button"
           onClick={() => void ingest()}
           disabled={running}
-          className="border border-copper px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-copper disabled:opacity-50"
+          className="border border-copper px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper disabled:opacity-50"
         >
           {running ? "Ingesting…" : "Ingest documents"}
         </button>

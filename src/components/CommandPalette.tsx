@@ -290,7 +290,7 @@ export function CommandPalette() {
           ) : (
             grouped.map((group) => (
               <section key={group.kind}>
-                <h2 className="px-4 pt-3 pb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <h2 className="px-4 pt-3 pb-1 font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   {KIND_LABEL[group.kind]}
                 </h2>
                 {group.rows.map((item) => {

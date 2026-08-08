@@ -3,15 +3,15 @@ import type { MachineBlock } from "@/lib/local-bridge";
 import { batteryLine, clockOf, holdersOf, type Plane } from "@/lib/machine-state";
 
 const BORDER: Record<Plane, string> = {
-  LIVE: "border-l-copper",
-  AWAKE_REMOTE: "border-l-ok",
+  LIVE: "border-l-ok",
+  AWAKE_REMOTE: "border-l-muted",
   DOZING: "border-l-watch",
   OFFLINE: "border-l-risk",
 };
 
 const DOT: Record<Plane, string> = {
-  LIVE: "bg-copper",
-  AWAKE_REMOTE: "bg-ok",
+  LIVE: "bg-ok",
+  AWAKE_REMOTE: "bg-muted",
   DOZING: "bg-watch",
   OFFLINE: "bg-risk",
 };

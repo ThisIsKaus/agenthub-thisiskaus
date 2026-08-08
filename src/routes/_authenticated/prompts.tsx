@@ -114,7 +114,7 @@ function PromptsPage() {
             type="button"
             disabled={scoring}
             onClick={() => void scoreTriage()}
-            className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-50"
+            className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.27em] text-copper disabled:opacity-50"
           >
             {scoring ? "Scoring…" : "Score triage"}
           </button>
@@ -174,7 +174,7 @@ function PromptsPage() {
                 <button
                   type="button"
                   onClick={() => void save()}
-                  className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper"
+                  className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.27em] text-copper"
                 >
                   Save
                 </button>

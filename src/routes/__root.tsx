@@ -16,6 +16,7 @@ import { registerServiceWorker, installStaleShellRecovery } from "@/lib/pwa";
 import { flushQueue } from "@/lib/capture-queue";
 import { LocalBridgeProvider } from "@/lib/local-bridge";
 import { JobDrawerProvider } from "@/lib/job-drawer";
+import { ThemeProvider } from "@/lib/theme";
 
 
 
@@ -86,7 +87,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "robots", content: "noindex, nofollow" },
       { name: "author", content: "AgentHub" },
-      { name: "theme-color", content: "#0B0B0D" },
+      { name: "theme-color", content: "#101115" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "AgentHub" },
@@ -115,7 +116,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap",
       },
       { rel: "icon", href: "/icon-192.png", type: "image/png" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
@@ -132,7 +133,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="ember">
       <head>
         <HeadContent />
       </head>
@@ -170,12 +171,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LocalBridgeProvider>
-        <JobDrawerProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </JobDrawerProvider>
-      </LocalBridgeProvider>
+      <ThemeProvider>
+        <LocalBridgeProvider>
+          <JobDrawerProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </JobDrawerProvider>
+        </LocalBridgeProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

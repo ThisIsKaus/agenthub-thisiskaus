@@ -64,7 +64,7 @@ function SignIn() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm border border-rule bg-panel p-6">
-        <h1 className="font-serif text-3xl leading-none text-paper">
+        <h1 className="font-serif text-[31px] leading-none text-paper">
           AgentHub
         </h1>
 
@@ -82,7 +82,7 @@ function SignIn() {
           <button
             type="submit"
             disabled={pending}
-            className="h-11 w-full border border-copper font-mono text-[12px] uppercase tracking-[0.14em] text-copper transition-colors hover:bg-copper hover:text-ink disabled:opacity-50"
+            className="h-11 w-full border border-copper font-mono text-[12px] uppercase tracking-[0.225em] text-copper transition-colors hover:bg-copper hover:text-ink disabled:opacity-50"
           >
             {pending ? "Sending" : "Send link"}
           </button>

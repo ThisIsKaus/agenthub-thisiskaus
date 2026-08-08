@@ -9,7 +9,7 @@ function SecHead({ title, note }: { title: string; note: string }) {
   return (
     <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
       <SectionHeading>{title}</SectionHeading>
-      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">{note}</span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">{note}</span>
     </div>
   );
 }
@@ -150,7 +150,7 @@ export function AboutSystemBody() {
         lede="Every request takes one of three lanes and the lane decides the cost. Two are already paid for. The third is metered, reserved for scheduled and programmatic work, and logged per request so the claim can be checked rather than believed."
       >
         <div className="border border-rule bg-panel p-2">
-          <svg
+          <svg style={{ letterSpacing: "0.48px" }}
             viewBox="0 0 1000 380"
             className="block h-auto w-full"
             role="img"
@@ -158,48 +158,48 @@ export function AboutSystemBody() {
           >
             <defs>
               <marker id="sys-ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
-                <path d="M0,0 L9,4.5 L0,9 Z" fill="#6E6E78" />
+                <path d="M0,0 L9,4.5 L0,9 Z" fill="var(--graphite)" />
               </marker>
               <marker id="sys-arc" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
-                <path d="M0,0 L9,4.5 L0,9 Z" fill="#C8744A" />
+                <path d="M0,0 L9,4.5 L0,9 Z" fill="var(--accent)" />
               </marker>
             </defs>
-            <rect x="20" y="150" width="150" height="80" fill="#191919" stroke="#26262A" />
-            <text x="95" y="182" textAnchor="middle" fill="#ECEBE8" fontFamily="Inter,sans-serif" fontSize="15" fontWeight="500">Front door</text>
-            <text x="95" y="203" textAnchor="middle" fill="#8E8E96" fontFamily="Geist Mono,monospace" fontSize="10">mail · calendar · files</text>
-            <rect x="215" y="150" width="130" height="80" fill="#191919" stroke="#C8744A" />
-            <text x="280" y="177" textAnchor="middle" fill="#ECEBE8" fontFamily="Inter,sans-serif" fontSize="14" fontWeight="500">Triage</text>
-            <text x="280" y="197" textAnchor="middle" fill="#8E8E96" fontFamily="Geist Mono,monospace" fontSize="11">4B · always resident</text>
-            <text x="280" y="214" textAnchor="middle" fill="#7FA88C" fontFamily="Geist Mono,monospace" fontSize="10">+ pattern filter</text>
-            <line x1="172" y1="190" x2="211" y2="190" stroke="#6E6E78" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
-            <line x1="347" y1="190" x2="428" y2="88" stroke="#7FA88C" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
-            <rect x="432" y="52" width="300" height="72" fill="#191919" stroke="#26262A" />
-            <text x="452" y="80" fill="#ECEBE8" fontFamily="Inter,sans-serif" fontSize="14" fontWeight="500">Local lane</text>
-            <text x="452" y="101" fill="#8E8E96" fontFamily="Geist Mono,monospace" fontSize="11">brain · coder · embeddings · S3 finance</text>
-            <text x="752" y="86" fill="#7FA88C" fontFamily="Geist Mono,monospace" fontSize="19">$0</text>
-            <text x="752" y="104" fill="#6E6E78" fontFamily="Geist Mono,monospace" fontSize="10">unlimited</text>
-            <line x1="347" y1="190" x2="428" y2="190" stroke="#7FA88C" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
-            <rect x="432" y="154" width="300" height="72" fill="#191919" stroke="#26262A" />
-            <text x="452" y="182" fill="#ECEBE8" fontFamily="Inter,sans-serif" fontSize="14" fontWeight="500">Subscription lane</text>
-            <text x="452" y="203" fill="#8E8E96" fontFamily="Geist Mono,monospace" fontSize="11">agentic coding · review · assistants</text>
-            <text x="752" y="188" fill="#7FA88C" fontFamily="Geist Mono,monospace" fontSize="19">$0</text>
-            <text x="752" y="206" fill="#6E6E78" fontFamily="Geist Mono,monospace" fontSize="10">marginal</text>
-            <line x1="347" y1="190" x2="428" y2="292" stroke="#C8744A" strokeWidth="1.5" markerEnd="url(#sys-arc)" />
-            <rect x="432" y="256" width="300" height="72" fill="#191919" stroke="#C8744A" />
-            <text x="452" y="284" fill="#ECEBE8" fontFamily="Inter,sans-serif" fontSize="14" fontWeight="500">Metered lane</text>
-            <text x="452" y="305" fill="#8E8E96" fontFamily="Geist Mono,monospace" fontSize="11">router :4000 · scheduled and programmatic only</text>
-            <text x="752" y="290" fill="#C8744A" fontFamily="Geist Mono,monospace" fontSize="19">$</text>
-            <text x="752" y="308" fill="#6E6E78" fontFamily="Geist Mono,monospace" fontSize="10">logged per request</text>
-            <path d="M836 88 L856 88 L856 292 L836 292" fill="none" stroke="#26262A" />
-            <path d="M836 190 L856 190" stroke="#26262A" />
-            <line x1="856" y1="190" x2="906" y2="190" stroke="#6E6E78" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
-            <rect x="908" y="150" width="76" height="80" fill="#191919" stroke="#26262A" />
-            <text x="946" y="180" textAnchor="middle" fill="#ECEBE8" fontFamily="Inter,sans-serif" fontSize="13" fontWeight="500">CI</text>
-            <text x="946" y="199" textAnchor="middle" fill="#8E8E96" fontFamily="Geist Mono,monospace" fontSize="10">ships prod</text>
-            <rect x="215" y="272" width="130" height="56" fill="none" stroke="#B5544A" strokeDasharray="3 3" />
-            <text x="280" y="296" textAnchor="middle" fill="#B5544A" fontFamily="Inter,sans-serif" fontSize="12.5" fontWeight="500">T2 approval</text>
-            <text x="280" y="314" textAnchor="middle" fill="#8E8E96" fontFamily="Geist Mono,monospace" fontSize="10">default deny</text>
-            <line x1="280" y1="234" x2="280" y2="268" stroke="#B5544A" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
+            <rect x="20" y="150" width="150" height="80" fill="var(--haze)" stroke="var(--rule)" />
+            <text x="95" y="182" textAnchor="middle" fill="var(--fg)" fontFamily="Geist,sans-serif" fontSize="15" fontWeight="500">Front door</text>
+            <text x="95" y="203" textAnchor="middle" fill="var(--dek)" fontFamily="Geist Mono,monospace" fontSize="10">mail · calendar · files</text>
+            <rect x="215" y="150" width="130" height="80" fill="var(--haze)" stroke="var(--accent)" />
+            <text x="280" y="177" textAnchor="middle" fill="var(--fg)" fontFamily="Geist,sans-serif" fontSize="14" fontWeight="500">Triage</text>
+            <text x="280" y="197" textAnchor="middle" fill="var(--dek)" fontFamily="Geist Mono,monospace" fontSize="11">4B · always resident</text>
+            <text x="280" y="214" textAnchor="middle" fill="var(--ok)" fontFamily="Geist Mono,monospace" fontSize="10">+ pattern filter</text>
+            <line x1="172" y1="190" x2="211" y2="190" stroke="var(--graphite)" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
+            <line x1="347" y1="190" x2="428" y2="88" stroke="var(--ok)" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
+            <rect x="432" y="52" width="300" height="72" fill="var(--haze)" stroke="var(--rule)" />
+            <text x="452" y="80" fill="var(--fg)" fontFamily="Geist,sans-serif" fontSize="14" fontWeight="500">Local lane</text>
+            <text x="452" y="101" fill="var(--dek)" fontFamily="Geist Mono,monospace" fontSize="11">brain · coder · embeddings · S3 finance</text>
+            <text x="752" y="86" fill="var(--ok)" fontFamily="Geist Mono,monospace" fontSize="19">$0</text>
+            <text x="752" y="104" fill="var(--graphite)" fontFamily="Geist Mono,monospace" fontSize="10">unlimited</text>
+            <line x1="347" y1="190" x2="428" y2="190" stroke="var(--ok)" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
+            <rect x="432" y="154" width="300" height="72" fill="var(--haze)" stroke="var(--rule)" />
+            <text x="452" y="182" fill="var(--fg)" fontFamily="Geist,sans-serif" fontSize="14" fontWeight="500">Subscription lane</text>
+            <text x="452" y="203" fill="var(--dek)" fontFamily="Geist Mono,monospace" fontSize="11">agentic coding · review · assistants</text>
+            <text x="752" y="188" fill="var(--ok)" fontFamily="Geist Mono,monospace" fontSize="19">$0</text>
+            <text x="752" y="206" fill="var(--graphite)" fontFamily="Geist Mono,monospace" fontSize="10">marginal</text>
+            <line x1="347" y1="190" x2="428" y2="292" stroke="var(--accent)" strokeWidth="1.5" markerEnd="url(#sys-arc)" />
+            <rect x="432" y="256" width="300" height="72" fill="var(--haze)" stroke="var(--accent)" />
+            <text x="452" y="284" fill="var(--fg)" fontFamily="Geist,sans-serif" fontSize="14" fontWeight="500">Metered lane</text>
+            <text x="452" y="305" fill="var(--dek)" fontFamily="Geist Mono,monospace" fontSize="11">router :4000 · scheduled and programmatic only</text>
+            <text x="752" y="290" fill="var(--accent)" fontFamily="Geist Mono,monospace" fontSize="19">$</text>
+            <text x="752" y="308" fill="var(--graphite)" fontFamily="Geist Mono,monospace" fontSize="10">logged per request</text>
+            <path d="M836 88 L856 88 L856 292 L836 292" fill="none" stroke="var(--rule)" />
+            <path d="M836 190 L856 190" stroke="var(--rule)" />
+            <line x1="856" y1="190" x2="906" y2="190" stroke="var(--graphite)" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
+            <rect x="908" y="150" width="76" height="80" fill="var(--haze)" stroke="var(--rule)" />
+            <text x="946" y="180" textAnchor="middle" fill="var(--fg)" fontFamily="Geist,sans-serif" fontSize="13" fontWeight="500">CI</text>
+            <text x="946" y="199" textAnchor="middle" fill="var(--dek)" fontFamily="Geist Mono,monospace" fontSize="10">ships prod</text>
+            <rect x="215" y="272" width="130" height="56" fill="none" stroke="var(--fail)" strokeDasharray="3 3" />
+            <text x="280" y="296" textAnchor="middle" fill="var(--fail)" fontFamily="Geist,sans-serif" fontSize="12.5" fontWeight="500">T2 approval</text>
+            <text x="280" y="314" textAnchor="middle" fill="var(--dek)" fontFamily="Geist Mono,monospace" fontSize="10">default deny</text>
+            <line x1="280" y1="234" x2="280" y2="268" stroke="var(--fail)" strokeWidth="1.5" markerEnd="url(#sys-ar)" />
           </svg>
         </div>
         <div className="mt-4 flex flex-wrap gap-5 font-mono text-[11px] text-muted-foreground">
@@ -249,7 +249,7 @@ export function AboutSystemBody() {
                 <span className="font-mono text-[11px] text-copper">{id}</span>
                 <span>{title}</span>
                 <span
-                  className={`font-mono text-[10px] uppercase tracking-[0.1em] ${
+                  className={`font-mono text-[10px] uppercase tracking-[0.27em] ${
                     state === "closed" ? "text-ok" : "text-watch"
                   }`}
                 >
@@ -293,7 +293,7 @@ export function AboutSystemBody() {
                 {["Cadence", "Action", "Time"].map((h, i) => (
                   <th
                     key={h}
-                    className={`border-b border-rule pb-3 pr-3 font-mono text-[10px] uppercase tracking-[0.1em] text-faint ${
+                    className={`border-b border-rule pb-3 pr-3 font-mono text-[10px] uppercase tracking-[0.27em] text-faint ${
                       i === 2 ? "text-right" : "text-left"
                     }`}
                   >
