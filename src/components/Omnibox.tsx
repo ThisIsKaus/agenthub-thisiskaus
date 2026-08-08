@@ -71,8 +71,6 @@ export function Omnibox() {
   const [classifying, setClassifying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
-  /** The ask surface expands in place; the question it is answering lives here. */
-  const [asked, setAsked] = useState<string | null>(null);
   const examples = useMemo(pickExamples, []);
   const field = useRef<HTMLInputElement>(null);
   const seq = useRef(0);
@@ -116,7 +114,7 @@ export function Omnibox() {
       const target = forced ?? (local.available ? intent : "capture");
       setBusy(true);
       setStatus(null);
-      setAsked(null);
+      setStatus(null);
       try {
         if (target === "capture") {
           const capture: PendingCapture = {
@@ -165,11 +163,7 @@ export function Omnibox() {
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     const meta = event.metaKey || event.ctrlKey;
-    if (event.key === "Escape" && asked) {
-      event.preventDefault();
-      setAsked(null);
-      return;
-    }
+
     if (meta && /^[1-4]$/.test(event.key)) {
       event.preventDefault();
       setOverridden(true);
