@@ -64,7 +64,7 @@ function SignIn() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm border border-rule bg-panel p-6">
-        <h1 className="font-serif text-3xl leading-none text-paper">
+        <h1 className="font-serif text-[31px] leading-none text-paper">
           AgentHub
         </h1>
 

@@ -109,7 +109,7 @@ export function CascadePanel() {
                   title={`Tier ${entry.tier} · ${entry.count}`}
                   style={{
                     width: `${(entry.count / total) * 100}%`,
-                    backgroundColor: entry.tier >= 4 ? "#C8744A" : "#7FA88C",
+                    backgroundColor: entry.tier >= 4 ? "var(--warn)" : "var(--ok)",
                   }}
                 />
               ))}
@@ -123,7 +123,7 @@ export function CascadePanel() {
                   <span
                     aria-hidden
                     className="h-1.5 w-1.5"
-                    style={{ backgroundColor: entry.tier >= 4 ? "#C8744A" : "#7FA88C" }}
+                    style={{ backgroundColor: entry.tier >= 4 ? "var(--warn)" : "var(--ok)" }}
                   />
                   tier {entry.tier} · {entry.count} · {Math.round((entry.count / total) * 100)}%
                 </span>

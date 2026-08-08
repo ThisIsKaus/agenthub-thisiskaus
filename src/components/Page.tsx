@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
  *
  *   container : 92.6vw (3.7% clear each side), max 1392px, centred — never full-bleed
  *               the same 92.6vw applies at every breakpoint, mobile included
- *   title     : Instrument Serif 31px, sentence case
+ *   title     : Bricolage Grotesque 31px, weight 500, sentence case
  *   subtitle  : secondary text, capped at 72ch
  *   children  : stacked with 56px between major sections
  *   footer    : Geist Mono 11px tertiary, always present

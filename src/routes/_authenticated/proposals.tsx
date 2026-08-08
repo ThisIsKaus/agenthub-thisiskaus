@@ -472,7 +472,7 @@ function ProposalRow({
                 type="checkbox"
                 checked={acknowledged}
                 onChange={(event) => setAcknowledged(event.target.checked)}
-                className="mt-1 accent-[#C8744A]"
+                className="mt-1 accent-[var(--accent)]"
               />
               I understand this alters a control
             </label>

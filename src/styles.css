@@ -118,9 +118,10 @@
     letter-spacing: -0.42px;
   }
 
-  .font-mono {
+  .font-mono,
+  svg text {
     font-weight: 400;
-    letter-spacing: 0.04em; /* 0.48px at 12px */
+    letter-spacing: max(0.48px, 0.04em); /* floor 0.48px; 0.48px at 12px */
   }
 
   .font-mono.text-\[13px\] {

@@ -54,7 +54,7 @@ const BOX: Record<ZoneId, { x: number; y: number; w: number; h: number }> = {
 function ZoneRect({ zone }: { zone: Zone }) {
   const box = BOX[zone.id];
   const outbound = zone.id === "frontier" || zone.id === "backup";
-  const stroke = zone.accent ? HEX[zone.accent] : "#26262A";
+  const stroke = zone.accent ? HEX[zone.accent] : "var(--rule)";
   const small = outbound;
 
   return (
@@ -65,15 +65,15 @@ function ZoneRect({ zone }: { zone: Zone }) {
         width={box.w}
         height={box.h}
         rx={8}
-        fill={outbound ? "#141416" : "#191919"}
+        fill={outbound ? "var(--haze)" : "var(--haze)"}
         stroke={stroke}
         strokeDasharray={outbound ? "4 4" : undefined}
       />
       <text
         x={box.x + 20}
         y={box.y + 30}
-        fill="#ECEBE8"
-        fontFamily="Inter,sans-serif"
+        fill="var(--fg)"
+        fontFamily="Geist,sans-serif"
         fontSize={small ? 13.5 : 15}
         fontWeight={500}
       >
@@ -157,7 +157,7 @@ export function BoardDiagram({ zones, caption }: { zones: Zone[]; caption: React
   return (
     <div>
       <div className="hidden border border-rule bg-panel p-2.5 md:block">
-        <svg
+        <svg style={{ letterSpacing: "0.48px" }}
           viewBox="0 0 1120 620"
           className="block h-auto w-full"
           role="img"
@@ -165,10 +165,10 @@ export function BoardDiagram({ zones, caption }: { zones: Zone[]; caption: React
         >
           <defs>
             <marker id="bd-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-              <path d="M1 1L9 5L1 9" fill="none" stroke="#C8744A" strokeWidth="1.4" strokeLinecap="round" />
+              <path d="M1 1L9 5L1 9" fill="none" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round" />
             </marker>
             <marker id="bd-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-              <path d="M1 1L9 5L1 9" fill="none" stroke="#6E6E78" strokeWidth="1.4" strokeLinecap="round" />
+              <path d="M1 1L9 5L1 9" fill="none" stroke="var(--graphite)" strokeWidth="1.4" strokeLinecap="round" />
             </marker>
           </defs>
 
@@ -179,28 +179,28 @@ export function BoardDiagram({ zones, caption }: { zones: Zone[]; caption: React
             height={500}
             rx={14}
             fill="none"
-            stroke="#B5544A"
+            stroke="var(--fail)"
             strokeWidth={1}
             strokeDasharray="6 5"
           />
-          <text x={42} y={44} fill="#B5544A" fontFamily="Geist Mono,monospace" fontSize={11.5}>
+          <text x={42} y={44} fill="var(--fail)" fontFamily="Geist Mono,monospace" fontSize={11.5}>
             SECURITY PERIMETER · zero inbound · nothing listens beyond loopback
           </text>
 
           {order.map((id) => (byId[id] ? <ZoneRect key={id} zone={byId[id]} /> : null))}
 
-          <Arrow d="M292 186 L352 186" colour="#C8744A" marker="bd-c" />
-          <text x={300} y={176} fill="#C8744A" fontFamily="Geist Mono,monospace" fontSize={10.5}>
+          <Arrow d="M292 186 L352 186" colour="var(--accent)" marker="bd-c" />
+          <text x={300} y={176} fill="var(--accent)" fontFamily="Geist Mono,monospace" fontSize={10.5}>
             loopback
           </text>
-          <Arrow d="M624 186 L684 186" colour="#6E6E78" marker="bd-f" />
-          <Arrow d="M813 288 L813 336" colour="#6E6E78" marker="bd-f" />
-          <Arrow d="M684 430 L626 430" colour="#6E6E78" marker="bd-f" />
-          <Arrow d="M352 430 L294 430" colour="#6E6E78" marker="bd-f" />
-          <Arrow d="M940 200 L958 200" colour="#C8744A" marker="bd-c" dashed />
-          <Arrow d="M940 398 L958 398" colour="#6E6E78" marker="bd-f" dashed />
+          <Arrow d="M624 186 L684 186" colour="var(--graphite)" marker="bd-f" />
+          <Arrow d="M813 288 L813 336" colour="var(--graphite)" marker="bd-f" />
+          <Arrow d="M684 430 L626 430" colour="var(--graphite)" marker="bd-f" />
+          <Arrow d="M352 430 L294 430" colour="var(--graphite)" marker="bd-f" />
+          <Arrow d="M940 200 L958 200" colour="var(--accent)" marker="bd-c" dashed />
+          <Arrow d="M940 398 L958 398" colour="var(--graphite)" marker="bd-f" dashed />
 
-          <text x={42} y={580} fill="#6E6E78" fontFamily="Geist Mono,monospace" fontSize={10.5}>
+          <text x={42} y={580} fill="var(--graphite)" fontFamily="Geist Mono,monospace" fontSize={10.5}>
             Every arrow crossing the perimeter points outward. There is no inbound path, and no port to find.
           </text>
         </svg>
