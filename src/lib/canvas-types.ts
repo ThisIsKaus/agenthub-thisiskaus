@@ -24,7 +24,13 @@ export type CanvasRef = {
 
 export type BlockKind = "prompt" | "note" | "job" | "capture";
 
-export type AskSource = { file?: string; path?: string; distance?: number };
+/** `sensitivity` is the machine's classification of the cited document. */
+export type AskSource = {
+  file?: string;
+  path?: string;
+  distance?: number;
+  sensitivity?: string;
+};
 
 export type RunStatus = "running" | "ok" | "failed" | "refused";
 
@@ -115,13 +121,28 @@ export type CanvasBlock = PromptBlock | NoteBlock | JobBlock | CaptureBlock;
  * history without merge semantics.
  */
 
-
 /**
  * Every canvas is also a project. A thought and a shipped thing are the same
  * document at different stages, so there is no second place to look.
  */
-export const STAGES = ["idea", "shaping", "wip", "review", "shipped", "parked"] as const;
+export const STAGES = ["draft", "done", "parked"] as const;
 export type Stage = (typeof STAGES)[number];
+
+/** Six states over five documents was a taxonomy with no population. */
+const LEGACY_STAGES: Record<string, Stage> = {
+  idea: "draft",
+  shaping: "draft",
+  wip: "draft",
+  review: "draft",
+  shipped: "done",
+  parked: "parked",
+};
+
+export function toStage(value: unknown): Stage {
+  const raw = typeof value === "string" ? value : "";
+  if ((STAGES as readonly string[]).includes(raw)) return raw as Stage;
+  return LEGACY_STAGES[raw] ?? "draft";
+}
 
 export type CanvasDoc = {
   version: 2;
@@ -146,7 +167,6 @@ export type CanvasDoc = {
   /** Absolute path on the machine once the document has been written. */
   path?: string;
 };
-
 
 /** Runs kept per block. Older ones fall off; the pinned run never does. */
 export const RUN_KEEP = 8;
@@ -220,12 +240,11 @@ export function emptyDoc(title = "Untitled canvas"): CanvasDoc {
     sources: [],
     versions: 0,
 
-    stage: "idea",
+    stage: "draft",
     entity: "personal",
     sensitivity: "S1p",
     skills: [],
   };
-
 }
 
 /** The run a block currently means, or null when it has never been run. */
@@ -267,9 +286,7 @@ export function normaliseDoc(raw: unknown, path?: string): CanvasDoc | null {
       : [],
     versions: typeof value.versions === "number" ? value.versions : 0,
 
-    stage: (STAGES as readonly string[]).includes(value.stage as string)
-      ? (value.stage as Stage)
-      : "idea",
+    stage: toStage(value.stage),
     entity: typeof value.entity === "string" && value.entity ? value.entity : "personal",
     sensitivity:
       typeof value.sensitivity === "string" && value.sensitivity ? value.sensitivity : "S1p",
@@ -278,9 +295,7 @@ export function normaliseDoc(raw: unknown, path?: string): CanvasDoc | null {
       : [],
     path,
   };
-
 }
-
 
 function normaliseBlock(raw: unknown): CanvasBlock | null {
   if (!raw || typeof raw !== "object") return null;
@@ -289,7 +304,9 @@ function normaliseBlock(raw: unknown): CanvasBlock | null {
   if (kind !== "prompt" && kind !== "note" && kind !== "job" && kind !== "capture") return null;
   const id = typeof value.id === "string" ? value.id : newId(kind);
   const runs = Array.isArray(value.runs)
-    ? (value.runs as unknown[]).map((run) => normaliseRun(run, id)).filter((run): run is Run => run !== null)
+    ? (value.runs as unknown[])
+        .map((run) => normaliseRun(run, id))
+        .filter((run): run is Run => run !== null)
     : migrateV1Runs(value, kind, id);
   const base = {
     id,
@@ -300,8 +317,7 @@ function normaliseBlock(raw: unknown): CanvasBlock | null {
       ? (value.dependsOn as unknown[]).filter((item): item is string => typeof item === "string")
       : [],
     runs,
-    pinnedRunId:
-      typeof value.pinnedRunId === "string" ? value.pinnedRunId : (runs[0]?.id ?? null),
+    pinnedRunId: typeof value.pinnedRunId === "string" ? value.pinnedRunId : (runs[0]?.id ?? null),
     note: typeof value.note === "string" ? value.note : null,
   };
   if (kind === "prompt") {
@@ -329,7 +345,12 @@ function migrateV1Runs(value: Record<string, unknown>, kind: BlockKind, blockId:
   const at = typeof value.at === "string" ? value.at : null;
   const legacy = value.result as Record<string, unknown> | null | undefined;
 
-  const shell = (output: RunOutput, startedAt: string, model: string, extra: Partial<Provenance>): Run => ({
+  const shell = (
+    output: RunOutput,
+    startedAt: string,
+    model: string,
+    extra: Partial<Provenance>,
+  ): Run => ({
     id: newId("run"),
     blockId,
     status: "ok",
@@ -372,7 +393,11 @@ function migrateV1Runs(value: Record<string, unknown>, kind: BlockKind, blockId:
     const jobKey = typeof value.jobKey === "string" ? value.jobKey : "verify";
     return [
       shell(
-        { type: "console", out: value.out, code: typeof value.code === "number" ? value.code : null },
+        {
+          type: "console",
+          out: value.out,
+          code: typeof value.code === "number" ? value.code : null,
+        },
         at ?? new Date().toISOString(),
         jobKey,
         { jobKey },
@@ -438,5 +463,7 @@ function normaliseRun(raw: unknown, blockId: string): Run | null {
 function isRef(value: unknown): value is CanvasRef {
   if (!value || typeof value !== "object") return false;
   const ref = value as Record<string, unknown>;
-  return typeof ref.id === "string" && typeof ref.label === "string" && typeof ref.kind === "string";
+  return (
+    typeof ref.id === "string" && typeof ref.label === "string" && typeof ref.kind === "string"
+  );
 }

@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { isRefusal, useLocal } from "@/lib/local-bridge";
-import { AskSurface } from "@/components/AskSurface";
+
 import { useJobDrawer } from "@/lib/job-drawer";
 import { insertCaptureJob, queueCapture, type PendingCapture } from "@/lib/capture-queue";
 
@@ -71,8 +71,6 @@ export function Omnibox() {
   const [classifying, setClassifying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
-  /** The ask surface expands in place; the question it is answering lives here. */
-  const [asked, setAsked] = useState<string | null>(null);
   const examples = useMemo(pickExamples, []);
   const field = useRef<HTMLInputElement>(null);
   const seq = useRef(0);
@@ -116,7 +114,6 @@ export function Omnibox() {
       const target = forced ?? (local.available ? intent : "capture");
       setBusy(true);
       setStatus(null);
-      setAsked(null);
       try {
         if (target === "capture") {
           const capture: PendingCapture = {
@@ -136,8 +133,8 @@ export function Omnibox() {
           setText("");
           setOverridden(false);
         } else if (target === "ask") {
-          // Expand in place. The surface below owns lanes, sources and streaming.
-          setAsked(body);
+          // Ask is the unsaved case of Canvas; there is one surface for both.
+          await navigate({ to: "/canvas", search: { q: body } });
         } else if (target === "build") {
           const started = await local.post<{ job: string }>("/api/build", { intent: body });
           if (started?.job) {
@@ -153,7 +150,10 @@ export function Omnibox() {
         setStatus(
           isRefusal(error)
             ? { tone: "muted", text: "Denied at the approval dialog on the machine." }
-            : { tone: "risk", text: error instanceof Error ? error.message : "That did not go through." },
+            : {
+                tone: "risk",
+                text: error instanceof Error ? error.message : "That did not go through.",
+              },
         );
       } finally {
         setBusy(false);
@@ -165,11 +165,7 @@ export function Omnibox() {
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     const meta = event.metaKey || event.ctrlKey;
-    if (event.key === "Escape" && asked) {
-      event.preventDefault();
-      setAsked(null);
-      return;
-    }
+
     if (meta && /^[1-4]$/.test(event.key)) {
       event.preventDefault();
       setOverridden(true);
@@ -198,8 +194,6 @@ export function Omnibox() {
           onChange={(event) => {
             setText(event.target.value);
             setOverridden(false);
-            // Clearing the field collapses the ask surface.
-            if (!event.target.value.trim()) setAsked(null);
           }}
           onKeyDown={onKeyDown}
           disabled={busy}
@@ -238,19 +232,19 @@ export function Omnibox() {
         ))}
       </div>
 
-
       {status && (
         <p
           className={`font-mono text-[11px] ${
-            status.tone === "risk" ? "text-risk" : status.tone === "copper" ? "text-copper" : "text-faint"
+            status.tone === "risk"
+              ? "text-risk"
+              : status.tone === "copper"
+                ? "text-copper"
+                : "text-faint"
           }`}
         >
           {status.text}
         </p>
       )}
-
-      {asked && <AskSurface question={asked} onClose={() => setAsked(null)} />}
-
     </section>
   );
 }
