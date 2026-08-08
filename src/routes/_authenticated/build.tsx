@@ -59,7 +59,10 @@ function matchLines(lines: string[], patterns: RegExp[]) {
 
 /** The streaming job output is the only signal; parse it into the five cascade stages. */
 function parseCascade(out: string, running: boolean, elapsed: number): Stage[] {
-  const lines = out.split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = out
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   const routing = matchLines(lines, [/rout/i, /\btier\s*\d.*(chosen|selected|because)/i]);
   const attempt = matchLines(lines, [/attempt/i, /executor/i, /claude code/i, /local 35b/i]);
@@ -82,10 +85,7 @@ function parseCascade(out: string, running: boolean, elapsed: number): Stage[] {
     { key: "result", hits: result },
   ];
 
-  const lastWithHits = order.reduce(
-    (last, stage, index) => (stage.hits.length ? index : last),
-    -1,
-  );
+  const lastWithHits = order.reduce((last, stage, index) => (stage.hits.length ? index : last), -1);
 
   return order
     .filter((stage) => stage.key !== "escalation" || stage.hits.length > 0)
@@ -188,146 +188,147 @@ function BuildPage() {
   return (
     <div className="space-y-6">
       <Section title="New build">
-      <Panel title="Intent">
-        <ul className="space-y-1">
-          {CASCADE_LINES.map((line) => (
-            <li key={line} className="font-mono text-[11px] leading-relaxed text-faint">
-              {line}
-            </li>
-          ))}
-        </ul>
-
-        <textarea
-          ref={textarea}
-          value={intent}
-          onChange={(event) => setIntent(event.target.value)}
-          onKeyDown={(event) => {
-            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-              event.preventDefault();
-              void submit();
-            }
-          }}
-          rows={6}
-          placeholder="Describe a change. Be specific about the outcome, not the implementation."
-          className="mt-4 w-full border border-rule bg-panel2 px-3 py-3 text-[14px] leading-[1.75] text-paper outline-none placeholder:text-faint focus:border-copper"
-        />
-
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => void submit()}
-            disabled={!intent.trim() || running}
-            className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper transition-colors hover:bg-copper/10 disabled:opacity-40"
-          >
-            {running ? "Building…" : "Build"}
-          </button>
-          <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
-            ⌘/Ctrl + Enter
-          </span>
-        </div>
-
-        <div className="mt-3">
-          <WaitTrail
-            running={running}
-            elapsed={elapsed}
-            stages={BUILD_STAGES}
-            error={note}
-            giveUpAt={600}
-            giveUpText="no result after ten minutes"
-            onRetry={() => void submit()}
-          />
-        </div>
-      </Panel>
-
-      {job && (
-        <Panel title="Run">
-          <ol className="space-y-0">
-            {stages.map((stage) => (
-              <li key={stage.key} className="flex gap-3 border-t border-rule py-3 first:border-t-0">
-                <span
-                  aria-hidden
-                  className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
-                    stage.state === "done"
-                      ? "bg-ok"
-                      : stage.state === "active"
-                        ? "bg-copper"
-                        : stage.state === "fail"
-                          ? "bg-risk"
-                          : "bg-faint/50"
-                  }`}
-                />
-                <div className="min-w-0">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
-                    {stage.label}
-                  </div>
-                  <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
-                    {stage.detail || "—"}
-                  </pre>
-                </div>
+        <Panel title="Intent">
+          <ul className="space-y-1">
+            {CASCADE_LINES.map((line) => (
+              <li key={line} className="font-mono text-[11px] leading-relaxed text-faint">
+                {line}
               </li>
             ))}
-          </ol>
+          </ul>
 
-          {succeeded && (
-            <p className="mt-4 border-t border-rule pt-4 text-[13px] leading-relaxed text-paper">
-              This is now a proposal. Review it under Proposals before it merges.
-            </p>
-          )}
+          <textarea
+            ref={textarea}
+            value={intent}
+            onChange={(event) => setIntent(event.target.value)}
+            onKeyDown={(event) => {
+              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                event.preventDefault();
+                void submit();
+              }
+            }}
+            rows={6}
+            placeholder="Describe a change. Be specific about the outcome, not the implementation."
+            className="mt-4 w-full border border-rule bg-panel2 px-3 py-3 text-[14px] leading-[1.75] text-paper outline-none placeholder:text-faint focus:border-copper"
+          />
+
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => void submit()}
+              disabled={!intent.trim() || running}
+              className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper transition-colors hover:bg-copper/10 disabled:opacity-40"
+            >
+              {running ? "Building…" : "Build"}
+            </button>
+            <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
+              ⌘/Ctrl + Enter
+            </span>
+          </div>
+
+          <div className="mt-3">
+            <WaitTrail
+              running={running}
+              elapsed={elapsed}
+              stages={BUILD_STAGES}
+              error={note}
+              giveUpAt={600}
+              giveUpText="no result after ten minutes"
+              onRetry={() => void submit()}
+            />
+          </div>
         </Panel>
-      )}
+
+        {job && (
+          <Panel title="Run">
+            <ol className="space-y-0">
+              {stages.map((stage) => (
+                <li
+                  key={stage.key}
+                  className="flex gap-3 border-t border-rule py-3 first:border-t-0"
+                >
+                  <span
+                    aria-hidden
+                    className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
+                      stage.state === "done"
+                        ? "bg-ok"
+                        : stage.state === "active"
+                          ? "bg-copper"
+                          : stage.state === "fail"
+                            ? "bg-risk"
+                            : "bg-faint/50"
+                    }`}
+                  />
+                  <div className="min-w-0">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
+                      {stage.label}
+                    </div>
+                    <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
+                      {stage.detail || "—"}
+                    </pre>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            {succeeded && (
+              <p className="mt-4 border-t border-rule pt-4 text-[13px] leading-relaxed text-paper">
+                This is now a proposal. Review it under Proposals before it merges.
+              </p>
+            )}
+          </Panel>
+        )}
       </Section>
 
       <Section title="History">
-      <Panel title="History">
-        {loadingHistory ? (
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-          </div>
-        ) : !history || history.length === 0 ? (
-          <Empty>No builds yet.</Empty>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
-                  <th className="py-2 pr-4 font-normal">Intent</th>
-                  <th className="py-2 pr-4 font-normal">Tier</th>
-                  <th className="py-2 pr-4 font-normal">Duration</th>
-                  <th className="py-2 pr-4 font-normal">Outcome</th>
-                  <th className="py-2 font-normal">When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((run, index) => (
-                  <tr key={index} className="border-t border-rule align-top">
-                    <td className="py-2 pr-4 text-[13px] text-paper">
-                      {run.intent ?? "—"}
-                    </td>
-                    <td className="py-2 pr-4 font-mono text-[11px] tabular-nums text-muted-foreground">
-                      {run.tier ?? "—"}
-                    </td>
-                    <td className="py-2 pr-4 font-mono text-[11px] tabular-nums text-muted-foreground">
-                      {formatDuration(run.duration)}
-                    </td>
-                    <td
-                      className={`py-2 pr-4 font-mono text-[11px] ${
-                        /fail|no tier|error/i.test(run.outcome ?? "")
-                          ? "text-risk"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {run.outcome ?? "—"}
-                    </td>
-                    <td className="py-2 font-mono text-[11px] text-faint">
-                      {formatStamp(run.created ?? run.at)}
-                    </td>
+        <Panel title="History">
+          {loadingHistory ? (
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+            </div>
+          ) : !history || history.length === 0 ? (
+            <Empty>No builds yet.</Empty>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
+                    <th className="py-2 pr-4 font-normal">Intent</th>
+                    <th className="py-2 pr-4 font-normal">Tier</th>
+                    <th className="py-2 pr-4 font-normal">Duration</th>
+                    <th className="py-2 pr-4 font-normal">Outcome</th>
+                    <th className="py-2 font-normal">When</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Panel>
+                </thead>
+                <tbody>
+                  {history.map((run, index) => (
+                    <tr key={index} className="border-t border-rule align-top">
+                      <td className="py-2 pr-4 text-[13px] text-paper">{run.intent ?? "—"}</td>
+                      <td className="py-2 pr-4 font-mono text-[11px] tabular-nums text-muted-foreground">
+                        {run.tier ?? "—"}
+                      </td>
+                      <td className="py-2 pr-4 font-mono text-[11px] tabular-nums text-muted-foreground">
+                        {formatDuration(run.duration)}
+                      </td>
+                      <td
+                        className={`py-2 pr-4 font-mono text-[11px] ${
+                          /fail|no tier|error/i.test(run.outcome ?? "")
+                            ? "text-risk"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {run.outcome ?? "—"}
+                      </td>
+                      <td className="py-2 font-mono text-[11px] text-faint">
+                        {formatStamp(run.created ?? run.at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
       </Section>
     </div>
   );

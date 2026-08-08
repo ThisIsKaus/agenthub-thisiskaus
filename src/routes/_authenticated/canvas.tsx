@@ -368,7 +368,6 @@ function CanvasPage() {
     [local, text],
   );
 
-
   const buildDoc = useCallback((): CanvasDoc => {
     const doc = emptyDoc(title.trim() || text.trim().slice(0, 60) || "Untitled");
     if (docId) doc.id = docId;
@@ -499,7 +498,6 @@ function CanvasPage() {
   const digestDays = digestDates.data?.dates?.length;
   if (digestDays != null) searched.push(`${digestDays} digest days`);
 
-
   return (
     <div className="space-y-3" data-testid="canvas-page">
       {naming && (
@@ -560,7 +558,6 @@ function CanvasPage() {
             : { label: "ask the 4B instead", at: 45, run: () => void ask("local-triage", k) }
         }
       />
-
 
       {!text.trim() && !answer && (
         <div data-testid="canvas-examples">
