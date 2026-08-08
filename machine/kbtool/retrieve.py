@@ -151,6 +151,10 @@ def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES, rerank
     # DISABLED pending an honest measurement. It cost S3 87% to 83% and MRR 0.736 to 0.716
     # while appearing to fix four README questions — which the corrected eval shows were never
     # misses. Re-enable only if it wins on a golden set that compares paths.
+    # DISABLED, measured 8 Aug: MRR 0.736 to 0.716, S3 87% to 83%. Third attempt at the
+    # README problem, third to lose. Boosting on folder-term overlap helps four questions and
+    # quietly reorders fifty thousand chunks — the same shape as the two prefix attempts.
+    # The remedy for seventy files sharing a name is not a scoring tweak.
     # for e in fused.values():
     #     e["path_bonus"] = _path_bonus(str(e["row"]["path"]))
     #     e["score"] *= e["path_bonus"]

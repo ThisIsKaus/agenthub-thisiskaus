@@ -34,7 +34,7 @@ def score(rows, fn, label):
         cls = r["sensitivity"]
         b = by.setdefault(cls, {"n": 0, "hit": 0})
         b["n"] += 1
-        if r["source"] in got or (r.get("path") and r["path"] in got):
+        if r["source"] in got:
             hit += 1
             b["hit"] += 1
             mrr += 1.0 / (got.index(r["source"]) + 1)
@@ -50,7 +50,7 @@ def score(rows, fn, label):
 rows = [json.loads(l) for l in GOLD.read_text().splitlines() if l.strip()]
 print(f"{len(rows)} golden questions")
 d_hit, n = score(rows, dense_only, "DENSE ONLY (current)")
-h_hit, _ = score(rows, lambda q, k: [x["file"] for x in retrieve.search(q, k=k)] + [x["path"] for x in retrieve.search(q, k=k)], "HYBRID (dense + BM25, RRF)")
+h_hit, _ = score(rows, lambda q, k: [x["file"] for x in retrieve.search(q, k=k)], "HYBRID (dense + BM25, RRF)")
 delta = h_hit - d_hit
 print(f"\nhybrid {'gains' if delta > 0 else 'loses'} {abs(delta)} of {n} — "
       f"{'keep it' if delta > 0 else 'revert, the change did not earn its place'}")

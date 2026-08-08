@@ -272,3 +272,22 @@ boilerplate are not duplicates; the same chunk twice within one file is.
 Note on the baseline: the 90% recall measured before this fix was taken against a corpus
 missing those 785 files. A smaller corpus is an easier one. 87% against the complete corpus is
 the better system, and the floor is set at 85%.
+
+## The README problem is open, and recorded as open (v3.1, 8 Aug 2026)
+
+Four of ninety-three golden questions want one README among seventy, distinguished only by
+directory. Three remedies were measured and all three lost:
+
+1. Prefix with folder and parsed date — fabricated dates, recall 87% to 81%.
+2. Prefix with folder only, validated across 3,384 paths — MRR 0.744 to 0.698.
+3. Boost at ranking time on folder-term overlap — MRR 0.736 to 0.716, S3 87% to 83%.
+
+The shape is consistent: each helps four questions and reorders fifty thousand chunks. A
+global change to serve a local failure loses, and will keep losing.
+
+Recorded as an open limitation rather than pursued further. The honest remedy is a metadata
+column that retrieval filters on when a query names a project — not a scoring adjustment, not
+a prefix. Anyone revisiting it should prove it on a branch against the golden set before it
+touches the live index, and should expect the same result unless the mechanism changes.
+
+Standing baseline: recall@5 84%, MRR 0.736, S3 87%, on 50,025 chunks across 3,126 files.
