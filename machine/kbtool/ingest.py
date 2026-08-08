@@ -186,7 +186,19 @@ def read_text(p: Path) -> str:
 
 
 def context_label(path: Path) -> str:
-    """A situating line for every chunk: where the file lives, and when it is about.
+    """DISABLED — measured 8 Aug and reverted. Recall fell 87% to 81%, MRR 0.751 to 0.701.
+
+    Two faults. The date regex matched inside digit runs: PaymentAdvice_22022019.pdf (22 Feb
+    2019) was labelled 2022-01, because "2022" appears inside "22022019". Every dated document
+    carried a fabricated date into its embedding, and false metadata is worse than none.
+    Second, the longer prefix changed dedup: chunks fell 50,017 to 38,766 and duplicate files
+    rose 417 to 1,195, so real content was dropped.
+
+    The folder trail was correct and useful — "OpenClaw / 03-Knowledge-Base" does distinguish
+    one README from seventy. Re-enable that half only, with the date read from file mtime or
+    a parsed path segment rather than a regex over the whole string.
+
+    A situating line for every chunk: where the file lives, and when it is about.
 
     The chunker prepended the filename alone, which discriminates nothing when 286 payslips
     share the name KaustubhBajpai_PaySlip.pdf and 70 files are called README.md. Seven of
@@ -389,7 +401,7 @@ def main():
         # The filename alone discriminated nothing: 286 payslips share one name, 70 files
         # are called README.md. The folder trail and any date now enter both the vector and
         # the BM25 index, which is where the golden set says the misses are.
-        parts = [c for c in chunks(text, context_label(p)) if c.strip()]
+        parts = [c for c in chunks(text, p.name) if c.strip()]
         if not parts:
             continue
         rows = []
