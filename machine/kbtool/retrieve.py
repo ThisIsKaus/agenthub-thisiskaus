@@ -141,7 +141,11 @@ def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES, rerank
             break
     ranked = diverse
     return [{
-        "file": Path(e["row"]["path"]).name,
+        # A skill's filename is always SKILL.md; the directory is the identity. Five sources
+        # reading "SKILL.md" tells the reader nothing about what was cited.
+        "file": (Path(e["row"]["path"]).parent.name
+                 if Path(e["row"]["path"]).name in ("SKILL.md", "index.md", "README.md")
+                 else Path(e["row"]["path"]).name),
         "path": e["row"]["path"],
         "text": e["row"]["text"],
         "sensitivity": e["row"].get("sensitivity", "?"),
