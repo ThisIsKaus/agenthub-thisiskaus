@@ -412,7 +412,7 @@ function OverviewPage() {
         )}
       </section>
 
-      <details className="border border-rule bg-panel">
+      <details className="border-y border-rule bg-panel">
         <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.245em] text-faint hover:text-copper">
           The whole board · {age ?? "routing map"}
         </summary>
@@ -449,11 +449,11 @@ function OverviewPage() {
       </details>
 
 
-      <details className="border border-rule bg-panel">
+      <details className="border-y border-rule bg-panel">
         <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.245em] text-faint hover:text-copper">
           About this system
         </summary>
-        <div className="border-t border-rule px-5 pt-6">
+        <div className="border-t border-rule pt-6">
           <AboutSystemBody />
         </div>
       </details>

@@ -405,7 +405,7 @@ function TriageLane() {
         </div>
 
         {group.rows.some((row) => failures[row.index]) && (
-          <p className="mt-1 max-w-[72ch] break-words font-mono text-[11px] leading-relaxed text-risk">
+          <p className="mt-1 break-words font-mono text-[11px] leading-relaxed text-risk">
             {[...new Set(group.rows.map((row) => failures[row.index]).filter(Boolean))].join(" · ")}
           </p>
         )}
@@ -417,7 +417,7 @@ function TriageLane() {
             <p className="font-mono text-[10px] uppercase tracking-[0.27em] text-watch">
               flagged {typeof item.flag === "string" ? `· ${item.flag}` : ""}
             </p>
-            <p className="mt-1 max-w-[72ch] text-[12px] leading-relaxed text-paper">
+            <p className="mt-1 text-[12px] leading-relaxed text-paper">
               {item.why ?? item.reason ?? item.one}
             </p>
             <button
@@ -486,7 +486,7 @@ function TriageLane() {
           <Empty>Nothing was read overnight.</Empty>
         ) : (
           <div className="space-y-3">
-            <p className="max-w-[72ch] text-[14px] leading-relaxed text-paper">
+            <p className="text-[14px] leading-relaxed text-paper">
               {dayHeadline(needingCount, flaggedCount)}
             </p>
             <p className="font-mono text-[10px] tabular-nums text-faint">
