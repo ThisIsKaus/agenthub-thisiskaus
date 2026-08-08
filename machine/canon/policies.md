@@ -291,3 +291,33 @@ a prefix. Anyone revisiting it should prove it on a branch against the golden se
 touches the live index, and should expect the same result unless the mechanism changes.
 
 Standing baseline: recall@5 84%, MRR 0.736, S3 87%, on 50,025 chunks across 3,126 files.
+
+## Cheap experiments, or confident guessing (v3.2, 8 Aug 2026)
+
+Seven wrong theories in one session, each disproved by measurement, each caught before it
+reached the user. The pattern is not carelessness. Every one was formed to avoid paying for a
+test: a retrieval rebuild costs nineteen minutes, and four of them in one day is over an hour.
+When an experiment is expensive you reason about it instead, and reasoning is where all seven
+lived.
+
+The remedy is mechanical, not a resolution.
+
+A 10% stratified sample of the corpus rebuilds in about ninety seconds and reuses existing
+vectors. Set AGENTHUB_KB_TABLE=kb_sample and every hypothesis is testable before it touches
+the real index. When the test is cheaper than the theory, testing wins.
+
+Disprove first. Any theory a single command can test gets that command run before a fix is
+written. Twice in one session a remedy was written before a ten-second command disproved the
+theory — the classifier that had not regressed, and the eval that was not lying.
+
+One variable per measurement. A patch with two effects is two patches. The linter fix changed
+input normalisation and a phrasing regex together; warnings moved from seven to nine and
+neither change could be attributed, so both were reverted and the good one was lost with the
+bad.
+
+Watch the work, not the response. A 200 means the handler returned. Approve returned 200 for
+two days while raising KeyError inside a worker thread. Anything that starts work is verified
+by watching the work.
+
+And note what a global change costs: three remedies for four README questions each reordered
+fifty thousand chunks and each lost. A local failure needs a local fix.
