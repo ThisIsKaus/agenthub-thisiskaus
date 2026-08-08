@@ -13,8 +13,8 @@ const TONE: Record<FieldTone, string> = {
 
 /**
  * <Field> owns the three-part figure used everywhere:
- *   1 · a large number in Instrument Serif, tabular-nums
- *   2 · an uppercase Geist Mono 10px label beneath it
+ *   1 · a large number in Bricolage Grotesque 500, tabular-nums
+ *   2 · an uppercase Geist Mono 10px label beneath it, 2.7px tracking
  *   3 · a tertiary detail line third
  * Any h3 inside computes to exactly 15px medium.
  */
@@ -47,9 +47,7 @@ export function Field({
           <span className="ml-1 font-mono text-[13px] text-muted-foreground">{unit}</span>
         ) : null}
       </div>
-      <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
-      </div>
+      <div className="mono-label mt-3 text-muted-foreground">{label}</div>
       {detail || missing ? (
         <div className="mt-1 break-words font-mono text-[10px] leading-relaxed text-faint">
           {missing ? "needs the machine" : detail}

@@ -265,7 +265,7 @@ function ScannerPage() {
               type="button"
               disabled={scanning}
               onClick={() => void rescan()}
-              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.27em] text-copper disabled:opacity-40"
             >
               {scanning ? "Scanning Hugging Face…" : "Scan now"}
             </button>
@@ -301,7 +301,7 @@ function ScannerPage() {
                         (heading, index) => (
                           <th
                             key={heading + index}
-                            className={`py-2 pr-3 font-mono text-[10px] uppercase tracking-[0.12em] text-faint ${
+                            className={`py-2 pr-3 font-mono text-[10px] uppercase tracking-[0.27em] text-faint ${
                               index >= 2 && index <= 4 ? "text-right" : ""
                             }`}
                           >
@@ -365,7 +365,7 @@ function ScannerPage() {
                                   : undefined
                               }
                               onClick={() => void trial(candidate)}
-                              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+                              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.27em] text-copper disabled:opacity-40"
                             >
                               {busy === candidate.id ? "Starting…" : "Download and benchmark"}
                             </button>
@@ -425,13 +425,13 @@ function TrialTable({
         <table className="w-full min-w-[420px] border-collapse text-left">
           <thead>
             <tr className="border-b border-rule">
-              <th className="py-2 pr-3 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+              <th className="py-2 pr-3 font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                 Measure
               </th>
-              <th className="py-2 pr-3 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+              <th className="py-2 pr-3 text-right font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                 {report.incumbentName ?? "Incumbent"}
               </th>
-              <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+              <th className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                 {report.candidateName ?? id}
               </th>
             </tr>
@@ -469,7 +469,7 @@ function TrialTable({
           type="button"
           disabled={gated || busy}
           onClick={() => void onPromote(id)}
-          className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+          className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.27em] text-copper disabled:opacity-40"
         >
           {busy ? "Proposing…" : "Promote"}
         </button>

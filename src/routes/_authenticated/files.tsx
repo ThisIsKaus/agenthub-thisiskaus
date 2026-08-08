@@ -308,7 +308,7 @@ function FilesPage() {
                     <button
                       type="button"
                       onClick={() => void remove(entry)}
-                      className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-risk"
+                      className="shrink-0 font-mono text-[10px] uppercase tracking-[0.27em] text-faint hover:text-risk"
                     >
                       Delete
                     </button>
@@ -383,7 +383,7 @@ function SmallButton({ children, onClick }: { children: React.ReactNode; onClick
     <button
       type="button"
       onClick={onClick}
-      className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+      className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
     >
       {children}
     </button>

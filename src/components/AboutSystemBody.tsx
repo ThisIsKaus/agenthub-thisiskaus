@@ -9,7 +9,7 @@ function SecHead({ title, note }: { title: string; note: string }) {
   return (
     <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
       <SectionHeading>{title}</SectionHeading>
-      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">{note}</span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">{note}</span>
     </div>
   );
 }
@@ -249,7 +249,7 @@ export function AboutSystemBody() {
                 <span className="font-mono text-[11px] text-copper">{id}</span>
                 <span>{title}</span>
                 <span
-                  className={`font-mono text-[10px] uppercase tracking-[0.1em] ${
+                  className={`font-mono text-[10px] uppercase tracking-[0.27em] ${
                     state === "closed" ? "text-ok" : "text-watch"
                   }`}
                 >
@@ -293,7 +293,7 @@ export function AboutSystemBody() {
                 {["Cadence", "Action", "Time"].map((h, i) => (
                   <th
                     key={h}
-                    className={`border-b border-rule pb-3 pr-3 font-mono text-[10px] uppercase tracking-[0.1em] text-faint ${
+                    className={`border-b border-rule pb-3 pr-3 font-mono text-[10px] uppercase tracking-[0.27em] text-faint ${
                       i === 2 ? "text-right" : "text-left"
                     }`}
                   >

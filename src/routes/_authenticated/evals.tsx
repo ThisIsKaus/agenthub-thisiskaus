@@ -129,7 +129,7 @@ function EvalsPage() {
       <Panel title="Detail">
         <Disclosure
           summary={
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+            <span className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
               Run history · {results.length} runs
             </span>
           }
@@ -146,7 +146,7 @@ function EvalsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   <th className="py-1.5 font-normal">Date</th>
                   <th className="py-1.5 font-normal">Model</th>
                   <th className="py-1.5 text-right font-normal">Class</th>
@@ -203,7 +203,7 @@ function EvalsPage() {
           type="button"
           disabled={running}
           onClick={() => void score()}
-          className="border border-copper px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-copper disabled:opacity-50"
+          className="border border-copper px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper disabled:opacity-50"
         >
           {running ? "Scoring…" : "Score triage"}
         </button>

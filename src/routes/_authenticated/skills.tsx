@@ -72,7 +72,7 @@ function LoopBoard({ counts }: { counts: Record<SkillState, number> }) {
   return (
     <section className="border border-rule bg-panel">
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-rule px-4 py-2.5">
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">
+        <p className="font-mono text-[10px] uppercase tracking-[0.27em] text-copper">
           Evergreen loop
         </p>
         <p className="font-mono text-[10px] text-faint">
@@ -87,7 +87,7 @@ function LoopBoard({ counts }: { counts: Record<SkillState, number> }) {
           >
             <div className="flex items-baseline gap-2">
               <span className="font-mono text-[9px] text-copper">{stage.n}</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-paper">
+              <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-paper">
                 {stage.label}
               </span>
             </div>
@@ -174,7 +174,7 @@ function SkillsPage() {
       <Section title="Library">
       <section className="border border-rule bg-panel">
         <div className="flex flex-wrap items-center gap-2 border-b border-rule px-4 py-2.5">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">show</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">show</span>
           {(["all", ...SKILL_STATES] as const).map((option) => (
             <button
               key={option}
@@ -195,7 +195,7 @@ function SkillsPage() {
           <button
             type="button"
             onClick={() => setActive(draftSkill(root, "new skill"))}
-            className="ml-auto border border-rule px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+            className="ml-auto border border-rule px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
           >
             + draft
           </button>
@@ -203,7 +203,7 @@ function SkillsPage() {
             type="button"
             onClick={() => void mine()}
             disabled={mining}
-            className="border border-copper px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-50"
+            className="border border-copper px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-copper disabled:opacity-50"
           >
             {mining ? "Mining…" : "Mine today"}
           </button>
@@ -231,11 +231,11 @@ function SkillsPage() {
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <span className="text-[14px] text-paper">{skill.name}</span>
                     <span
-                      className={`border border-rule px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${STATE_TONE[skill.state]}`}
+                      className={`border border-rule px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.3em] ${STATE_TONE[skill.state]}`}
                     >
                       {skill.state}
                     </span>
-                    <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-faint">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-faint">
                       {skill.scope}
                     </span>
                     <span className="ml-auto font-mono text-[10px] tabular-nums text-faint">
@@ -297,7 +297,7 @@ function SkillsPage() {
                   key={candidate.id}
                   className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule py-3 first:border-t-0"
                 >
-                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-copper">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-copper">
                     {candidate.source}
                   </span>
                   <span className="text-[14px] text-paper">{candidate.title}</span>
@@ -310,7 +310,7 @@ function SkillsPage() {
                       onClick={() =>
                         setActive(draftSkill(root, candidate.title, candidate.seed))
                       }
-                      className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+                      className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
                     >
                       Draft it
                     </button>
@@ -321,7 +321,7 @@ function SkillsPage() {
                           (current ?? []).filter((entry) => entry.id !== candidate.id),
                         )
                       }
-                      className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-risk"
+                      className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint hover:text-risk"
                     >
                       Reject
                     </button>
@@ -468,7 +468,7 @@ function Editor({
         <button
           type="button"
           onClick={() => setEditing((open) => !open)}
-          className="border border-rule px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+          className="border border-rule px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
         >
           {editing ? "Read" : "Edit"}
         </button>
@@ -476,14 +476,14 @@ function Editor({
           type="button"
           disabled={busy}
           onClick={() => void save()}
-          className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-copper disabled:opacity-50"
+          className="border border-copper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.27em] text-copper disabled:opacity-50"
         >
           {busy ? "Saving…" : "Save version"}
         </button>
         <button
           type="button"
           onClick={() => setShowHistory((open) => !open)}
-          className="border border-rule px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+          className="border border-rule px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
         >
           History
         </button>
@@ -515,7 +515,7 @@ function Editor({
 
       {diff && (
         <div className="mt-3 border border-rule bg-panel p-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+          <p className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
             {diff.stamp} → now
           </p>
           <p className="mt-2 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed">
@@ -543,7 +543,7 @@ function Editor({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+      <span className="block font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
         {label}
       </span>
       <span className="mt-1 block">{children}</span>

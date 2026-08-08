@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 /**
  * <Section> owns every second-level heading in the app.
  *
- *   heading  : Instrument Serif, exactly 25px, sentence case
+ *   heading  : Bricolage Grotesque 500, exactly 25px, -0.42px, sentence case
  *   rhythm   : 56px above, 24px below the heading
  *   subtitle : secondary text, capped at 72ch
  *
@@ -20,9 +20,7 @@ export function SectionHeading({
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
       <h2 className="font-serif text-[25px] leading-[1.15] text-paper">{children}</h2>
-      {note ? (
-        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">{note}</span>
-      ) : null}
+      {note ? <span className="mono-label text-faint">{note}</span> : null}
     </div>
   );
 }

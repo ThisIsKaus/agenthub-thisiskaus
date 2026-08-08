@@ -589,7 +589,7 @@ function CanvasPage() {
             </p>
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
+            <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
               skills
             </span>
             {skillsLoaded.length === 0 && (
@@ -633,7 +633,7 @@ function CanvasPage() {
               if (index < CLASS_ORDER.length - 1) setRaised(CLASS_ORDER[index + 1]);
             }}
             title="Raise the class by hand. Nothing lowers it."
-            className="ml-2 font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
+            className="ml-2 font-mono text-[10px] uppercase tracking-[0.27em] text-faint hover:text-copper"
           >
             Raise
           </button>
@@ -650,7 +650,7 @@ function CanvasPage() {
             <button
               type="button"
               onClick={() => void keep()}
-              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
             >
               Keep as document
             </button>
@@ -658,7 +658,7 @@ function CanvasPage() {
               type="button"
               data-testid="handover"
               onClick={() => void handOver()}
-              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
             >
               Hand over to inbox
             </button>
@@ -679,7 +679,7 @@ function CanvasPage() {
           <button
             type="button"
             onClick={() => setSourcesOpen((open) => !open)}
-            className="flex w-full items-baseline justify-between gap-3 px-4 py-2 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-copper"
+            className="flex w-full items-baseline justify-between gap-3 px-4 py-2 text-left font-mono text-[10px] uppercase tracking-[0.27em] text-copper"
           >
             <span>
               Sources · <span className="tabular-nums text-paper">{grouped.length}</span> of {k}{" "}
@@ -700,7 +700,7 @@ function CanvasPage() {
                       }
                       className="flex w-full items-baseline justify-between gap-3 text-left"
                     >
-                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground">
                         {group.kind}{" "}
                         <span className="tabular-nums text-faint">{group.rows.length}</span>
                       </span>
@@ -723,7 +723,7 @@ function CanvasPage() {
                                 </span>
                               )}
                               {source.foundBy && (
-                                <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                                <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                                   {source.foundBy}
                                 </span>
                               )}
@@ -744,7 +744,7 @@ function CanvasPage() {
                 );
               })}
               <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-rule pt-2">
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
+                <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                   retrieve
                 </span>
                 {SOURCE_COUNTS.map((count) => (
@@ -781,7 +781,7 @@ function CanvasPage() {
 
       {docId && (
         <div className="flex flex-wrap items-center gap-2" data-testid="state-bar">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
+          <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
             state
           </span>
           {STAGES.map((entry) => (

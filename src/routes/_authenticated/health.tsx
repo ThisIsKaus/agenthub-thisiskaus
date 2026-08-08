@@ -143,7 +143,7 @@ function HealthPage() {
                 void load();
               })
             }
-            className="border border-copper px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-copper"
+            className="border border-copper px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper"
           >
             Run self-test
           </button>
@@ -154,7 +154,7 @@ function HealthPage() {
                 void load();
               })
             }
-            className="border border-rule px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground hover:text-paper"
+            className="border border-rule px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-muted-foreground hover:text-paper"
           >
             Repair to known-good
           </button>
@@ -187,7 +187,7 @@ function HealthPage() {
                         <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                           <span className="min-w-0 flex-1 text-[13px] text-paper">{row.name ?? "—"}</span>
                           <span
-                            className={`shrink-0 border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${stateTone(row.state)}`}
+                            className={`shrink-0 border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.27em] ${stateTone(row.state)}`}
                           >
                             {row.state ?? "—"}
                           </span>

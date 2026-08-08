@@ -37,7 +37,7 @@ export function JobDrawer() {
           aria-expanded={open}
           className="flex w-full items-center justify-between gap-3 py-2.5 text-left"
         >
-          <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+          <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
             <span
               aria-hidden
               className={`h-1.5 w-1.5 rounded-full ${running ? "bg-copper" : "bg-faint"}`}
@@ -60,7 +60,7 @@ export function JobDrawer() {
                     key={job.id}
                     type="button"
                     onClick={() => setActiveId(job.id)}
-                    className={`shrink-0 border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] ${
+                    className={`shrink-0 border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.27em] ${
                       isActive
                         ? "border-copper text-copper"
                         : "border-rule text-faint hover:text-paper"

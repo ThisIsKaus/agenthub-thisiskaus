@@ -148,7 +148,7 @@ export function AppShell() {
               <PlanePill />
               <ThemeSwitch />
               {!online && (
-                <span className="border border-watch/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-watch">
+                <span className="border border-watch/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-watch">
                   Offline
                 </span>
               )}
@@ -193,7 +193,7 @@ export function AppShell() {
                 <Link
                   key={sub.to}
                   to={sub.to}
-                  className={`shrink-0 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors hover:text-paper ${
+                  className={`shrink-0 font-mono text-[11px] uppercase tracking-[0.245em] transition-colors hover:text-paper ${
                     sub.to === pathname ? "text-copper" : "text-faint"
                   }`}
                 >
@@ -219,7 +219,7 @@ export function AppShell() {
 export function Panel({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
     <section className="border border-rule bg-panel p-5">
-      <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">{title}</div>
+      <div className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">{title}</div>
       <div className="mt-4 text-sm text-muted-foreground">{children}</div>
     </section>
   );
