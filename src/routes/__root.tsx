@@ -16,6 +16,7 @@ import { registerServiceWorker, installStaleShellRecovery } from "@/lib/pwa";
 import { flushQueue } from "@/lib/capture-queue";
 import { LocalBridgeProvider } from "@/lib/local-bridge";
 import { JobDrawerProvider } from "@/lib/job-drawer";
+import { ThemeProvider } from "@/lib/theme";
 
 
 
@@ -132,7 +133,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="ember">
       <head>
         <HeadContent />
       </head>
@@ -170,12 +171,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LocalBridgeProvider>
-        <JobDrawerProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </JobDrawerProvider>
-      </LocalBridgeProvider>
+      <ThemeProvider>
+        <LocalBridgeProvider>
+          <JobDrawerProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </JobDrawerProvider>
+        </LocalBridgeProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

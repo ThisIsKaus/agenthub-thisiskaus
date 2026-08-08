@@ -8,6 +8,7 @@ import { JobDrawer } from "@/components/JobDrawer";
 import { CommandHint, CommandPalette } from "@/components/CommandPalette";
 import { fixed } from "@/lib/format";
 import { servingLabel } from "@/lib/state";
+import { useTheme } from "@/lib/theme";
 
 type Sub = { to: string; label: string };
 type Group = { label: string; to: string; subs: Sub[] };
@@ -97,6 +98,19 @@ function PlanePill() {
 }
 
 
+function ThemeSwitch() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <button
+      onClick={() => setTheme(theme === "ember" ? "paper" : "ember")}
+      aria-label={`Theme: ${theme}. Switch to ${theme === "ember" ? "paper" : "ember"}.`}
+      className="font-mono text-[11px] uppercase tracking-wide text-faint transition-colors hover:text-copper"
+    >
+      {theme}
+    </button>
+  );
+}
+
 export function AppShell() {
   const hub = useHubStateValue();
   const { data, provenance } = hub;
@@ -132,6 +146,7 @@ export function AppShell() {
             <div className="flex items-center gap-3">
               <CommandHint />
               <PlanePill />
+              <ThemeSwitch />
               {!online && (
                 <span className="border border-watch/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-watch">
                   Offline
