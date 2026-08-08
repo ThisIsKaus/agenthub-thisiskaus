@@ -13,7 +13,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Page } from "@/components/Page";
 import { LocalOnly } from "@/components/LocalOnly";
 import { Markdown } from "@/components/Markdown";
-import { isRefusal, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
+import { isRefusal, LocalError, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
 import { askProgressive } from "@/lib/ask-stream";
 import { askStages, WaitTrail } from "@/components/WaitTrail";
 
@@ -226,6 +226,7 @@ function CanvasPage() {
   const [asking, setAsking] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
+  const [askError, setAskError] = useState<string | null>(null);
   const [askedText, setAskedText] = useState("");
   const [answeredBy, setAnsweredBy] = useState<string | null>(null);
 
