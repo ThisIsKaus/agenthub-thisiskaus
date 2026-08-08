@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
 """
-A 10% stratified sample of the corpus — REBUILT, not copied.
+RETIRED — measured 8 Aug and it does not work. Kept for the record, not for use.
 
-The first version copied rows from kb_main including their vectors, which made it useless for
-the experiments that motivated it: both prefix attempts changed what gets embedded, and a
-sample carrying the old vectors cannot see that. The third failure was a ranking change, which
-needs no sample at all — editing retrieve.py and running the eval against the full index takes
-thirty seconds.
+The idea was to test retrieval hypotheses in ninety seconds instead of nineteen minutes, on
+the reasoning that expensive experiments produce confident guessing.
 
-So the sample exists for one purpose: testing a change to chunking or embedding without paying
-nineteen minutes. It must therefore re-embed the sampled documents, and it must include enough
-distractors that its score tracks the real index. Measured: at 8% it scored nine points
-optimistic, at 25% seven, at 40% five. Pin the golden sources, then add distractors until the
-gap closes.
+It failed on fidelity. A sample scores optimistically because removing distractors makes
+retrieval easier, and the gap does not close at any useful size: 8% was nine points high, 25%
+seven, 40% five, and 25% with a real re-ingest still four — against a gate of two. Reaching
+two points needs most of the corpus, at which point it is not a sample.
 
-  sample_index.py --build [pct]   re-ingest a stratified sample into kb_sample
-  sample_index.py --stats
+It also cost 7m15s to build, not the two minutes estimated: 38% of a full rebuild for a number
+reliably wrong in the flattering direction. A harness that scores high approves changes that
+lose in production, which is worse than paying the nineteen minutes.
+
+What survives is the AGENTHUB_KB_TABLE hook in ingest.py and retrieve.py, which is genuinely
+useful for pointing either at an alternative table.
+
+And the honest conclusion about method: two of the three failed retrieval experiments changed
+what gets embedded and would have needed a full rebuild to test regardless. The third was a
+ranking change that needed no sample at all — thirty seconds against the real index. The
+premise that experiments were expensive was only half true, and the half that was true is not
+sampleable.
 """
 import random, sys
 from pathlib import Path

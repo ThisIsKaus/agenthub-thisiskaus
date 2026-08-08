@@ -321,3 +321,25 @@ by watching the work.
 
 And note what a global change costs: three remedies for four README questions each reordered
 fifty thousand chunks and each lost. A local failure needs a local fix.
+
+## The sampled index does not work (v3.3, 8 Aug 2026)
+
+Built to make retrieval experiments cheap, measured, and retired the same evening.
+
+A sample of the corpus scores optimistically because removing distractors makes retrieval
+easier. The gap does not close at any useful size: 8% ran nine points above the real index,
+25% seven, 40% five, and 25% with a genuine re-ingest still four — against a gate of two
+points. It also took 7m15s, which is 38% of a full rebuild.
+
+A harness that scores high is worse than no harness: it approves changes that then lose in
+production. Retired rather than tuned.
+
+The method conclusion is more useful than the tool. Of three failed retrieval experiments, two
+changed what gets embedded and needed a full rebuild regardless — no sample could have helped.
+The third was a ranking change requiring no rebuild at all: edit retrieve.py, run the eval,
+thirty seconds. So the premise that experiments are expensive was only half right, and the
+expensive half cannot be sampled.
+
+The transferable rule: before assuming a test is costly, check which layer the change touches.
+Ranking changes are nearly free and should be measured immediately. Embedding changes cost
+nineteen minutes and deserve a disproving argument before they are attempted at all.
