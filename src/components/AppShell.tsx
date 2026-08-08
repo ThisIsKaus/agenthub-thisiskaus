@@ -74,7 +74,7 @@ export function Pill({
   className?: string;
 }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px] tracking-tight">
+    <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px]">
       <span className="text-faint uppercase">{label}</span>
       <span className={className ?? "text-paper"}>{value}</span>
     </span>
@@ -104,7 +104,7 @@ function ThemeSwitch() {
     <button
       onClick={() => setTheme(theme === "ember" ? "paper" : "ember")}
       aria-label={`Theme: ${theme}. Switch to ${theme === "ember" ? "paper" : "ember"}.`}
-      className="font-mono text-[11px] uppercase tracking-wide text-faint transition-colors hover:text-copper"
+      className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint transition-colors hover:text-copper"
     >
       {theme}
     </button>
@@ -154,7 +154,7 @@ export function AppShell() {
               )}
               <button
                 onClick={signOut}
-                className="font-mono text-[11px] uppercase tracking-wide text-faint transition-colors hover:text-copper"
+                className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint transition-colors hover:text-copper"
               >
                 Sign out
               </button>
