@@ -523,6 +523,27 @@ function CanvasPage() {
         {!asking && status && <span className="font-mono text-[11px] text-faint">{status}</span>}
       </div>
 
+      {!text.trim() && !answer && (
+        <div data-testid="canvas-examples">
+          {[0, 1, 2].map((slot) => {
+            const example = EXAMPLES[(rotation + slot) % EXAMPLES.length];
+            return (
+              <button
+                key={slot}
+                type="button"
+                onClick={() => {
+                  setText(example.q);
+                  area.current?.focus();
+                }}
+                className="block text-left text-[13px] leading-relaxed text-faint hover:text-copper"
+              >
+                “{example.q}” <span className="font-mono text-[10px]">← {example.reach}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {settings && (
         <section className="border border-rule bg-panel px-4 py-3" data-testid="canvas-settings">
           <div className="flex flex-wrap gap-2">
