@@ -323,8 +323,10 @@ function CanvasPage() {
       const question = text.trim();
       if (!question || running.current) return;
       running.current = true;
+      setModel(lane);
       setAsking(true);
-      setStatus("retrieving from the corpus…");
+      setAskError(null);
+      setStatus(null);
       setAnswer("");
       setAnsweredBy(null);
       setSources([]);
@@ -335,10 +337,11 @@ function CanvasPage() {
           local.post,
           { q: question, model: lane, k: count },
           {
+            // Retrieval finishes in well under a second: render it at once,
+            // rather than holding the page blank until the model has written.
             sources: (found) => {
               setSources(found);
               setSourcesOpen(true);
-              setStatus("thinking on the machine…");
             },
             delta: (partial) => setAnswer(partial),
           },
@@ -346,13 +349,16 @@ function CanvasPage() {
         setAnswer(result.answer);
         setSources(result.sources);
         setAnsweredBy(result.model ?? lane);
-        setStatus(null);
       } catch (error) {
-        setStatus(
-          isRefusal(error)
-            ? error.message || "denied at the approval dialog"
-            : "the machine did not answer that question",
-        );
+        if (isRefusal(error)) {
+          setAskError(error.message || "denied at the approval dialog");
+        } else {
+          const status = error instanceof LocalError ? `${error.status} · ` : "";
+          setAskError(
+            `${status}${error instanceof Error ? error.message : String(error)}` ||
+              "the machine did not answer that question",
+          );
+        }
       } finally {
         running.current = false;
         setAsking(false);
@@ -360,6 +366,7 @@ function CanvasPage() {
     },
     [local, text],
   );
+
 
   const buildDoc = useCallback((): CanvasDoc => {
     const doc = emptyDoc(title.trim() || text.trim().slice(0, 60) || "Untitled");
