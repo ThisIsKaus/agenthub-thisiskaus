@@ -105,7 +105,6 @@ function CostPage() {
               label="spend month to date"
               value={`$${fixed(mtd, 2)}`}
               detail={`$${fixed(dailyAverage, 2)} daily average over ${daysElapsed} days`}
-              tone="copper"
             />
             <Figure label="metered requests" value={count(requests)} />
             <Figure label="per request" value={`$${fixed(perRequest, 4)}`} />
@@ -178,7 +177,7 @@ function CostPage() {
                     </span>
                     <span className="h-2 flex-1 bg-panel2">
                       <span
-                        className="block h-2 bg-copper"
+                        className="block h-2 bg-dek/70"
                         style={{ width: peak > 0 ? `${Math.max((day.amount / peak) * 100, day.amount > 0 ? 2 : 0)}%` : "0%" }}
                       />
                     </span>

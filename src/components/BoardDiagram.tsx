@@ -3,13 +3,13 @@ import type { ReactNode } from "react";
 export type Tone = "paper" | "muted" | "faint" | "ok" | "copper" | "risk" | "watch";
 
 export const HEX: Record<Tone, string> = {
-  paper: "#ECEBE8",
-  muted: "#8E8E96",
-  faint: "#6E6E78",
-  ok: "#7FA88C",
-  copper: "#C8744A",
-  risk: "#B5544A",
-  watch: "#C9A227",
+  paper: "var(--fg)",
+  muted: "var(--dek)",
+  faint: "var(--graphite)",
+  ok: "var(--ok)",
+  copper: "var(--accent)",
+  risk: "var(--fail)",
+  watch: "var(--warn)",
 };
 
 const TEXT: Record<Tone, string> = {

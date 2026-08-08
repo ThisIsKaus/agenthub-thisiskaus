@@ -57,7 +57,7 @@
   --muted: var(--graphite);
   --muted-foreground: var(--dek);
   --accent-foreground: var(--cta-text);
-  --destructive: var(--accent-strong);
+  --destructive: var(--fail);
   --destructive-foreground: var(--cta-text);
   --border: var(--rule);
   --input: var(--rule);
