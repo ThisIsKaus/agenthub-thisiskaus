@@ -125,6 +125,33 @@ def search(query, k=5, lane="local", sources=None, candidates=CANDIDATES, rerank
 
     if not fused:
         return []
+    # Path relevance, applied at ranking time rather than indexing time.
+    #
+    # Four unreachable golden-set sources are one README among seventy, distinguished only by
+    # directory. Two attempts to prepend the folder to the embedded text both made retrieval
+    # worse — a prefix is prose the embedder weighs against the body, and across 50,000 chunks
+    # its noise exceeds the discrimination it buys.
+    #
+    # The path is already returned with every candidate. Matching query terms against it here
+    # costs nothing, changes no embedding, and needs no rebuild: a question naming GenCAI
+    # prefers the README under a GenCAI folder over the sixty-nine others.
+    q_terms = {w.lower() for w in re.findall(r"[A-Za-z][A-Za-z0-9_-]{2,}", query)}
+    q_terms -= {"the", "and", "for", "what", "how", "does", "did", "with", "から",
+                "from", "that", "this", "are", "was", "were", "his", "her", "its",
+                "single", "source", "truth", "specific", "rules", "configure"}
+
+    def _path_bonus(path):
+        """Only the folder, never the filename — the filename is already in the text."""
+        folder = " ".join(Path(path).parts[:-1]).lower()
+        folder = re.sub(r"[^a-z0-9]+", " ", folder)
+        hits = sum(1 for t in q_terms if t in folder.split() or
+                   any(t in seg for seg in folder.split() if len(seg) > 4))
+        return 1.0 + min(hits, 3) * 0.12
+
+    for e in fused.values():
+        e["path_bonus"] = _path_bonus(str(e["row"]["path"]))
+        e["score"] *= e["path_bonus"]
+
     # Source authority. Adding sessions, digests and logs to the index cost 3 points of
     # recall and 10 on S1p: a transcript discussing the autonomy tiers outranked the canon
     # entry that defines them. Derivative material is worth retrieving and worth ranking
