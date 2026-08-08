@@ -198,6 +198,19 @@ function laneLabel(id: string) {
   return LANES.find((lane) => lane.id === id)?.label.toLowerCase() ?? id;
 }
 
+/**
+ * With nothing typed, the surface teaches its own range — sessions, skills and
+ * corpus — rather than its syntax. Clicking one fills the field.
+ */
+const EXAMPLES = [
+  { q: "what did I decide about model residency", reach: "sessions" },
+  { q: "which skill covers negotiating an offer", reach: "skills" },
+  { q: "what's my super balance", reach: "corpus, local only" },
+  { q: "what proposals am I sitting on", reach: "proposals" },
+  { q: "what kept flagging last week", reach: "digest" },
+  { q: "what does canon say about client context", reach: "canon" },
+] as const;
+
 /* ── page ────────────────────────────────────────────────────────────────── */
 
 function CanvasPage() {
@@ -223,6 +236,7 @@ function CanvasPage() {
   const [settings, setSettings] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [kindOpen, setKindOpen] = useState<Record<string, boolean>>({});
+  const [rotation, setRotation] = useState(0);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [naming, setNaming] = useState(false);
   const [title, setTitle] = useState("");
@@ -269,6 +283,12 @@ function CanvasPage() {
     retry: false,
     queryFn: () => local.get<{ dates?: unknown[] }>("/api/digest"),
   });
+
+  // Three examples at a time, rotating slowly through the pool.
+  useEffect(() => {
+    const timer = setInterval(() => setRotation((n) => n + 3), 7000);
+    return () => clearInterval(timer);
+  }, []);
 
   // The page opens on a cursor.
   useEffect(() => {
