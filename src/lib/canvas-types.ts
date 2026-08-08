@@ -242,7 +242,7 @@ export function emptyDoc(title = "Untitled canvas"): CanvasDoc {
     sources: [],
     versions: 0,
 
-    stage: "idea",
+    stage: "draft",
     entity: "personal",
     sensitivity: "S1p",
     skills: [],
@@ -289,9 +289,7 @@ export function normaliseDoc(raw: unknown, path?: string): CanvasDoc | null {
       : [],
     versions: typeof value.versions === "number" ? value.versions : 0,
 
-    stage: (STAGES as readonly string[]).includes(value.stage as string)
-      ? (value.stage as Stage)
-      : "idea",
+    stage: toStage(value.stage),
     entity: typeof value.entity === "string" && value.entity ? value.entity : "personal",
     sensitivity:
       typeof value.sensitivity === "string" && value.sensitivity ? value.sensitivity : "S1p",
