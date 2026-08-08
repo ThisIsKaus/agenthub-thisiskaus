@@ -332,15 +332,37 @@ function CanvasPage() {
       setAnsweredBy(null);
       setSources([]);
       setAskedText(question);
+      // Retrieval on its own path: /api/ask/sources returns in well under a
+      // second and never calls a model, so the citations — and with them the
+      // derived sensitivity line — land before the wait rather than after it.
+      // If it fails we log and carry on: /api/ask returns sources of its own.
+      let fastSources = false;
+      const fast = local
+        .post<{ sources?: AskSource[] }>("/api/ask/sources", {
+          q: question,
+          model: lane,
+          k: String(count),
+        })
+        .then((data) => {
+          const found = data.sources ?? [];
+          if (!found.length) return;
+          fastSources = true;
+          setSources(found);
+          setSourcesOpen(true);
+        })
+        .catch((error) => {
+          console.warn("ask/sources unavailable, falling back to ask", error);
+        });
+      void fast;
+
       try {
         const result = await askProgressive(
           LOCAL_BASE,
           local.post,
           { q: question, model: lane, k: count },
           {
-            // Retrieval finishes in well under a second: render it at once,
-            // rather than holding the page blank until the model has written.
             sources: (found) => {
+              if (!found.length) return;
               setSources(found);
               setSourcesOpen(true);
             },
@@ -348,8 +370,9 @@ function CanvasPage() {
           },
         );
         setAnswer(result.answer);
-        setSources(result.sources);
+        if (result.sources.length || !fastSources) setSources(result.sources);
         setAnsweredBy(result.model ?? lane);
+
       } catch (error) {
         if (isRefusal(error)) {
           setAskError(error.message || "denied at the approval dialog");
