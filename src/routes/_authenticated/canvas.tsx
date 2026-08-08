@@ -559,6 +559,40 @@ function CanvasPage() {
         </p>
       )}
 
+      {answer && (
+        <section className="border border-rule bg-panel px-4 py-3" data-testid="answer">
+          <Markdown text={answer} />
+          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-rule pt-3">
+            <span className="font-mono text-[10px] text-faint">
+              {answeredBy ?? laneLabel(model)}
+            </span>
+            <button
+              type="button"
+              onClick={() => void keep()}
+              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+            >
+              Keep as document
+            </button>
+            <button
+              type="button"
+              data-testid="handover"
+              onClick={() => void handOver()}
+              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+            >
+              Hand over to inbox
+            </button>
+          </div>
+          {saveNote && <p className="mt-2 font-mono text-[10px] text-copper">{saveNote}</p>}
+          {handoverNote && <p className="mt-1 font-mono text-[10px] text-faint">{handoverNote}</p>}
+        </section>
+      )}
+
+      {answer && searched.length > 0 && (
+        <p className="font-mono text-[10px] leading-relaxed text-faint" data-testid="searched-line">
+          searched {searched.join(" · ")}
+        </p>
+      )}
+
       {grouped.length > 0 && (
         <section className="border border-rule bg-panel" data-testid="sources">
           <button
@@ -574,27 +608,60 @@ function CanvasPage() {
           </button>
           {sourcesOpen && (
             <div className="border-t border-rule px-4 py-2">
-              <ul>
-                {grouped.map((source) => (
-                  <li
-                    key={source.name}
-                    className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-rule py-2 first:border-t-0"
-                  >
-                    <span className="break-all font-mono text-[12px] text-paper">
-                      {source.name}
-                      {source.passages > 1 && (
-                        <span className="ml-2 text-faint">{source.passages} passages</span>
-                      )}
-                    </span>
-                    <span className="font-mono text-[10px] text-faint">{source.cls ?? "—"}</span>
-                    <span
-                      className={`font-mono text-[10px] tabular-nums ${distanceTone(source.best)}`}
+              {kinds.map((group, index) => {
+                const open = kindOpen[group.kind] ?? index < 2;
+                return (
+                  <div key={group.kind} className="border-t border-rule py-2 first:border-t-0">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setKindOpen((current) => ({ ...current, [group.kind]: !open }))
+                      }
+                      className="flex w-full items-baseline justify-between gap-3 text-left"
                     >
-                      {source.best != null ? source.best.toFixed(3) : "—"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                        {group.kind}{" "}
+                        <span className="tabular-nums text-faint">{group.rows.length}</span>
+                      </span>
+                      <span className="font-mono text-[10px] text-faint">
+                        {open ? "hide" : "show"}
+                      </span>
+                    </button>
+                    {open && (
+                      <ul className="mt-1">
+                        {group.rows.map((source) => (
+                          <li
+                            key={source.name}
+                            className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-1"
+                          >
+                            <span className="min-w-0 break-all text-[13px] leading-relaxed text-paper">
+                              {source.name}
+                              {source.passages > 1 && (
+                                <span className="ml-2 font-mono text-[10px] text-faint">
+                                  {source.passages} passages
+                                </span>
+                              )}
+                              {source.foundBy && (
+                                <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                                  {source.foundBy}
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-mono text-[10px] text-faint">
+                              {source.cls ?? "—"}
+                            </span>
+                            <span
+                              className={`font-mono text-[10px] tabular-nums ${distanceTone(source.best)}`}
+                            >
+                              {source.best != null ? source.best.toFixed(3) : "—"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
               <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-rule pt-2">
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
                   retrieve
@@ -628,34 +695,6 @@ function CanvasPage() {
               </div>
             </div>
           )}
-        </section>
-      )}
-
-      {answer && (
-        <section className="border border-rule bg-panel px-4 py-3" data-testid="answer">
-          <Markdown text={answer} />
-          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-rule pt-3">
-            <span className="font-mono text-[10px] text-faint">
-              {answeredBy ?? laneLabel(model)}
-            </span>
-            <button
-              type="button"
-              onClick={() => void keep()}
-              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
-            >
-              Keep as document
-            </button>
-            <button
-              type="button"
-              data-testid="handover"
-              onClick={() => void handOver()}
-              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
-            >
-              Hand over to inbox
-            </button>
-          </div>
-          {saveNote && <p className="mt-2 font-mono text-[10px] text-copper">{saveNote}</p>}
-          {handoverNote && <p className="mt-1 font-mono text-[10px] text-faint">{handoverNote}</p>}
         </section>
       )}
 
