@@ -14,7 +14,8 @@
 
 import { loopbackFetch } from "./local-bridge";
 
-export type AskSource = { file?: string; path?: string; distance?: number };
+export type { AskSource } from "./canvas-types";
+import type { AskSource } from "./canvas-types";
 
 
 export type AskStreamResult = {
