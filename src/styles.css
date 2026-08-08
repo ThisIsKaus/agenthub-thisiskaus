@@ -106,24 +106,27 @@
     font-weight: 500;
     letter-spacing: -0.42px;
   }
+
+  /*
+   * Display and mono voice. In @layer base so a route's explicit tracking-*
+   * utility still wins. Mono tracking is the signature of the system, measured
+   * on the live site: 0.48px at 12px, 1.04px at 13px, 2.7px on section labels.
+   */
+  .font-serif {
+    font-weight: 500;
+    letter-spacing: -0.42px;
+  }
+
+  .font-mono {
+    font-weight: 400;
+    letter-spacing: 0.04em; /* 0.48px at 12px */
+  }
+
+  .font-mono.text-\[13px\] {
+    letter-spacing: 0.08em; /* 1.04px at 13px */
+  }
 }
 
-/*
- * Display and mono voice. Outside @layer base so these beat Tailwind utilities.
- * Mono tracking is the signature of the system, measured on the live site:
- * 0.48px at 12px, 1.04px at 13px, 2.7px on section labels.
- */
-.font-serif,
-[class~="font-serif"] {
-  font-weight: 500;
-  letter-spacing: -0.42px;
-}
-
-.font-mono,
-[class~="font-mono"] {
-  font-weight: 400;
-  letter-spacing: 0.04em; /* 0.48px at 12px */
-}
 
 /* One label treatment: spaced small caps. */
 @utility mono-label {
