@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as FilesAuditRouteImport } from './routes/files-audit'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSystemRouteImport } from './routes/_authenticated/system'
@@ -38,11 +37,6 @@ import { Route as AuthenticatedAskRouteImport } from './routes/_authenticated/as
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 
-const FilesAuditRoute = FilesAuditRouteImport.update({
-  id: '/files-audit',
-  path: '/files-audit',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -181,7 +175,6 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/files-audit': typeof FilesAuditRoute
   '/ask': typeof AuthenticatedAskRoute
   '/build': typeof AuthenticatedBuildRoute
   '/canvas': typeof AuthenticatedCanvasRoute
@@ -210,7 +203,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/files-audit': typeof FilesAuditRoute
   '/ask': typeof AuthenticatedAskRoute
   '/build': typeof AuthenticatedBuildRoute
   '/canvas': typeof AuthenticatedCanvasRoute
@@ -241,7 +233,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/files-audit': typeof FilesAuditRoute
   '/_authenticated/ask': typeof AuthenticatedAskRoute
   '/_authenticated/build': typeof AuthenticatedBuildRoute
   '/_authenticated/canvas': typeof AuthenticatedCanvasRoute
@@ -272,7 +263,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/files-audit'
     | '/ask'
     | '/build'
     | '/canvas'
@@ -301,7 +291,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/files-audit'
     | '/ask'
     | '/build'
     | '/canvas'
@@ -331,7 +320,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/files-audit'
     | '/_authenticated/ask'
     | '/_authenticated/build'
     | '/_authenticated/canvas'
@@ -362,20 +350,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  FilesAuditRoute: typeof FilesAuditRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/files-audit': {
-      id: '/files-audit'
-      path: '/files-audit'
-      fullPath: '/files-audit'
-      preLoaderRoute: typeof FilesAuditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -626,7 +606,6 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  FilesAuditRoute: FilesAuditRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
