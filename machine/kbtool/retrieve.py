@@ -20,7 +20,10 @@ from pathlib import Path
 import lancedb, requests
 
 H = Path.home() / "AgentHub"
-DB, TABLE = H / "kb", "kb_main"
+import os
+# AGENTHUB_KB_TABLE=kb_sample runs every query against the 10% sample. A hypothesis is tested
+# there in ninety seconds; only a winner touches the real index.
+DB, TABLE = H / "kb", os.environ.get("AGENTHUB_KB_TABLE", "kb_main")
 EMBED = "http://127.0.0.1:4000/v1/embeddings"
 CLASSIFIED = ("S1c", "S2", "S3")
 RRF_K = 60
