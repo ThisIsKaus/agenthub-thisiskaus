@@ -65,9 +65,9 @@ export function MachineStatePanel({
 
   return (
     <section aria-label="Machine state">
-      <div className="flex items-center gap-2.5">
-        <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${DOT[plane]}`} />
+      <div className="relative">
         <SectionHeading>{headline}</SectionHeading>
+        <span aria-hidden className={`absolute right-0 top-2 h-2 w-2 rounded-full ${DOT[plane]}`} />
       </div>
       <div className={`mt-3 border border-l-2 border-rule bg-panel px-4 py-4 ${BORDER[plane]}`}>
         <p className="break-words font-mono text-[11px] leading-relaxed text-faint">{detail}</p>
