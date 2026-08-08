@@ -30,7 +30,13 @@ EMBED_MODEL = "local-embed"
 CHUNK, OVERLAP, BATCH = 1600, 200, 32
 EXTS = {".md", ".txt", ".pdf", ".docx", ".xlsx", ".pptx", ".csv", ".html", ".htm"}
 
-SOURCES = [H / "canon", H / "inbox", H / "docs", H / "drafts", H / "digests"]
+SOURCES = [H / "canon", H / "inbox", H / "docs", H / "drafts", H / "digests",
+           H / "skills-lib" / "skills", H / "state" / "proposals",
+           H / "state" / "builds", H / "evals", H / "contracts", H / "logs"]
+# Canvas should be able to answer a question about the system itself: which skills cover
+# negotiation, what the diagnostician proposed and why, what a build actually changed, what
+# the last self-test failed on. Those artefacts existed and were unreadable — the system knew
+# things it could not tell you.
 # docs/ already carries memory notes and exported sessions; digests join them so a
 # question, an answer and the day it arrived are all findable from one query.
 EXTRA = H / "kbtool" / "sources.json"
@@ -123,8 +129,11 @@ def classify(path: Path, default="S0") -> str:
     # Derived material inherits the sensitivity of what it derives from. A memory note
     # distils a day that may have included S3 questions; a digest carries email subjects
     # across every class. Neither may reach a cloud lane on the strength of its own path.
-    if "/docs/memory/" in s or "/digests/" in s or "/sessions/" in s:
+    if "/docs/memory/" in s or "/digests/" in s or "/sessions/" in s or "/logs/" in s:
         return "S3"
+    if "/skills-lib/" in s or "/state/proposals/" in s or "/state/builds/" in s \
+            or "/contracts/" in s or "/evals/" in s:
+        return "S1p"
     if S1C.search(s):
         return "S1c"
     if PRODUCT.search(s):
