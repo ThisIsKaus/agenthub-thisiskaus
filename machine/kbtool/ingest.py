@@ -185,6 +185,33 @@ def read_text(p: Path) -> str:
     return p.read_text(errors="ignore")
 
 
+def context_label(path: Path) -> str:
+    """A situating line for every chunk: where the file lives, and when it is about.
+
+    The chunker prepended the filename alone, which discriminates nothing when 286 payslips
+    share the name KaustubhBajpai_PaySlip.pdf and 70 files are called README.md. Seven of
+    twelve golden-set misses were documents identical but for a date the embedding never saw,
+    and three wanted one README among seventy.
+
+    The folder trail and any date in the path go into both the vector and the BM25 index.
+    Deterministic, no model call — the cheap half of contextual retrieval, aimed at the
+    failure the golden set actually reports.
+    """
+    home = str(Path.home())
+    rel = str(path).replace(home + "/", "")
+    for noise in ("Library/CloudStorage/", "OneDrive-Personal/",
+                  "OneDrive-AgenticPersonalityPty.Ltd/", "AgentHub/"):
+        rel = rel.replace(noise, "")
+    parts = [x for x in Path(rel).parts[:-1] if x not in (".", "")][-3:]
+    m = re.search(r"(20\d{2})[-_ ]?(0[1-9]|1[0-2])?[-_ ]?(0[1-9]|[12]\d|3[01])?", rel)
+    when = ""
+    if m:
+        when = m.group(1) + ("-" + m.group(2) if m.group(2) else "") + \
+               ("-" + m.group(3) if m.group(3) else "")
+    bits = [b for b in (when, " / ".join(parts), path.name) if b]
+    return " · ".join(bits)
+
+
 def chunks(text, name=""):
     """Split on markdown headings, then paragraphs. Each chunk carries its heading trail."""
     sections, trail, buf = [], [], []
@@ -359,7 +386,10 @@ def main():
             duped += 1
             continue
         seen.add(digest)
-        parts = [c for c in chunks(text, p.name) if c.strip()]
+        # The filename alone discriminated nothing: 286 payslips share one name, 70 files
+        # are called README.md. The folder trail and any date now enter both the vector and
+        # the BM25 index, which is where the golden set says the misses are.
+        parts = [c for c in chunks(text, context_label(p)) if c.strip()]
         if not parts:
             continue
         rows = []
