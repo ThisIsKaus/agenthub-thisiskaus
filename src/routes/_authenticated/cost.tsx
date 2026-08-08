@@ -125,7 +125,7 @@ function CostPage() {
       <Panel title="Detail">
         <Disclosure
           summary={
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+            <span className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
               By model
             </span>
           }
@@ -164,7 +164,7 @@ function CostPage() {
       <Panel title="Detail">
         <Disclosure
           summary={
-            <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">
+            <span className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
               Day by day · last {days.length || 30} days
             </span>
           }

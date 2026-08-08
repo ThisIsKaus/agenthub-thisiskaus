@@ -230,7 +230,7 @@ function ProposalsPage() {
 
           <button
             onClick={() => void runJob("diagnose", "Run diagnosis", () => void load())}
-            className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-copper transition-colors hover:bg-copper/10"
+            className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper transition-colors hover:bg-copper/10"
           >
             Run diagnosis
           </button>
@@ -269,7 +269,7 @@ function ProposalsPage() {
           <div className="border border-rule bg-panel px-4">
             <Disclosure
               summary={
-                <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                <span className="font-mono text-[11px] uppercase tracking-[0.245em] text-muted-foreground">
                   {decided.length} acted on · what happened next
                 </span>
               }
@@ -307,7 +307,7 @@ function DecidedRow({ proposal }: { proposal: Proposal }) {
   return (
     <article className="space-y-1.5">
       <p className="text-[14px] text-paper">{proposal.title ?? proposal.id}</p>
-      <p className={`font-mono text-[10px] uppercase tracking-[0.12em] ${tone}`}>
+      <p className={`font-mono text-[10px] uppercase tracking-[0.27em] ${tone}`}>
         {proposal.status ?? "acted"}
         {proposal.job ? ` · job ${proposal.job}` : ""}
         {proposal.job_running ? (
@@ -386,7 +386,7 @@ function ProposalRow({
       >
         <span className="min-w-0">
           <span className="block truncate text-[14px] text-paper">{proposal.title ?? proposal.id}</span>
-          <span className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+          <span className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
             {proposal.category && (
               <span className="border border-rule px-1.5 py-0.5 text-muted-foreground">
                 {proposal.category}
@@ -425,14 +425,14 @@ function ProposalRow({
           )}
 
           <section>
-            <h3 className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Why</h3>
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">Why</h3>
             <pre className="mt-2 max-w-[72ch] whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
               {proposal.why?.trim() || "—"}
             </pre>
           </section>
 
           <section>
-            <h3 className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">What</h3>
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">What</h3>
             <p className="mt-2 max-w-[72ch] text-[13px] leading-relaxed text-paper">
               {proposal.change?.trim() || "—"}
             </p>
@@ -448,7 +448,7 @@ function ProposalRow({
           </section>
 
           <section>
-            <h3 className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Cost</h3>
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">Cost</h3>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {[
                 ["impact", proposal.impact],
@@ -483,21 +483,21 @@ function ProposalRow({
               <button
                 disabled={busy || approveBlocked}
                 onClick={() => void run("approve", "")}
-                className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-copper transition-colors hover:bg-copper/10 disabled:opacity-40"
+                className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper transition-colors hover:bg-copper/10 disabled:opacity-40"
               >
                 Approve
               </button>
               <button
                 disabled={busy}
                 onClick={() => setShowApproveNote((value) => !value)}
-                className="border border-rule px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-paper disabled:opacity-40"
+                className="border border-rule px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-muted-foreground transition-colors hover:text-paper disabled:opacity-40"
               >
                 Approve with note
               </button>
               <button
                 disabled={busy}
                 onClick={() => void run("defer", approveNote.trim())}
-                className="border border-rule px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-paper disabled:opacity-40"
+                className="border border-rule px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-muted-foreground transition-colors hover:text-paper disabled:opacity-40"
               >
                 Defer
               </button>
@@ -515,7 +515,7 @@ function ProposalRow({
                 <button
                   disabled={busy || approveBlocked || !approveNote.trim()}
                   onClick={() => void run("approve", approveNote.trim())}
-                  className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-copper transition-colors hover:bg-copper/10 disabled:opacity-40"
+                  className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper transition-colors hover:bg-copper/10 disabled:opacity-40"
                 >
                   Approve with this note
                 </button>
@@ -533,7 +533,7 @@ function ProposalRow({
               <button
                 disabled={busy || !reason.trim()}
                 onClick={() => void run("reject", reason.trim())}
-                className="border border-risk/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-risk transition-colors hover:bg-risk/10 disabled:opacity-40"
+                className="border border-risk/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-risk transition-colors hover:bg-risk/10 disabled:opacity-40"
               >
                 Reject
               </button>

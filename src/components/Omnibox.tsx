@@ -210,7 +210,7 @@ export function Omnibox() {
               ? "Click to cycle the interpretation · ⌘1 capture, ⌘2 ask, ⌘3 build, ⌘4 search"
               : "This reads on the machine. Enter still captures."
           }
-          className={`mr-2 shrink-0 whitespace-nowrap border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+          className={`mr-2 shrink-0 whitespace-nowrap border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.27em] ${
             local.available
               ? "border-copper text-copper hover:bg-copper/10"
               : "cursor-default border-rule text-faint"

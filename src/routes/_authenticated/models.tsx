@@ -306,7 +306,7 @@ function ModelsPage() {
           <button
             type="button"
             onClick={() => void models.refetch()}
-            className="mt-2 border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-copper"
+            className="mt-2 border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-copper"
           >
             Try again
           </button>
@@ -409,7 +409,7 @@ function ModelsPage() {
             type="button"
             disabled={busy === "clear duplicates"}
             onClick={() => void clearDuplicates()}
-            className="mt-2 border border-watch px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-watch disabled:opacity-50"
+            className="mt-2 border border-watch px-3 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-watch disabled:opacity-50"
           >
             {busy === "clear duplicates" ? "Clearing…" : "Clear duplicates"}
           </button>
@@ -425,7 +425,7 @@ function ModelsPage() {
         ) : (
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                 <th className="py-1.5 font-normal">Model</th>
                 <th className="py-1.5 text-right font-normal">Size</th>
                 <th className="py-1.5 text-right font-normal">State</th>
@@ -440,7 +440,7 @@ function ModelsPage() {
                   <td className="py-2 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
                     {fixed(entry.gib, 1)} GiB
                   </td>
-                  <td className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-ok">
+                  <td className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.27em] text-ok">
                     pinned
                   </td>
                 </tr>
@@ -470,7 +470,7 @@ function ModelsPage() {
         ) : (
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                 <th className="py-1.5 font-normal">Model</th>
                 <th className="py-1.5 font-normal">Role</th>
                 <th className="py-1.5 text-right font-normal">Gen t/s</th>
@@ -491,7 +491,7 @@ function ModelsPage() {
                     {fixed(row.gib, 1)}
                   </td>
                   <td
-                    className={`py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] ${row.loaded ? "text-ok" : "text-faint"}`}
+                    className={`py-2 text-right font-mono text-[10px] uppercase tracking-[0.27em] ${row.loaded ? "text-ok" : "text-faint"}`}
                   >
                     {row.loaded ? "loaded" : "not loaded"}
                   </td>
@@ -501,7 +501,7 @@ function ModelsPage() {
                       disabled={disabled}
                       title="Loading this evicts the currently loaded large model"
                       onClick={() => void act("load", row.id, `load ${row.id}`)}
-                      className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
+                      className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
                     >
                       {busy === `load ${row.id}` ? "Loading…" : "Load"}
                     </button>
@@ -520,7 +520,7 @@ function ModelsPage() {
         ) : (
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                 <th className="py-1.5 font-normal">Rung</th>
                 <th className="py-1.5 font-normal">Name</th>
                 <th className="py-1.5 text-right font-normal">Tested</th>
@@ -558,7 +558,7 @@ function ModelsPage() {
                       {row.tested ? String(row.tested).slice(0, 10) : "never"}
                     </td>
                     <td
-                      className={`py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] ${
+                      className={`py-2 text-right font-mono text-[10px] uppercase tracking-[0.27em] ${
                         row.ok === true ? "text-ok" : row.ok === false ? "text-risk" : "text-faint"
                       }`}
                     >
@@ -568,7 +568,7 @@ function ModelsPage() {
                       <button
                         type="button"
                         onClick={() => void runJob(key, `failover ${rung} · ${key}`)}
-                        className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper"
+                        className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper"
                       >
                         Test
                       </button>
@@ -590,7 +590,7 @@ function ModelsPage() {
         ) : (
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                 <th className="py-1.5 font-normal">Role</th>
                 <th className="py-1.5 font-normal">Model</th>
                 <th className="py-1.5 text-right font-normal">Gen t/s</th>
@@ -634,7 +634,7 @@ function ModelsPage() {
         ) : (
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+              <tr className="border-b border-rule font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                 <th className="py-1.5 font-normal">Alias</th>
                 <th className="py-1.5 font-normal">Target</th>
                 <th className="py-1.5 text-right font-normal">Lane</th>
@@ -655,7 +655,7 @@ function ModelsPage() {
                     <td className="break-all py-2 pr-2 font-mono text-[11px] text-muted-foreground">
                       {target}
                     </td>
-                    <td className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                    <td className="py-2 text-right font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
                       {lane}
                     </td>
                   </tr>
@@ -708,7 +708,7 @@ function RetrievalProof({
   return (
     <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule pt-2">
       <span
-        className={`font-mono text-[10px] uppercase tracking-[0.12em] ${
+        className={`font-mono text-[10px] uppercase tracking-[0.27em] ${
           health.proved === true ? "text-ok" : health.proved === false ? "text-risk" : "text-watch"
         }`}
       >
@@ -726,7 +726,7 @@ function RetrievalProof({
         type="button"
         disabled={proving}
         onClick={() => void prove()}
-        className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
+        className="border border-rule px-2 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
       >
         {proving ? "Probing…" : "Probe retrieval"}
       </button>

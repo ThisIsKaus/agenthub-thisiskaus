@@ -255,7 +255,7 @@ function StreamRow({
     <li className="border-t border-rule py-3 first:border-t-0 first:pt-0">
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
         <span
-          className={`mt-0.5 shrink-0 border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${PILL_TONE[item.kind]}`}
+          className={`mt-0.5 shrink-0 border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.27em] ${PILL_TONE[item.kind]}`}
         >
           {item.pill}
         </span>
@@ -277,7 +277,7 @@ function StreamRow({
               type="button"
               disabled={busy}
               onClick={() => void action.run()}
-              className={`border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] disabled:opacity-50 ${
+              className={`border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.27em] disabled:opacity-50 ${
                 action.primary
                   ? "border-copper/60 text-copper hover:bg-copper/10"
                   : "border-rule text-muted-foreground hover:border-copper hover:text-copper"
@@ -291,7 +291,7 @@ function StreamRow({
 
       {open && item.kind === "build" && (
         <div className="mt-2 border border-rule bg-panel2 p-2">
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+          <p className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
             {raw.branch ? `branch ${raw.branch}` : "branch on the machine"}
           </p>
           {raw.diff ? (
@@ -333,7 +333,7 @@ function StreamRow({
                 true,
               )
             }
-            className="border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
+            className="border border-rule px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.27em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-50"
           >
             Record rejection
           </button>

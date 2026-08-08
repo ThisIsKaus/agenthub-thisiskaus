@@ -24,7 +24,7 @@ export function Stat({
 
   return (
     <div className="border border-rule bg-panel2 px-3 py-3">
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">{label}</div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">{label}</div>
       <div className={`mt-2 font-mono text-2xl leading-none tabular-nums ${toneClass}`}>{value}</div>
       {hint && <div className="mt-1.5 font-mono text-[10px] text-faint">{hint}</div>}
     </div>
