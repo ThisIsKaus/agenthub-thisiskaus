@@ -15,6 +15,8 @@ import { LocalOnly } from "@/components/LocalOnly";
 import { Markdown } from "@/components/Markdown";
 import { isRefusal, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
 import { askProgressive } from "@/lib/ask-stream";
+import { askStages, WaitTrail } from "@/components/WaitTrail";
+
 import {
   handoverCanvas,
   listCanvases,
