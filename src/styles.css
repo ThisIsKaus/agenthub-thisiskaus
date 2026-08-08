@@ -138,10 +138,10 @@
 }
 
 
-/* The single page frame: 86vw — 7% clear each side at every viewport. */
+/* The single page frame: 92.6vw — 3.7% clear each side at every viewport. */
 @utility page-container {
-  width: 86vw;
-  max-width: 1240px;
+  width: 92.6vw;
+  max-width: 1392px;
   margin-inline: auto;
   padding-block: 40px 56px;
   display: flex;
@@ -150,8 +150,8 @@
 }
 
 @utility page-width {
-  width: 86vw;
-  max-width: 1240px;
+  width: 92.6vw;
+  max-width: 1392px;
   margin-inline: auto;
 }
 
@@ -164,7 +164,7 @@
 @media (max-width: 900px) {
   .page-container,
   .page-width {
-    width: 86vw;
+    width: 92.6vw;
     padding-block: 28px 40px;
     gap: 40px;
   }
