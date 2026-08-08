@@ -192,7 +192,6 @@ export function Omnibox() {
             setText(event.target.value);
             setOverridden(false);
 
-            }}
           }}
           onKeyDown={onKeyDown}
           disabled={busy}
