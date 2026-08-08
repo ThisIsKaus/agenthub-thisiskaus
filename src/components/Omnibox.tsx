@@ -114,7 +114,6 @@ export function Omnibox() {
       const target = forced ?? (local.available ? intent : "capture");
       setBusy(true);
       setStatus(null);
-      setStatus(null);
       try {
         if (target === "capture") {
           const capture: PendingCapture = {
@@ -192,7 +191,7 @@ export function Omnibox() {
           onChange={(event) => {
             setText(event.target.value);
             setOverridden(false);
-            // Clearing the field collapses the ask surface.
+
             if (!event.target.value.trim()) setAsked(null);
           }}
           onKeyDown={onKeyDown}
