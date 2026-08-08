@@ -1,8 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-/** One Ask surface, and it lives under the omnibox on Overview. */
+/** Ask is the unsaved case of Canvas. There is no separate surface. */
 export const Route = createFileRoute("/_authenticated/ask")({
-  beforeLoad: () => {
-    throw redirect({ to: "/overview" });
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" ? search.q : undefined,
+  }),
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: "/canvas", search: { q: search.q } });
   },
 });

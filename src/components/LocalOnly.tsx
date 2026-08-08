@@ -6,7 +6,12 @@ import { useLocal } from "@/lib/local-bridge";
  * no error styling, no spinner, no retry, and never a Supabase fallback.
  */
 export function LocalOnly({ children }: { children: ReactNode }) {
-  const { available } = useLocal();
+  const { available, resolved } = useLocal();
+
+  // Until the loopback probe settles, neither plane may be claimed.
+  if (!resolved) {
+    return <div className="h-24 border border-rule bg-panel" aria-hidden />;
+  }
 
   if (!available) {
     return (
@@ -17,6 +22,7 @@ export function LocalOnly({ children }: { children: ReactNode }) {
       </div>
     );
   }
+
 
   return <>{children}</>;
 }

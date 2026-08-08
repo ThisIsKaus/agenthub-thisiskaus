@@ -1,35 +1,44 @@
+/**
+ * Canvas — content first.
+ *
+ * The page opens on a cursor. Everything else is inferred from what you write:
+ * the lane, the number of sources, the skills that matched, and the document's
+ * sensitivity class, which is derived from the sources actually cited and can
+ * only ever be raised by hand. Ask is the unsaved case of this same surface —
+ * one code path, one document type.
+ */
 import { createFileRoute } from "@tanstack/react-router";
-import { Page } from "@/components/Page";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Page } from "@/components/Page";
 import { LocalOnly } from "@/components/LocalOnly";
-import { CanvasBlockCard } from "@/components/canvas/CanvasBlockCard";
-import { Section } from "@/components/Section";
-import { useReferenceCatalogue } from "@/lib/canvas-refs";
-import { useLocal } from "@/lib/local-bridge";
+import { Markdown } from "@/components/Markdown";
+import { isRefusal, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
+import { askProgressive } from "@/lib/ask-stream";
 import {
   handoverCanvas,
   listCanvases,
   readCanvas,
-  setCanvasState,
   writeCanvas,
   type LibraryEntry,
 } from "@/lib/canvas-store";
 import {
   emptyBlock,
   emptyDoc,
+  LANES,
+  SOURCE_COUNTS,
   STAGES,
-  type BlockKind,
-  type CanvasBlock,
+  type AskSource,
   type CanvasDoc,
-  type CanvasRef,
   type Stage,
 } from "@/lib/canvas-types";
+import { listSkills, type Skill } from "@/lib/skills-store";
 
 export const Route = createFileRoute("/_authenticated/canvas")({
   validateSearch: (search: Record<string, unknown>) => ({
+    /** A question routed here from the omnibox or /ask — answered on load. */
+    q: typeof search.q === "string" ? search.q : undefined,
     seed: typeof search.seed === "string" ? search.seed : undefined,
-    // A document the inbox already saved on the machine — opened, not re-created.
     id: typeof search.id === "string" ? search.id : undefined,
   }),
   head: () => ({
@@ -38,23 +47,20 @@ export const Route = createFileRoute("/_authenticated/canvas")({
       {
         name: "description",
         content:
-          "The workbench where a captured thought becomes a finished artefact: ask the corpus, critique on a second lane, and hand the result over.",
+          "One writing surface: ask the corpus, keep the answer as a document, and let the machine infer lane, sources and sensitivity.",
       },
       { property: "og:title", content: "Canvas — AgentHub" },
       {
         property: "og:description",
         content:
-          "The workbench where a captured thought becomes a finished artefact: ask the corpus, critique on a second lane, and hand the result over.",
+          "One writing surface: ask the corpus, keep the answer as a document, and let the machine infer lane, sources and sensitivity.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => (
-    <Page
-      title="Canvas"
-      footer="Canvas · documents live on the machine; every save keeps the previous version"
-    >
+    <Page title="Canvas" footer="Canvas · documents live on the machine; every save keeps the previous version">
       <LocalOnly>
         <CanvasPage />
       </LocalOnly>
@@ -62,12 +68,30 @@ export const Route = createFileRoute("/_authenticated/canvas")({
   ),
 });
 
-const ADD: { kind: BlockKind; label: string }[] = [
-  { kind: "prompt", label: "Ask" },
-  { kind: "note", label: "Note" },
-  { kind: "job", label: "Run" },
-  { kind: "capture", label: "Hand over" },
-];
+/* ── sensitivity ─────────────────────────────────────────────────────────── */
+
+const CLASS_ORDER = ["S0", "S1p", "S1c", "S2", "S3"] as const;
+const LOCAL_ONLY = ["S1c", "S2", "S3"];
+
+/** The document's class is the highest among its cited sources. Never chosen. */
+function derivedClass(sources: AskSource[]): { cls: string | null; because: string | null } {
+  let best = -1;
+  let because: string | null = null;
+  for (const source of sources) {
+    const index = CLASS_ORDER.indexOf(String(source.sensitivity ?? "") as (typeof CLASS_ORDER)[number]);
+    if (index > best) {
+      best = index;
+      because = source.file ?? source.path ?? null;
+    }
+  }
+  return best < 0 ? { cls: null, because: null } : { cls: CLASS_ORDER[best], because };
+}
+
+function higher(a: string | null, b: string | null): string | null {
+  const ai = a ? CLASS_ORDER.indexOf(a as (typeof CLASS_ORDER)[number]) : -1;
+  const bi = b ? CLASS_ORDER.indexOf(b as (typeof CLASS_ORDER)[number]) : -1;
+  return ai >= bi ? a : b;
+}
 
 function stamp(iso: string | undefined) {
   if (!iso) return "—";
@@ -75,162 +99,90 @@ function stamp(iso: string | undefined) {
   return Number.isNaN(date.getTime()) ? "—" : date.toISOString().slice(0, 16).replace("T", " ");
 }
 
-function HarnessBoard({ doc }: { doc: CanvasDoc }) {
-  const refs = doc.blocks.reduce((sum, block) => sum + block.refs.length, 0);
-  const runs = doc.blocks.reduce((sum, block) => sum + block.runs.length, 0);
-  const linked = doc.blocks.filter((block) => block.dependsOn.length > 0).length;
-  const stages = [
-    { n: "01", label: "Compose", detail: `${doc.blocks.length} blocks` },
-    { n: "02", label: "Ground", detail: `${refs} references` },
-    { n: "03", label: "Orchestrate", detail: linked ? `${linked} linked` : "sequential · fan-out" },
-    { n: "04", label: "Review", detail: "critique · compare" },
-    { n: "05", label: "Prove", detail: `${runs} run records` },
-  ];
-
-  return (
-    <Section title="Execution harness" note="local · append-only runs · versioned saves" flush>
-    <section className="border border-rule bg-panel" data-testid="harness-board">
-      <div className="grid grid-cols-1 sm:grid-cols-5">
-        {stages.map((stage, index) => (
-          <div
-            key={stage.n}
-            className="relative border-b border-rule px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
-          >
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-[9px] text-copper">{stage.n}</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-paper">
-                {stage.label}
-              </span>
-            </div>
-            <p className="mt-1 font-mono text-[9.5px] text-faint">{stage.detail}</p>
-            {index < stages.length - 1 && (
-              <span className="absolute right-[-5px] top-1/2 z-10 hidden -translate-y-1/2 bg-panel px-0.5 font-mono text-[10px] text-copper sm:block">
-                →
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
-    </Section>
-  );
+/** One row per cited file: its best distance, and how many passages matched. */
+function groupSources(sources: AskSource[]) {
+  const byName = new Map<string, { name: string; best?: number; passages: number; cls?: string }>();
+  for (const source of sources) {
+    const name = source.file ?? source.path ?? "—";
+    const row = byName.get(name);
+    if (!row) {
+      byName.set(name, {
+        name,
+        best: source.distance,
+        passages: 1,
+        cls: source.sensitivity,
+      });
+      continue;
+    }
+    row.passages += 1;
+    if (source.distance != null && (row.best == null || source.distance < row.best)) {
+      row.best = source.distance;
+    }
+    if (!row.cls) row.cls = source.sensitivity;
+  }
+  return [...byName.values()].sort((a, b) => (a.best ?? Infinity) - (b.best ?? Infinity));
 }
 
-const ENTITIES = ["personal", "Agenticality", "NXI", "Envelope Collective", "client"];
-const SENSITIVITIES = ["S0", "S1p", "S1c", "S2", "S3"];
-
-/** A canvas carries its own project record: state, who it is for, how far it may travel. */
-function ProjectBar({
-  doc,
-  onChange,
-  skills,
-}: {
-  doc: CanvasDoc;
-  onChange: (patch: Partial<CanvasDoc>) => void;
-  skills: string[];
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <section className="border border-rule bg-panel" data-testid="project-bar">
-      <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
-        <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">for</span>
-        <select
-          value={doc.entity}
-          onChange={(event) => onChange({ entity: event.target.value })}
-          aria-label="Entity"
-          className="border border-rule bg-panel2 px-2 py-1 font-mono text-[10px] text-paper outline-none focus:border-copper"
-        >
-          {(ENTITIES.includes(doc.entity) ? ENTITIES : [doc.entity, ...ENTITIES]).map((entity) => (
-            <option key={entity} value={entity}>
-              {entity}
-            </option>
-          ))}
-        </select>
-        <select
-          value={doc.sensitivity}
-          onChange={(event) => onChange({ sensitivity: event.target.value })}
-          aria-label="Sensitivity"
-          className="border border-rule bg-panel2 px-2 py-1 font-mono text-[10px] text-paper outline-none focus:border-copper"
-        >
-          {SENSITIVITIES.map((sensitivity) => (
-            <option key={sensitivity} value={sensitivity}>
-              {sensitivity}
-            </option>
-          ))}
-        </select>
-        <span className="ml-auto font-mono text-[9px] text-faint">
-          {["S1c", "S2", "S3"].includes(doc.sensitivity)
-            ? `${doc.sensitivity} — local lanes only; the cloud lane is unavailable to this document`
-            : "cloud lane permitted for this document"}
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 border-t border-rule px-4 py-2">
-        <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">skills</span>
-        {doc.skills.length === 0 && (
-          <span className="font-mono text-[10px] text-faint">none loaded</span>
-        )}
-        {doc.skills.map((name) => (
-          <button
-            key={name}
-            type="button"
-            onClick={() => onChange({ skills: doc.skills.filter((item) => item !== name) })}
-            title="Remove from this canvas"
-            className="border border-copper px-2 py-1 font-mono text-[10px] text-copper"
-          >
-            {name} ×
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="border border-rule px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-copper hover:text-copper"
-        >
-          + skill
-        </button>
-        <span className="ml-auto font-mono text-[9px] text-faint">loaded into every run</span>
-      </div>
-      {open && (
-        <div className="flex flex-wrap gap-2 border-t border-rule px-4 py-2">
-          {skills.length === 0 && (
-            <span className="font-mono text-[10px] text-faint">no skill files on the machine</span>
-          )}
-          {skills
-            .filter((name) => !doc.skills.includes(name))
-            .map((name) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => {
-                  onChange({ skills: [...doc.skills, name] });
-                  setOpen(false);
-                }}
-                className="border border-rule px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-copper hover:text-copper"
-              >
-                {name}
-              </button>
-            ))}
-        </div>
-      )}
-    </section>
-  );
+function distanceTone(distance: number | undefined) {
+  if (distance == null) return "text-faint";
+  if (distance < 0.5) return "text-ok";
+  if (distance <= 0.7) return "text-muted-foreground";
+  return "text-watch";
 }
+
+/** Which skill matched, and on which trigger — shown after the fact, not before. */
+function matchedSkills(skills: Skill[], text: string) {
+  const haystack = text.toLowerCase();
+  if (!haystack.trim()) return [];
+  const out: { name: string; trigger: string }[] = [];
+  for (const skill of skills) {
+    if (skill.state !== "active" && skill.state !== "watch") continue;
+    if (skill.scope !== "both" && skill.scope !== "canvas") continue;
+    const trigger = skill.triggers.find((item) => item && haystack.includes(item.toLowerCase()));
+    if (trigger) out.push({ name: skill.name, trigger });
+  }
+  return out;
+}
+
+function laneLabel(id: string) {
+  return LANES.find((lane) => lane.id === id)?.label.toLowerCase() ?? id;
+}
+
+/* ── page ────────────────────────────────────────────────────────────────── */
 
 function CanvasPage() {
   const local = useLocal();
   const queryClient = useQueryClient();
-  const { skills: skillRefs } = useReferenceCatalogue();
-  const skillNames = useMemo(() => skillRefs.map((ref) => ref.label), [skillRefs]);
-  const { seed, id: openId } = Route.useSearch();
+  const { q, seed, id: openId } = Route.useSearch();
 
-  const [doc, setDoc] = useState<CanvasDoc | null>(null);
-  const [saving, setSaving] = useState<string | null>(null);
-  const [dirty, setDirty] = useState(false);
+  const [text, setText] = useState(seed ?? q ?? "");
+  const [answer, setAnswer] = useState("");
+  const [sources, setSources] = useState<AskSource[]>([]);
+  const [asking, setAsking] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [status, setStatus] = useState<string | null>(null);
+  const [askedText, setAskedText] = useState("");
+  const [answeredBy, setAnsweredBy] = useState<string | null>(null);
+
+  const [model, setModel] = useState<string>(LANES[0].id);
+  const [k, setK] = useState<number>(8);
+  const [onePass, setOnePass] = useState(false);
+  const [extraSkills, setExtraSkills] = useState<string[]>([]);
+  const [raised, setRaised] = useState<string | null>(null);
+
+  const [settings, setSettings] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [filter, setFilter] = useState<string>("all");
-  const [handover, setHandover] = useState<"idle" | "confirm" | "working">("idle");
-  const [handoverPath, setHandoverPath] = useState<string | null>(null);
-  const timer = useRef<number | null>(null);
+  const [naming, setNaming] = useState(false);
+  const [title, setTitle] = useState("");
+  const [docId, setDocId] = useState<string | null>(null);
+  const [stage, setStage] = useState<Stage>("draft");
+  const [saveNote, setSaveNote] = useState<string | null>(null);
+  const [handoverNote, setHandoverNote] = useState<string | null>(null);
+
+  const area = useRef<HTMLTextAreaElement | null>(null);
+  const nameField = useRef<HTMLInputElement | null>(null);
+  const running = useRef(false);
 
   const library = useQuery({
     queryKey: ["canvas", "library"],
@@ -238,473 +190,476 @@ function CanvasPage() {
     queryFn: () => listCanvases(local),
   });
 
-  useEffect(() => {
-    if (doc) return;
-    // The inbox saves the document before it navigates; open that one.
-    if (openId && local.available) {
-      let cancelled = false;
-      void readCanvas(local, openId)
-        .then((loaded) => {
-          if (cancelled) return;
-          setDoc(loaded ?? emptyDoc());
-        })
-        .catch(() => {
-          if (!cancelled) setDoc(emptyDoc());
-        });
-      return () => {
-        cancelled = true;
-      };
-    }
-    const fresh = emptyDoc();
-    // An item sent from the inbox arrives as the first note, already written down.
-    if (seed) {
-      fresh.title = seed.slice(0, 60);
-      fresh.blocks = [{ ...emptyBlock("note"), text: seed }, ...fresh.blocks];
-    }
-    setDoc(fresh);
-  }, [doc, seed, openId, local]);
+  const skillFiles = useQuery({
+    queryKey: ["skills", "catalogue"],
+    enabled: local.available,
+    queryFn: () => listSkills(local),
+  });
 
-  const save = useCallback(
-    async (next: CanvasDoc) => {
-      setSaving("saving to the machine…");
+  // The page opens on a cursor.
+  useEffect(() => {
+    area.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (asking) {
+      const started = Date.now();
+      setElapsed(0);
+      const timer = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [asking]);
+
+  const derived = useMemo(() => derivedClass(sources), [sources]);
+  const cls = higher(raised, derived.cls);
+  const localOnly = cls ? LOCAL_ONLY.includes(cls) : false;
+
+  const skillsLoaded = useMemo(() => {
+    const matched = matchedSkills(skillFiles.data ?? [], askedText || text);
+    const extra = extraSkills
+      .filter((name) => !matched.some((item) => item.name === name))
+      .map((name) => ({ name, trigger: "added by hand" }));
+    return [...matched, ...extra];
+  }, [skillFiles.data, askedText, text, extraSkills]);
+
+  const ask = useCallback(
+    async (lane: string, count: number) => {
+      const question = text.trim();
+      if (!question || running.current) return;
+      running.current = true;
+      setAsking(true);
+      setStatus("retrieving from the corpus…");
+      setAnswer("");
+      setAnsweredBy(null);
+      setSources([]);
+      setAskedText(question);
       try {
-        const versions = await writeCanvas(local, next);
-        setDirty(false);
-        setDoc((current) => (current && current.id === next.id ? { ...current, versions } : current));
-        setSaving(`saved ${new Date().toISOString().slice(11, 16)}`);
-        void queryClient.invalidateQueries({ queryKey: ["canvas", "library"] });
-      } catch {
-        setSaving("the machine did not save this canvas");
+        const result = await askProgressive(
+          LOCAL_BASE,
+          local.post,
+          { q: question, model: lane, k: count },
+          {
+            sources: (found) => {
+              setSources(found);
+              setSourcesOpen(true);
+              setStatus("thinking on the machine…");
+            },
+            delta: (partial) => setAnswer(partial),
+          },
+        );
+        setAnswer(result.answer);
+        setSources(result.sources);
+        setAnsweredBy(result.model ?? lane);
+        setStatus(null);
+      } catch (error) {
+        setStatus(
+          isRefusal(error)
+            ? error.message || "denied at the approval dialog"
+            : "the machine did not answer that question",
+        );
+      } finally {
+        running.current = false;
+        setAsking(false);
       }
     },
-    [local, queryClient],
+    [local, text],
   );
 
-  // Autosave is debounced; the document lives on the machine and nowhere else.
-  useEffect(() => {
-    if (!doc || !dirty) return;
-    if (timer.current) window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => void save(doc), 1200);
-    return () => {
-      if (timer.current) window.clearTimeout(timer.current);
-    };
-  }, [doc, dirty, save]);
+  const buildDoc = useCallback((): CanvasDoc => {
+    const doc = emptyDoc(title.trim() || text.trim().slice(0, 60) || "Untitled");
+    if (docId) doc.id = docId;
+    doc.stage = stage;
+    doc.sensitivity = cls ?? "S1p";
+    doc.skills = skillsLoaded.map((skill) => skill.name);
+    doc.sources = groupSources(sources).map((source) => source.name);
+    doc.blocks = [
+      { ...emptyBlock("note"), text: askedText || text },
+      ...(answer ? [{ ...emptyBlock("note"), text: answer }] : []),
+    ];
+    return doc;
+  }, [answer, askedText, cls, docId, skillsLoaded, sources, stage, text, title]);
 
-  function patchDoc(patch: Partial<CanvasDoc>) {
-    setDirty(true);
-    setDoc((current) => (current ? { ...current, ...patch } : current));
-  }
-
-  function patchBlock(id: string, patch: Partial<CanvasBlock>) {
-    setDirty(true);
-    setDoc((current) =>
-      current
-        ? {
-            ...current,
-            blocks: current.blocks.map((block) =>
-              block.id === id ? ({ ...block, ...patch } as CanvasBlock) : block,
-            ),
-          }
-        : current,
-    );
-  }
-
-  /** Functional block update — safe when several runs land at once. */
-  function updateBlock(id: string, updater: (block: CanvasBlock) => CanvasBlock) {
-    setDirty(true);
-    setDoc((current) =>
-      current
-        ? {
-            ...current,
-            blocks: current.blocks.map((block) => (block.id === id ? updater(block) : block)),
-          }
-        : current,
-    );
-  }
-
-  function addBlock(kind: BlockKind) {
-    setDirty(true);
-    setDoc((current) =>
-      current ? { ...current, blocks: [...current.blocks, emptyBlock(kind)] } : current,
-    );
-  }
-
-  /** Insert a produced block directly beneath the one that produced it. */
-  function insertAfter(id: string, block: CanvasBlock) {
-    setDirty(true);
-    setDoc((current) => {
-      if (!current) return current;
-      const index = current.blocks.findIndex((entry) => entry.id === id);
-      const blocks = [...current.blocks];
-      blocks.splice(index < 0 ? blocks.length : index + 1, 0, block);
-      return { ...current, blocks };
-    });
-  }
-
-  /** Provenance: where this draft came from, recorded once per document. */
-  function addSource(reference: CanvasRef) {
-    const line = reference.path ?? reference.label;
-    setDoc((current) => {
-      if (!current || current.sources.includes(line)) return current;
-      setDirty(true);
-      return { ...current, sources: [...current.sources, line] };
-    });
-  }
-
-  function removeSource(line: string) {
-    setDirty(true);
-    setDoc((current) =>
-      current ? { ...current, sources: current.sources.filter((item) => item !== line) } : current,
-    );
-  }
-
-  function moveBlock(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    setDoc((current) => {
-      if (!current || target < 0 || target >= current.blocks.length) return current;
-      setDirty(true);
-      const blocks = [...current.blocks];
-      const [held] = blocks.splice(index, 1);
-      blocks.splice(target, 0, held);
-      return { ...current, blocks };
-    });
-  }
-
-  function removeBlock(id: string) {
-    setDirty(true);
-    setDoc((current) => {
-      if (!current) return current;
-      const blocks = current.blocks.filter((block) => block.id !== id);
-      return { ...current, blocks: blocks.length ? blocks : [emptyBlock("prompt")] };
-    });
-  }
-
-  function duplicateBlock(id: string) {
-    setDirty(true);
-    setDoc((current) => {
-      if (!current) return current;
-      const index = current.blocks.findIndex((block) => block.id === id);
-      if (index < 0) return current;
-      const source = current.blocks[index];
-      const copy = { ...emptyBlock(source.kind), ...source, id: emptyBlock(source.kind).id };
-      const blocks = [...current.blocks];
-      blocks.splice(index + 1, 0, copy as CanvasBlock);
-      return { ...current, blocks };
-    });
-  }
-
-  /** The six states both filter the library and set this document's own state. */
-  async function chooseState(stage: Stage) {
-    if (!doc) return;
-    setFilter(stage);
-    patchDoc({ stage });
+  const keep = useCallback(async () => {
+    setSaveNote("saving to the machine…");
     try {
-      await setCanvasState(local, doc.id, stage);
+      const doc = buildDoc();
+      const versions = await writeCanvas(local, doc);
+      setDocId(doc.id);
+      setTitle(doc.title);
+      setSaveNote(`kept as “${doc.title}” · ${versions} ${versions === 1 ? "version" : "versions"}`);
+      void queryClient.invalidateQueries({ queryKey: ["canvas", "library"] });
+    } catch (error) {
+      setSaveNote(
+        isRefusal(error)
+          ? error.message || "denied at the approval dialog"
+          : "the machine did not keep this document",
+      );
+    }
+  }, [buildDoc, local, queryClient]);
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const meta = event.metaKey || event.ctrlKey;
+    if (meta && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      setNaming(true);
+      window.setTimeout(() => nameField.current?.focus(), 0);
+      return;
+    }
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void ask(model, k).then(() => {
+        if (meta) void keep();
+      });
+    }
+  };
+
+  // A question routed in from the omnibox or /ask is answered without a press.
+  const auto = useRef(false);
+  useEffect(() => {
+    if (auto.current || !q?.trim() || !local.available) return;
+    auto.current = true;
+    void ask(model, k);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, local.available]);
+
+  // A document the inbox already saved on the machine is opened, not re-created.
+  const opened = useRef<string | null>(null);
+  useEffect(() => {
+    if (!openId || !local.available || opened.current === openId) return;
+    opened.current = openId;
+    void readCanvas(local, openId)
+      .then((doc) => doc && load(doc))
+      .catch(() => setSaveNote("the machine did not open that document"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, local.available]);
+
+  function load(doc: CanvasDoc) {
+    const [first, second] = doc.blocks;
+    setDocId(doc.id);
+    setTitle(doc.title);
+    setStage(doc.stage);
+    setText(first?.text ?? "");
+    setAskedText(first?.text ?? "");
+    setAnswer(second?.text ?? "");
+    setSources([]);
+    setRaised(doc.sensitivity && doc.sensitivity !== "S1p" ? doc.sensitivity : null);
+    setLibraryOpen(false);
+    setSaveNote(`opened “${doc.title}”`);
+  }
+
+  async function chooseStage(next: Stage) {
+    setStage(next);
+    if (!docId) return;
+    try {
+      await writeCanvas(local, { ...buildDoc(), stage: next });
       void queryClient.invalidateQueries({ queryKey: ["canvas", "library"] });
     } catch {
-      setSaving("the machine did not record that state");
+      setSaveNote("the machine did not record that state");
     }
   }
 
-  async function openCanvas(entry: LibraryEntry) {
-    setSaving(null);
-    setHandoverPath(null);
+  async function handOver() {
+    if (!docId) await keep();
+    const id = docId ?? buildDoc().id;
+    setHandoverNote("awaiting approval on the machine…");
     try {
-      const loaded = await readCanvas(local, entry.id);
-      if (loaded) {
-        setDirty(false);
-        setDoc(loaded);
-        setLibraryOpen(false);
-      } else {
-        setSaving("the machine did not return that document");
-      }
-    } catch {
-      setSaving("the machine did not open that canvas");
+      const path = await handoverCanvas(local, id);
+      setHandoverNote(`copied to ${path ?? "the inbox"}`);
+    } catch (error) {
+      setHandoverNote(
+        isRefusal(error)
+          ? error.message || "denied at the approval dialog"
+          : "the hand-over was refused on the machine",
+      );
     }
   }
 
-  async function confirmHandover() {
-    if (!doc) return;
-    setHandover("working");
-    setHandoverPath(null);
-    try {
-      if (dirty) await save(doc);
-      const path = await handoverCanvas(local, doc.id);
-      setHandoverPath(path ?? "copied to the inbox");
-      setHandover("idle");
-    } catch {
-      setHandover("idle");
-      setSaving("the hand-over was refused on the machine");
-    }
-  }
-
-  if (!doc)
-    return (
-      <p className="font-mono text-[10px] text-faint" data-testid="canvas-no-doc">
-        Open or create a document to edit.
-      </p>
-    );
-
-  const counts = library.data?.counts ?? {};
   const documents = library.data?.documents ?? [];
-  const shown = filter === "all" ? documents : documents.filter((entry) => entry.state === filter);
+  const counts = library.data?.counts ?? {};
+  const grouped = groupSources(sources);
+  const lanes = localOnly ? LANES.filter((lane) => lane.id.startsWith("local-")) : LANES;
 
   return (
-    <div className="space-y-4" data-testid="canvas-page">
-      <ProjectBar doc={doc} onChange={patchDoc} skills={skillNames} />
-      <HarnessBoard doc={doc} />
+    <div className="space-y-3" data-testid="canvas-page">
+      {naming && (
+        <input
+          ref={nameField}
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          onBlur={() => setNaming(false)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              setNaming(false);
+              void keep();
+            }
+          }}
+          aria-label="Name this document"
+          placeholder="Name it"
+          className="w-full border border-copper bg-panel px-4 py-2 font-serif text-[20px] text-paper outline-none placeholder:text-faint"
+        />
+      )}
 
-      <Section title="Document" flush>
-      <section className="border border-rule bg-panel">
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-b border-rule px-4 py-3">
-          <input
-            value={doc.title}
-            data-testid="canvas-title"
-            onChange={(event) => patchDoc({ title: event.target.value })}
-            aria-label="Canvas title"
-            className="min-w-0 flex-1 bg-transparent font-serif text-2xl leading-tight text-paper outline-none placeholder:text-faint"
-            placeholder="Untitled canvas"
-          />
-          <button
-            type="button"
-            data-testid="save-canvas"
-            onClick={() => void save(doc)}
-            title={dirty ? "There are unsaved changes" : "Everything is saved on the machine"}
-            className={`border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${
-              dirty
-                ? "border-copper text-copper"
-                : "border-rule text-muted-foreground hover:border-copper hover:text-copper"
-            }`}
-          >
-            {dirty ? "Save · unsaved" : "Save · saved"}
-          </button>
+      <textarea
+        ref={area}
+        value={text}
+        onChange={(event) => setText(event.target.value)}
+        onKeyDown={onKeyDown}
+        rows={10}
+        aria-label="Write or ask"
+        className="w-full resize-y border border-rule bg-panel px-4 py-3 text-[16px] leading-[1.85] text-paper outline-none focus:border-copper placeholder:text-faint"
+        placeholder=""
+      />
+
+      <p className="font-mono text-[11px] text-faint">
+        ⏎ ask · ⌘⏎ ask and keep · ⌘S name it
+      </p>
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <button
+          type="button"
+          data-testid="inferred-line"
+          onClick={() => setSettings((open) => !open)}
+          title="Click to change the lane, the number of sources, or the skills"
+          className="font-mono text-[11px] text-muted-foreground hover:text-copper"
+        >
+          {laneLabel(model)} · {k} sources · {skillsLoaded.length}{" "}
+          {skillsLoaded.length === 1 ? "skill" : "skills"} loaded
+        </button>
+        {asking && (
+          <span className="font-mono text-[11px] tabular-nums text-copper">
+            {status ?? "thinking on the machine…"} {elapsed}s
+          </span>
+        )}
+        {!asking && status && <span className="font-mono text-[11px] text-faint">{status}</span>}
+      </div>
+
+      {settings && (
+        <section className="border border-rule bg-panel px-4 py-3" data-testid="canvas-settings">
+          <div className="flex flex-wrap gap-2">
+            {lanes.map((lane) => (
+              <button
+                key={lane.id}
+                type="button"
+                onClick={() => setModel(lane.id)}
+                className={`border px-2 py-1 font-mono text-[10px] ${
+                  lane.id === model ? "border-copper text-copper" : "border-rule text-muted-foreground"
+                }`}
+              >
+                {lane.label} <span className={lane.cost === "$0" ? "text-ok" : "text-copper"}>{lane.cost}</span>
+              </button>
+            ))}
+          </div>
+          {localOnly && (
+            <p className="mt-2 font-mono text-[10px] text-faint">
+              cloud lanes are withheld: this document cites {cls} material
+            </p>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">skills</span>
+            {skillsLoaded.length === 0 && (
+              <span className="font-mono text-[10px] text-faint">none matched yet</span>
+            )}
+            {(skillFiles.data ?? [])
+              .filter((skill) => !skillsLoaded.some((loaded) => loaded.name === skill.name))
+              .slice(0, 12)
+              .map((skill) => (
+                <button
+                  key={skill.path}
+                  type="button"
+                  onClick={() => setExtraSkills((current) => [...current, skill.name])}
+                  className="border border-rule px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-copper hover:text-copper"
+                >
+                  + {skill.name}
+                </button>
+              ))}
+          </div>
+        </section>
+      )}
+
+      {skillsLoaded.length > 0 && (
+        <p className="font-mono text-[10px] leading-relaxed text-faint" data-testid="skills-loaded">
+          {skillsLoaded
+            .map((skill) => `${skill.name} · matched on “${skill.trigger}”`)
+            .join(" · ")}
+        </p>
+      )}
+
+      {cls && (
+        <p className="font-mono text-[11px] leading-relaxed text-paper" data-testid="sensitivity-line">
+          <span className={localOnly ? "text-watch" : "text-ok"}>{cls}</span>{" "}
+          {localOnly ? "— local only" : "— cloud lane available"}
+          {derived.because ? `, because you cited ${derived.because}` : ""}
           <button
             type="button"
             onClick={() => {
-              setDirty(false);
-              setDoc(emptyDoc());
-              setSaving(null);
-              setHandoverPath(null);
+              const index = CLASS_ORDER.indexOf(cls as (typeof CLASS_ORDER)[number]);
+              if (index < CLASS_ORDER.length - 1) setRaised(CLASS_ORDER[index + 1]);
             }}
-            className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+            title="Raise the class by hand. Nothing lowers it."
+            className="ml-2 font-mono text-[10px] uppercase tracking-[0.12em] text-faint hover:text-copper"
           >
-            New
+            Raise
           </button>
+        </p>
+      )}
+
+      {grouped.length > 0 && (
+        <section className="border border-rule bg-panel" data-testid="sources">
           <button
             type="button"
-            onClick={() => setLibraryOpen((open) => !open)}
-            data-testid="toggle-library"
-            className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+            onClick={() => setSourcesOpen((open) => !open)}
+            className="flex w-full items-baseline justify-between gap-3 px-4 py-2 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-copper"
           >
-            Library
+            <span>
+              Sources · <span className="tabular-nums text-paper">{grouped.length}</span> of {k} requested
+            </span>
+            <span className="text-faint">{sourcesOpen ? "hide" : "show"}</span>
           </button>
-        </div>
+          {sourcesOpen && (
+            <div className="border-t border-rule px-4 py-2">
+              <ul>
+                {grouped.map((source) => (
+                  <li
+                    key={source.name}
+                    className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-rule py-2 first:border-t-0"
+                  >
+                    <span className="break-all font-mono text-[12px] text-paper">
+                      {source.name}
+                      {source.passages > 1 && (
+                        <span className="ml-2 text-faint">{source.passages} passages</span>
+                      )}
+                    </span>
+                    <span className="font-mono text-[10px] text-faint">{source.cls ?? "—"}</span>
+                    <span className={`font-mono text-[10px] tabular-nums ${distanceTone(source.best)}`}>
+                      {source.best != null ? source.best.toFixed(3) : "—"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-rule pt-2">
+                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">retrieve</span>
+                {SOURCE_COUNTS.map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => {
+                      setK(count);
+                      void ask(model, count);
+                    }}
+                    className={`border px-2 py-1 font-mono text-[10px] tabular-nums ${
+                      count === k ? "border-copper text-copper" : "border-rule text-muted-foreground"
+                    }`}
+                  >
+                    {count}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setOnePass((value) => !value)}
+                  className={`border px-2 py-1 font-mono text-[10px] ${
+                    onePass ? "border-copper text-copper" : "border-rule text-muted-foreground"
+                  }`}
+                >
+                  one pass per source
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 font-mono text-[10px] text-faint">
-          <span>{doc.blocks.length} blocks</span>
-          <span className="tabular-nums">edited {stamp(doc.updated)}</span>
-          <button
-            type="button"
-            data-testid="toggle-history"
-            onClick={() => setHistoryOpen((open) => !open)}
-            className="uppercase tracking-[0.14em] text-faint hover:text-copper"
-          >
-            history · <span className="tabular-nums text-paper">{doc.versions}</span>{" "}
-            {doc.versions === 1 ? "version" : "versions"}
-          </button>
-          <span className={dirty ? "text-copper" : "text-faint"} data-testid="dirty-state">
-            {dirty ? "unsaved changes" : "all changes saved"}
-          </span>
-          {saving && <span className="text-copper">{saving}</span>}
-        </div>
-
-        {historyOpen && (
-          <p className="border-t border-rule px-4 py-3 font-mono text-[10px] leading-relaxed text-faint">
-            Every save snapshots the previous version on the machine — {doc.versions} kept for this
-            document, first written {stamp(doc.created)}. There are no branches: a personal draft
-            workspace does not need merge semantics, and a snapshot per save is the right weight.
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2 border-t border-rule px-4 py-2" data-testid="lifecycle-bar">
-          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint">state</span>
-          <button
-            type="button"
-            onClick={() => setFilter("all")}
-            className={`border px-2 py-1 font-mono text-[10px] ${
-              filter === "all" ? "border-copper text-copper" : "border-rule text-muted-foreground"
-            }`}
-          >
-            all <span className="tabular-nums">{documents.length}</span>
-          </button>
-          {STAGES.map((stage) => (
+      {answer && (
+        <section className="border border-rule bg-panel px-4 py-3" data-testid="answer">
+          <Markdown text={answer} />
+          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-rule pt-3">
+            <span className="font-mono text-[10px] text-faint">{answeredBy ?? laneLabel(model)}</span>
             <button
-              key={stage}
               type="button"
-              onClick={() => void chooseState(stage)}
-              title={`Set this document to ${stage} and show only ${stage} documents`}
+              onClick={() => void keep()}
+              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+            >
+              Keep as document
+            </button>
+            <button
+              type="button"
+              data-testid="handover"
+              onClick={() => void handOver()}
+              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper"
+            >
+              Hand over to inbox
+            </button>
+          </div>
+          {saveNote && <p className="mt-2 font-mono text-[10px] text-copper">{saveNote}</p>}
+          {handoverNote && <p className="mt-1 font-mono text-[10px] text-faint">{handoverNote}</p>}
+        </section>
+      )}
+
+      {docId && (
+        <div className="flex flex-wrap items-center gap-2" data-testid="state-bar">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">state</span>
+          {STAGES.map((entry) => (
+            <button
+              key={entry}
+              type="button"
+              onClick={() => void chooseStage(entry)}
               className={`border px-2 py-1 font-mono text-[10px] ${
-                doc.stage === stage || filter === stage
-                  ? "border-copper text-copper"
-                  : "border-rule text-muted-foreground hover:text-paper"
+                stage === entry ? "border-copper text-copper" : "border-rule text-muted-foreground"
               }`}
             >
-              {stage} <span className="tabular-nums">{counts[stage] ?? 0}</span>
+              {entry}
             </button>
           ))}
-          <span className="ml-auto font-mono text-[9px] text-faint">
-            this document is {doc.stage}
-          </span>
         </div>
+      )}
 
+      <div>
+        <button
+          type="button"
+          data-testid="toggle-library"
+          onClick={() => setLibraryOpen((open) => !open)}
+          className="font-mono text-[11px] text-faint hover:text-copper"
+        >
+          Library · {documents.length} {documents.length === 1 ? "document" : "documents"}
+        </button>
         {libraryOpen && (
-          <div className="border-t border-rule" data-testid="canvas-library">
+          <section className="mt-2 border border-rule bg-panel" data-testid="canvas-library">
+            <p className="border-b border-rule px-4 py-2 font-mono text-[10px] text-faint">
+              {STAGES.map((entry) => `${entry} ${counts[entry] ?? 0}`).join(" · ")}
+            </p>
             {library.isLoading && (
               <p className="px-4 py-3 font-mono text-[11px] text-faint">reading the machine…</p>
             )}
-            {!library.isLoading && shown.length === 0 && (
+            {!library.isLoading && documents.length === 0 && (
               <p className="px-4 py-3 font-mono text-[11px] text-faint">
-                {documents.length === 0
-                  ? "no canvases yet — the first save writes one"
-                  : `no documents at ${filter} — choose all to see the other ${documents.length}`}
+                nothing kept yet — ⌘⏎ keeps an answer as a document
               </p>
             )}
-            {shown.map((entry) => (
+            {documents.map((entry: LibraryEntry) => (
               <div
                 key={entry.id}
-                className="flex items-baseline justify-between gap-3 border-t border-rule px-4 py-2 first:border-t-0"
+                className="flex items-baseline justify-between gap-3 border-t border-rule px-4 py-2"
               >
                 <button
                   type="button"
-                  onClick={() => void openCanvas(entry)}
+                  onClick={() =>
+                    void readCanvas(local, entry.id)
+                      .then((doc) => doc && load(doc))
+                      .catch(() => setSaveNote("the machine did not open that document"))
+                  }
                   className="min-w-0 flex-1 truncate text-left font-mono text-[12px] text-paper hover:text-copper"
                 >
                   {entry.title}
                 </button>
                 <span className="shrink-0 font-mono text-[10px] text-faint">{entry.state}</span>
                 <span className="shrink-0 font-mono text-[10px] tabular-nums text-faint">
-                  {typeof entry.words === "number" ? `${entry.words} w` : "—"}
-                </span>
-                <span className="shrink-0 font-mono text-[10px] tabular-nums text-faint">
                   {stamp(entry.updated)}
                 </span>
               </div>
             ))}
-          </div>
+          </section>
         )}
-      </section>
-
-      <div className="space-y-3">
-        {doc.blocks.map((block, index) => (
-          <CanvasBlockCard
-            key={block.id}
-            block={block}
-            index={index}
-            total={doc.blocks.length}
-            doc={doc}
-            onChange={(patch) => patchBlock(block.id, patch)}
-            onUpdate={(updater) => updateBlock(block.id, updater)}
-            onRemove={() => removeBlock(block.id)}
-            onMove={(direction) => moveBlock(index, direction)}
-            onDuplicate={() => duplicateBlock(block.id)}
-            onInsertAfter={(produced) => insertAfter(block.id, produced)}
-            onAddSource={addSource}
-          />
-        ))}
       </div>
-
-      <div className="flex flex-wrap items-center gap-2 border border-rule bg-panel px-4 py-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">add</span>
-        {ADD.map((entry) => (
-          <button
-            key={entry.kind}
-            type="button"
-            data-testid={`add-${entry.kind}`}
-            onClick={() => addBlock(entry.kind)}
-            className="border border-rule px-3 py-1 font-mono text-[11px] text-muted-foreground hover:border-copper hover:text-copper"
-          >
-            {entry.label}
-          </button>
-        ))}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          {handover === "confirm" ? (
-            <>
-              <span className="font-mono text-[10px] text-paper">
-                This copies the document to the inbox. It becomes searchable after the next ingest
-                run.
-              </span>
-              <button
-                type="button"
-                data-testid="handover-confirm"
-                onClick={() => void confirmHandover()}
-                className="border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-copper"
-              >
-                Copy it
-              </button>
-              <button
-                type="button"
-                onClick={() => setHandover("idle")}
-                className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint hover:text-paper"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              data-testid="handover"
-              onClick={() => setHandover("confirm")}
-              disabled={handover === "working"}
-              className="border border-rule px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-copper hover:text-copper disabled:opacity-40"
-            >
-              {handover === "working" ? "handing over…" : "Hand over to inbox"}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {handoverPath && (
-        <p className="border border-rule bg-panel px-4 py-2 font-mono text-[10px] text-copper" data-testid="handover-path">
-          copied to {handoverPath}
-        </p>
-      )}
-
-      <section className="border border-rule bg-panel" data-testid="doc-sources">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-rule px-4 py-2">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-copper">Built from</p>
-          <p className="font-mono text-[9px] text-faint">
-            provenance · recorded per document, saved with it
-          </p>
-        </div>
-        {doc.sources.length === 0 ? (
-          <p className="px-4 py-3 font-mono text-[10px] text-faint">
-            nothing recorded — use “+ built from” on any block to name a source
-          </p>
-        ) : (
-          <ul className="px-4 py-2">
-            {doc.sources.map((line) => (
-              <li key={line} className="flex items-baseline justify-between gap-3 py-[3px]">
-                <span className="min-w-0 flex-1 truncate font-mono text-[10.5px] text-muted-foreground">
-                  {line}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => removeSource(line)}
-                  className="shrink-0 font-mono text-[10px] text-faint hover:text-risk"
-                >
-                  remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <p className="font-mono text-[10px] leading-relaxed text-faint">
-        Canvases are written to the machine and never leave it. Hand-over is the one exception: it
-        passes text out, and only when you press it.
-      </p>
-      </Section>
     </div>
   );
 }
