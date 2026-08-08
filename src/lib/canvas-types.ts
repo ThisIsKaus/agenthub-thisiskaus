@@ -30,6 +30,8 @@ export type AskSource = {
   path?: string;
   distance?: number;
   sensitivity?: string;
+  /** Which retriever surfaced it — vector, keyword, recency, skill match. */
+  found_by?: string;
 };
 
 export type RunStatus = "running" | "ok" | "failed" | "refused";
