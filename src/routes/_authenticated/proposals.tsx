@@ -11,6 +11,7 @@ import { Field } from "@/components/Field";
 
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
+import { BUILD_STAGES, useElapsed, WaitTrail } from "@/components/WaitTrail";
 import { relativeTime } from "@/lib/captures";
 
 
@@ -177,6 +178,7 @@ function ProposalsPage() {
     const timer = window.setInterval(() => void load(), 5000);
     return () => window.clearInterval(timer);
   }, [building, load]);
+  const buildElapsed = useElapsed(building);
 
   async function act(id: string, action: string, actionNote: string) {
     setNote(null);
@@ -238,6 +240,15 @@ function ProposalsPage() {
       </header>
 
       {note && <p className="text-[13px] text-muted-foreground">{note}</p>}
+
+      {/* One wait treatment: the approve path is a build, and looks like one. */}
+      <WaitTrail
+        running={building}
+        elapsed={buildElapsed}
+        stages={BUILD_STAGES}
+        giveUpAt={600}
+        giveUpText="no result after ten minutes"
+      />
 
       {loading ? (
         <div className="space-y-2">
