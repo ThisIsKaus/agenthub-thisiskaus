@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Page } from "@/components/Page";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BUILD_STAGES, WaitTrail } from "@/components/WaitTrail";
 import { Panel } from "@/components/AppShell";
 import { Section } from "@/components/Section";
 import { Empty, Skeleton, formatStamp } from "@/components/data";
@@ -222,12 +223,19 @@ function BuildPage() {
           <span className="font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
             ⌘/Ctrl + Enter
           </span>
-          {running && (
-            <span className="font-mono text-[10px] tabular-nums text-faint">{elapsed}s</span>
-          )}
         </div>
 
-        {note && <p className="mt-3 text-[13px] text-muted-foreground">{note}</p>}
+        <div className="mt-3">
+          <WaitTrail
+            running={running}
+            elapsed={elapsed}
+            stages={BUILD_STAGES}
+            error={note}
+            giveUpAt={600}
+            giveUpText="no result after ten minutes"
+            onRetry={() => void submit()}
+          />
+        </div>
       </Panel>
 
       {job && (
