@@ -24,15 +24,30 @@ random.seed(11)
 def build(pct=10):
     db = lancedb.connect(str(H / "kb"))
     df = db.open_table("kb_main").to_pandas()
-    keep = []
+    # Every golden-set source must be in the sample, or the sample cannot test the thing the
+    # golden set measures. Observed: policies.md fell outside a 10% draw, so the same query
+    # returned a Meesho proposal — the sample answered a different question from the index.
+    import json
+    gold = H / "evals" / "retrieval_golden.jsonl"
+    must = set()
+    if gold.exists():
+        for line in gold.read_text().splitlines():
+            if line.strip():
+                r = json.loads(line)
+                if r.get("path"):
+                    must.add(r["path"])
+    print(f"  {len(must)} golden sources pinned into the sample")
+
+    keep = list(must)
     for cls, grp in df.groupby("sensitivity"):
         paths = sorted(grp["path"].unique())
         random.shuffle(paths)
+        paths = [x for x in paths if x not in must]
         n = max(3, int(len(paths) * pct / 100))
         # Sample whole documents, never chunks. A half-indexed file answers questions
         # differently from a whole one, and the sample must fail the same way the real
         # index would.
-        keep += list(paths[:n])
+        keep += list(paths[:n])   # noqa — distractors around the pinned sources
         print(f"  {cls:5} {n:5} of {len(paths):5} documents")
     sub = df[df["path"].isin(keep)].reset_index(drop=True)
     if "kb_sample" in db.table_names():
