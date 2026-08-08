@@ -428,7 +428,22 @@ function CanvasPage() {
   const documents = library.data?.documents ?? [];
   const counts = library.data?.counts ?? {};
   const grouped = groupSources(sources);
+  const kinds = byKind(grouped);
   const lanes = localOnly ? LANES.filter((lane) => lane.id.startsWith("local-")) : LANES;
+
+  /**
+   * What was searched, in one line. Confidence, not configuration: a reader who
+   * does not know the reach of a query cannot tell a thin answer from a thin corpus.
+   */
+  const searched: string[] = [];
+  const kbDocs = num(kb.data?.documents);
+  if (kbDocs !== null) searched.push(`${kbDocs.toLocaleString()} documents`);
+  if (skillFiles.data) searched.push(`${skillFiles.data.length} skills`);
+  const proposalCount = proposals.data?.proposals?.length;
+  if (proposalCount != null) searched.push(`${proposalCount} proposals`);
+  const digestDays = digestDates.data?.dates?.length;
+  if (digestDays != null) searched.push(`${digestDays} digest days`);
+
 
   return (
     <div className="space-y-3" data-testid="canvas-page">
