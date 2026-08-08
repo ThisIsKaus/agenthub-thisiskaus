@@ -24,7 +24,12 @@ import lancedb
 HOME = Path.home()
 H = HOME / "AgentHub"
 DB_PATH = H / "kb"
-TABLE = "kb_main"
+import os
+# AGENTHUB_KB_TABLE=kb_sample re-ingests into the sample. The sample exists to test changes to
+# chunking or embedding, which means it must re-embed — copying vectors from kb_main made it
+# blind to exactly the experiments that motivated it.
+TABLE = os.environ.get("AGENTHUB_KB_TABLE", "kb_main")
+SAMPLE_ONLY = os.environ.get("AGENTHUB_SAMPLE_PATHS")
 EMBED_URL = "http://127.0.0.1:4000/v1/embeddings"
 EMBED_MODEL = "local-embed"
 CHUNK, OVERLAP, BATCH = 1600, 200, 32
@@ -335,6 +340,13 @@ def main():
 
     if args.only:
         files = [(p, s) for p, s in files if s == args.only]
+    if SAMPLE_ONLY:
+        # The sample re-ingests a subset through this same code path, so it can never drift
+        # from production behaviour. Copying vectors from kb_main — the first version — made
+        # it blind to any change in chunking or embedding, which is what it exists to test.
+        want = {l.strip() for l in Path(SAMPLE_ONLY).read_text().splitlines() if l.strip()}
+        files = [(p, s) for p, s in files if str(p) in want]
+        print(f"sample: {len(files)} of {len(want)} requested documents")
 
     by = {}
     for _, s in files:
