@@ -535,13 +535,22 @@ function CanvasPage() {
           {laneLabel(model)} · {k} sources · {skillsLoaded.length}{" "}
           {skillsLoaded.length === 1 ? "skill" : "skills"} loaded
         </button>
-        {asking && (
-          <span className="font-mono text-[11px] tabular-nums text-copper">
-            {status ?? "thinking on the machine…"} {elapsed}s
-          </span>
-        )}
-        {!asking && status && <span className="font-mono text-[11px] text-faint">{status}</span>}
       </div>
+
+      <WaitTrail
+        running={asking}
+        elapsed={elapsed}
+        stages={askStages(toNum(kb.data?.chunks))}
+        error={askError}
+        giveUpText="no answer after three minutes"
+        onRetry={() => void ask(model, k)}
+        fastLane={
+          model === "local-triage"
+            ? null
+            : { label: "ask the 4B instead", at: 45, run: () => void ask("local-triage", k) }
+        }
+      />
+
 
       {!text.trim() && !answer && (
         <div data-testid="canvas-examples">
