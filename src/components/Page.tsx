@@ -5,8 +5,8 @@ import type { ReactNode } from "react";
  * It owns the container width, the heading, the vertical rhythm and the footer,
  * so no later change can invent its own layout.
  *
- *   container : 86vw (7% clear each side), max 1240px, centred — never full-bleed
- *               the same 86vw applies at every breakpoint, mobile included
+ *   container : 92.6vw (3.7% clear each side), max 1392px, centred — never full-bleed
+ *               the same 92.6vw applies at every breakpoint, mobile included
  *   title     : Instrument Serif 31px, sentence case
  *   subtitle  : secondary text, capped at 72ch
  *   children  : stacked with 56px between major sections

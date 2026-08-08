@@ -298,15 +298,15 @@ function ModelsPage() {
   return (
     <div className="space-y-4">
       {failed && (
-        <div className="border border-copper bg-panel px-3 py-3">
-          <p className="text-[13px] leading-relaxed text-copper">
+        <div className="border border-watch bg-panel px-3 py-3">
+          <p className="text-[13px] leading-relaxed text-watch">
             The machine is reachable but did not answer{" "}
             <span className="font-mono">/api/models</span>. Nothing below is current.
           </p>
           <button
             type="button"
             onClick={() => void models.refetch()}
-            className="mt-2 border border-copper px-3 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-copper"
+            className="mt-2 border border-watch px-3 py-1 font-mono text-[10px] uppercase tracking-[0.27em] text-watch"
           >
             Try again
           </button>
@@ -344,7 +344,7 @@ function ModelsPage() {
                 title="pinned · always resident"
               />
               <div
-                className="h-full bg-copper"
+                className="h-full bg-dek/70"
                 style={{ width: `${pct(elasticGib)}%` }}
                 title="elastic"
               />
@@ -362,7 +362,7 @@ function ModelsPage() {
               </div>
               <div className="overflow-hidden pr-2" style={{ width: `${pct(elasticGib)}%` }}>
                 {elasticGib > 0 && (
-                  <span className="whitespace-nowrap break-all text-copper">{elasticLabel}</span>
+                  <span className="whitespace-nowrap break-all text-dek">{elasticLabel}</span>
                 )}
               </div>
               <div className="min-w-0 flex-1 overflow-hidden">

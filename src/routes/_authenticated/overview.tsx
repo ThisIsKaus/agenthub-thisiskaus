@@ -198,7 +198,7 @@ function OverviewPage() {
         },
         {
           text: cloudAliases != null ? `${cloudAliases} cloud aliases · metered` : "cloud aliases —",
-          tone: "copper",
+          tone: "paper",
         },
         { text: `$${mtd.toFixed(4)} month to date` },
         { text: `${fmt(requests) ?? "—"} metered requests`, tone: "faint" },
@@ -312,7 +312,7 @@ function OverviewPage() {
       label: "Metered, month to date",
       value: `$${mtd.toFixed(4)}`,
       detail: `${fmt(requests) ?? "0"} metered requests · ${age}`,
-      tone: "copper",
+      tone: "paper",
     },
     {
       label: "Resident memory",
@@ -439,7 +439,7 @@ function OverviewPage() {
               cost="$0 marginal"
             />
             <Lane
-              tone="copper"
+              tone="muted"
               name="Metered"
               detail={`${cloudAliases ?? "—"} router aliases, scheduled and programmatic only`}
               cost={`$${mtd.toFixed(2)} this month`}
@@ -472,12 +472,12 @@ function Lane({
   detail,
   cost,
 }: {
-  tone: "ok" | "copper";
+  tone: "ok" | "muted";
   name: string;
   detail: string;
   cost: string;
 }) {
-  const toneClass = tone === "ok" ? "text-ok" : "text-copper";
+  const toneClass = tone === "ok" ? "text-ok" : "text-muted-foreground";
   return (
     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-rule pt-2 font-mono text-[11px] leading-relaxed first:border-t-0 first:pt-0">
       <span className={toneClass}>{name}</span>
