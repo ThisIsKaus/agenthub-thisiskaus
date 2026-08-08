@@ -11,8 +11,8 @@ import { Field } from "@/components/Field";
 
 import { isRefusal, useLocal } from "@/lib/local-bridge";
 import { useJobDrawer } from "@/lib/job-drawer";
+import { BUILD_STAGES, useElapsed, WaitTrail } from "@/components/WaitTrail";
 import { relativeTime } from "@/lib/captures";
-
 
 export const Route = createFileRoute("/_authenticated/proposals")({
   head: () => ({
@@ -70,8 +70,6 @@ type ProposalsData = {
 
 /** The statuses the queue speaks in, in the order they are worth reading. */
 const STATUS_ORDER = ["open", "building", "built", "build failed", "rejected", "deferred"];
-
-
 
 const PROTECTED: { match: (path: string) => boolean; control: string }[] = [
   { match: (p) => p === "machine/scripts/approve.sh", control: "the approval dialog" },
@@ -177,6 +175,7 @@ function ProposalsPage() {
     const timer = window.setInterval(() => void load(), 5000);
     return () => window.clearInterval(timer);
   }, [building, load]);
+  const buildElapsed = useElapsed(building);
 
   async function act(id: string, action: string, actionNote: string) {
     setNote(null);
@@ -211,57 +210,66 @@ function ProposalsPage() {
   return (
     <div className="space-y-6">
       <Section title="Queue">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {counts.map(([status, n]) => (
-            <StatusPill key={status} label={status} value={n} />
-          ))}
-          <StatusPill
-            label="last diagnosed"
-            tone={lastDiagnosed ? "paper" : "watch"}
-            value={
-              lastDiagnosed ? (
-                <span title={String(lastDiagnosed)}>{relativeTime(String(lastDiagnosed))}</span>
-              ) : (
-                "never"
-              )
-            }
-          />
-
-          <button
-            onClick={() => void runJob("diagnose", "Run diagnosis", () => void load())}
-            className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper transition-colors hover:bg-copper/10"
-          >
-            Run diagnosis
-          </button>
-        </div>
-      </header>
-
-      {note && <p className="text-[13px] text-muted-foreground">{note}</p>}
-
-      {loading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-14 w-full" />
-          <Skeleton className="h-14 w-full" />
-        </div>
-      ) : queue.length === 0 ? (
-        <Panel title="Queue">
-          <Empty>Nothing awaiting a decision. The diagnostician runs nightly.</Empty>
-        </Panel>
-      ) : (
-        <div className="border border-rule bg-panel">
-          {queue.map((proposal, index) => (
-            <ProposalRow
-              key={proposal.id}
-              proposal={proposal}
-              hint={index === 0}
-              open={openId === proposal.id}
-              onToggle={() => setOpenId(openId === proposal.id ? null : proposal.id)}
-              onAct={act}
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {counts.map(([status, n]) => (
+              <StatusPill key={status} label={status} value={n} />
+            ))}
+            <StatusPill
+              label="last diagnosed"
+              tone={lastDiagnosed ? "paper" : "watch"}
+              value={
+                lastDiagnosed ? (
+                  <span title={String(lastDiagnosed)}>{relativeTime(String(lastDiagnosed))}</span>
+                ) : (
+                  "never"
+                )
+              }
             />
-          ))}
-        </div>
-      )}
+
+            <button
+              onClick={() => void runJob("diagnose", "Run diagnosis", () => void load())}
+              className="border border-copper/60 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.245em] text-copper transition-colors hover:bg-copper/10"
+            >
+              Run diagnosis
+            </button>
+          </div>
+        </header>
+
+        {note && <p className="text-[13px] text-muted-foreground">{note}</p>}
+
+        {/* One wait treatment: the approve path is a build, and looks like one. */}
+        <WaitTrail
+          running={building}
+          elapsed={buildElapsed}
+          stages={BUILD_STAGES}
+          giveUpAt={600}
+          giveUpText="no result after ten minutes"
+        />
+
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        ) : queue.length === 0 ? (
+          <Panel title="Queue">
+            <Empty>Nothing awaiting a decision. The diagnostician runs nightly.</Empty>
+          </Panel>
+        ) : (
+          <div className="border border-rule bg-panel">
+            {queue.map((proposal, index) => (
+              <ProposalRow
+                key={proposal.id}
+                proposal={proposal}
+                hint={index === 0}
+                open={openId === proposal.id}
+                onToggle={() => setOpenId(openId === proposal.id ? null : proposal.id)}
+                onAct={act}
+              />
+            ))}
+          </div>
+        )}
       </Section>
 
       {!loading && decided.length > 0 && (
@@ -302,7 +310,11 @@ function Elapsed({ since }: { since?: string }) {
 function DecidedRow({ proposal }: { proposal: Proposal }) {
   const status = (proposal.status ?? "").toLowerCase();
   const tone =
-    status === "build failed" ? "text-risk" : status === "built" ? "text-ok" : "text-muted-foreground";
+    status === "build failed"
+      ? "text-risk"
+      : status === "built"
+        ? "text-ok"
+        : "text-muted-foreground";
 
   return (
     <article className="space-y-1.5">
@@ -347,7 +359,6 @@ function DecidedRow({ proposal }: { proposal: Proposal }) {
   );
 }
 
-
 function ProposalRow({
   proposal,
   hint = false,
@@ -385,27 +396,35 @@ function ProposalRow({
         aria-expanded={open}
       >
         <span className="min-w-0 w-full">
-          <span data-measure="proposal-title" className="block w-full text-[14px] leading-relaxed text-paper">{proposal.title ?? proposal.id}</span>
+          <span
+            data-measure="proposal-title"
+            className="block w-full text-[14px] leading-relaxed text-paper"
+          >
+            {proposal.title ?? proposal.id}
+          </span>
           <span className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.27em] text-faint">
             {proposal.category && (
               <span className="border border-rule px-1.5 py-0.5 text-muted-foreground">
                 {proposal.category}
               </span>
             )}
-            <span>{files.length} file{files.length === 1 ? "" : "s"}</span>
+            <span>
+              {files.length} file{files.length === 1 ? "" : "s"}
+            </span>
             {controls.length > 0 && <span className="text-watch">control</span>}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-3">
           <span className="font-mono text-lg tabular-nums text-copper" title="score">
-            {typeof proposal.score === "number" ? proposal.score.toFixed(2) : (proposal.score ?? "—")}
+            {typeof proposal.score === "number"
+              ? proposal.score.toFixed(2)
+              : (proposal.score ?? "—")}
           </span>
           <ChevronDown
             aria-hidden
             className={`h-4 w-4 text-faint transition-transform ${open ? "rotate-180" : ""}`}
           />
         </span>
-
       </button>
 
       {hint && !open && (
@@ -464,7 +483,6 @@ function ProposalRow({
               ))}
             </div>
           </section>
-
 
           {controls.length > 0 && (
             <label className="flex items-start gap-2 text-[13px] text-muted-foreground">

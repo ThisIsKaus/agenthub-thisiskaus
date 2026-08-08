@@ -13,8 +13,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Page } from "@/components/Page";
 import { LocalOnly } from "@/components/LocalOnly";
 import { Markdown } from "@/components/Markdown";
-import { isRefusal, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
+import { isRefusal, LocalError, LOCAL_BASE, useLocal } from "@/lib/local-bridge";
 import { askProgressive } from "@/lib/ask-stream";
+import { askStages, WaitTrail } from "@/components/WaitTrail";
+
 import {
   handoverCanvas,
   listCanvases,
@@ -224,6 +226,7 @@ function CanvasPage() {
   const [asking, setAsking] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
+  const [askError, setAskError] = useState<string | null>(null);
   const [askedText, setAskedText] = useState("");
   const [answeredBy, setAnsweredBy] = useState<string | null>(null);
 
@@ -321,8 +324,10 @@ function CanvasPage() {
       const question = text.trim();
       if (!question || running.current) return;
       running.current = true;
+      setModel(lane);
       setAsking(true);
-      setStatus("retrieving from the corpus…");
+      setAskError(null);
+      setStatus(null);
       setAnswer("");
       setAnsweredBy(null);
       setSources([]);
@@ -333,10 +338,11 @@ function CanvasPage() {
           local.post,
           { q: question, model: lane, k: count },
           {
+            // Retrieval finishes in well under a second: render it at once,
+            // rather than holding the page blank until the model has written.
             sources: (found) => {
               setSources(found);
               setSourcesOpen(true);
-              setStatus("thinking on the machine…");
             },
             delta: (partial) => setAnswer(partial),
           },
@@ -344,13 +350,16 @@ function CanvasPage() {
         setAnswer(result.answer);
         setSources(result.sources);
         setAnsweredBy(result.model ?? lane);
-        setStatus(null);
       } catch (error) {
-        setStatus(
-          isRefusal(error)
-            ? error.message || "denied at the approval dialog"
-            : "the machine did not answer that question",
-        );
+        if (isRefusal(error)) {
+          setAskError(error.message || "denied at the approval dialog");
+        } else {
+          const status = error instanceof LocalError ? `${error.status} · ` : "";
+          setAskError(
+            `${status}${error instanceof Error ? error.message : String(error)}` ||
+              "the machine did not answer that question",
+          );
+        }
       } finally {
         running.current = false;
         setAsking(false);
@@ -489,7 +498,6 @@ function CanvasPage() {
   const digestDays = digestDates.data?.dates?.length;
   if (digestDays != null) searched.push(`${digestDays} digest days`);
 
-
   return (
     <div className="space-y-3" data-testid="canvas-page">
       {naming && (
@@ -535,13 +543,21 @@ function CanvasPage() {
           {laneLabel(model)} · {k} sources · {skillsLoaded.length}{" "}
           {skillsLoaded.length === 1 ? "skill" : "skills"} loaded
         </button>
-        {asking && (
-          <span className="font-mono text-[11px] tabular-nums text-copper">
-            {status ?? "thinking on the machine…"} {elapsed}s
-          </span>
-        )}
-        {!asking && status && <span className="font-mono text-[11px] text-faint">{status}</span>}
       </div>
+
+      <WaitTrail
+        running={asking}
+        elapsed={elapsed}
+        stages={askStages(toNum(kb.data?.chunks))}
+        error={askError}
+        giveUpText="no answer after three minutes"
+        onRetry={() => void ask(model, k)}
+        fastLane={
+          model === "local-triage"
+            ? null
+            : { label: "ask the 4B instead", at: 45, run: () => void ask("local-triage", k) }
+        }
+      />
 
       {!text.trim() && !answer && (
         <div data-testid="canvas-examples">
