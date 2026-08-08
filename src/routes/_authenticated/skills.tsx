@@ -231,11 +231,11 @@ function SkillsPage() {
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <span className="text-[14px] text-paper">{skill.name}</span>
                     <span
-                      className={`border border-rule px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${STATE_TONE[skill.state]}`}
+                      className={`border border-rule px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.3em] ${STATE_TONE[skill.state]}`}
                     >
                       {skill.state}
                     </span>
-                    <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-faint">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-faint">
                       {skill.scope}
                     </span>
                     <span className="ml-auto font-mono text-[10px] tabular-nums text-faint">
@@ -297,7 +297,7 @@ function SkillsPage() {
                   key={candidate.id}
                   className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-rule py-3 first:border-t-0"
                 >
-                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-copper">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-copper">
                     {candidate.source}
                   </span>
                   <span className="text-[14px] text-paper">{candidate.title}</span>

@@ -95,7 +95,7 @@ export function StatusPill({
 
   return (
     <span className="inline-flex shrink-0 items-center gap-2 border border-rule bg-panel2 px-2 py-1 font-mono text-[11px]">
-      <span className="uppercase tracking-[0.12em] text-faint">{label}</span>
+      <span className="uppercase tracking-[0.27em] text-faint">{label}</span>
       <span className={`tabular-nums ${toneClass}`}>{value}</span>
     </span>
   );

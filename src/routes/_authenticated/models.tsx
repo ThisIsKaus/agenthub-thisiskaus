@@ -322,7 +322,7 @@ function ModelsPage() {
             aria-hidden
             className={`inline-block h-2 w-2 rounded-full ${PRESSURE_DOT[pressure] ?? "bg-faint"}`}
           />
-          <span className="uppercase tracking-[0.14em] text-paper">{pressure}</span>
+          <span className="uppercase tracking-[0.27em] text-paper">{pressure}</span>
           <span className="tabular-nums">
             envelope {fixed(envelope, 1)} GiB · compressed {fixed(budget.compressed_gib, 1)} GiB ·
             free {fixed(budget.free_gib, 1)} GiB · wired limit{" "}

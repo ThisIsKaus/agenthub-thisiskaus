@@ -265,7 +265,7 @@ function ScannerPage() {
               type="button"
               disabled={scanning}
               onClick={() => void rescan()}
-              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.27em] text-copper disabled:opacity-40"
             >
               {scanning ? "Scanning Hugging Face…" : "Scan now"}
             </button>
@@ -365,7 +365,7 @@ function ScannerPage() {
                                   : undefined
                               }
                               onClick={() => void trial(candidate)}
-                              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.12em] text-copper disabled:opacity-40"
+                              className="border border-copper px-3 py-1.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.27em] text-copper disabled:opacity-40"
                             >
                               {busy === candidate.id ? "Starting…" : "Download and benchmark"}
                             </button>
