@@ -1272,6 +1272,28 @@ def digest_decide(date: str = Form(...), item: str = Form(...), action: str = Fo
     return {"ok": True, "date": date, "item": item, "action": action}
 
 
+
+@app.post("/api/ask/sources")
+def ask_sources(q: str = Form(...), model: str = Form("local-brain"), k: int = Form(5)):
+    """Retrieval only — no model call.
+
+    /api/ask is single-shot: it retrieves, reasons and returns together, so nothing can render
+    for the 30 to 90 seconds the local brain takes. Retrieval itself finishes in well under a
+    second. Splitting it turns a blank wait into reading what the system found, and costs
+    nothing — the ask call repeats the retrieval, which is cheap and keeps one code path.
+    """
+    sys.path.insert(0, str(H / "kbtool"))
+    import retrieve as _r
+    lane = "cloud" if model.startswith("cloud-") else "local"
+    hits = _r.search(q, k=max(1, min(k, 12)), lane=lane)
+    return {"sources": [{"file": h["file"], "path": h["path"],
+                         "distance": round(1 - h["rrf"] * 60, 3),
+                         "found_by": h["found_by"], "sensitivity": h["sensitivity"]}
+                        for h in hits],
+            "lane": lane,
+            "note": "retrieval only — the answer follows from /api/ask"}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=4100, log_level="warning")

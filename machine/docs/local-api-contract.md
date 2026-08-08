@@ -1,5 +1,5 @@
 # AgentHub local API — contract for Lovable
-_Generated from console.py by AST parse, 2026-08-08T15:37. Do not edit by hand._
+_Generated from console.py by AST parse, 2026-08-08T15:47. Do not edit by hand._
 
 ## How to call it
 
@@ -33,12 +33,13 @@ Every POST takes **multipart form fields**, not a JSON body. Sending JSON will
 return HTTP 422. A 403 means the path was outside the allowlist or an approval
 dialog was denied — surface it as a refusal, never as an error.
 
-## Endpoints (45)
+## Endpoints (46)
 
 | Method | Path | Parameters | Purpose |
 |---|---|---|---|
 | GET | `/` | no parameters | index |
 | POST | `/api/ask` | form: { q: string, model?: string, k?: number } | ask |
+| POST | `/api/ask/sources` | form: { q: string, model?: string, k?: number } | Retrieval only — no model call. |
 | POST | `/api/build` | form: { intent: string, scope?: string } | build |
 | GET | `/api/canvas` | no parameters | canvas_list |
 | GET | `/api/canvas/doc` | query: { id: string } | canvas_doc |
