@@ -20,8 +20,12 @@
   --radius-3xl: 2px;
   --radius-4xl: 2px;
 
-  --font-serif: "Instrument Serif", Georgia, serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Display face. `font-serif` is kept as the class name only for continuity —
+     the family is Bricolage Grotesque, matching the studio site. The fallback is
+     a sans, never a serif, so an unloaded display face cannot flash as Georgia. */
+  --font-serif: "Bricolage Grotesque", "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Bricolage Grotesque", "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-background: var(--background);
