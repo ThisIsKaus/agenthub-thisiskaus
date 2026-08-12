@@ -361,11 +361,9 @@ function OverviewPage() {
     <div className="space-y-6">
       <Omnibox />
 
-      <FiguresBand />
+      <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
 
       <DecisionStream />
-
-      <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
 
 
 
@@ -418,15 +416,12 @@ function OverviewPage() {
         )}
       </section>
 
-      <div className="border-y border-rule bg-panel px-5">
-        <Disclosure
-          summary={
-            <span className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
-              The whole board · {age ?? "routing map"}
-            </span>
-          }
-        >
-          <div className="py-2">
+      <details open className="border-y border-rule bg-panel">
+        <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
+          The whole board · {age ?? "routing map"}
+        </summary>
+        <div className="border-t border-rule px-5 py-6">
+          <div>
           <BoardDiagram
             zones={zones}
             caption={
@@ -456,20 +451,13 @@ function OverviewPage() {
             />
           </div>
           </div>
-        </Disclosure>
-      </div>
+        </div>
+      </details>
 
-      <div className="border-y border-rule bg-panel px-5">
-        <Disclosure
-          summary={
-            <span className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
-              About this system
-            </span>
-          }
-        >
-          <AboutSystemBody />
-        </Disclosure>
-      </div>
+      <details className="border-y border-rule bg-panel">
+        <summary className="px-5 py-4 font-mono text-[11px] uppercase tracking-[0.245em] text-faint">About this system</summary>
+        <div className="border-t border-rule pt-6"><AboutSystemBody /></div>
+      </details>
 
       <p className="font-mono text-[10px] leading-relaxed text-faint">
         {aliasCount ?? "—"} router aliases · {evals?.set_size != null ? `${evals.set_size} golden eval items · ` : ""}
