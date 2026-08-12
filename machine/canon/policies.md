@@ -360,17 +360,19 @@ file. Tier 3 looked like one success in five, but three of those attempts never 
 model — two were the cascade correctly refusing multi-file work in zero seconds, and one was
 the memory rejection. Its real record is one genuine attempt, one success, 65 seconds.
 
-CORRECTION, same evening: the fix above was misdiagnosed. Line 383 already reads
-`start = args.tier or max(ctx["tier"], 3)`, so the floor was applied at the call site and the
-classifier's initial value of 2 was never the effective start. The three tier-2 runs were
-reached by an explicit --tier 2, not by default. Aligning the classifier to 3 is harmless and
-removes the confusion, but it fixed nothing.
+RESOLVED by dates, which were in the run files from the start. All three tier-2 runs are from
+31 July; commit 5f6a941 — "tier 3 is the local entry point, on measured evidence" — is also
+31 July. The runs predate the floor. `start = args.tier or max(ctx["tier"], 3)` has worked
+correctly every day since, and no run has begun at tier 2 in the twelve days after it landed.
 
-What stands: tier 2 produced no change in three deliberate attempts and burned 653 seconds
-writing diffs. Do not pass --tier 2 until a better local coder is benchmarked.
+There was no bug. Aligning the classifier's initial value from 2 to 3 is cosmetic — it makes
+the two agree and changes no behaviour.
 
-Keeping: the gate, which has never merged a regression, and the refusal, which declines
-multi-file work before spending anything. Removing: tier 2 from the default path; it stays
-reachable with --tier 2 for when a better local coder is worth trying.
+The finding is about method, not the cascade. Three positions were taken on this question in
+one hour: the entry tier is broken, no it is not because the floor handles it, no the floor is
+not reaching those runs. Each came from reading one line and reasoning outward. The dates
+settled it in a single command, and that command was available before the first theory.
+
+When a question is about what happened, read the timestamps before reading the code.
 
 The transferable point: a comment is not configuration. Assert the value the code uses.
