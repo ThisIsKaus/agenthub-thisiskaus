@@ -134,7 +134,7 @@ export function Omnibox() {
           setOverridden(false);
         } else if (target === "ask") {
           // Ask is the unsaved case of Canvas; there is one surface for both.
-          await navigate({ to: "/canvas", search: { q: body } });
+          await navigate({ to: "/canvas", search: { q: body, seed: undefined, id: undefined } });
         } else if (target === "build") {
           const started = await local.post<{ job: string }>("/api/build", { intent: body });
           if (started?.job) {

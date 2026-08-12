@@ -6,6 +6,6 @@ export const Route = createFileRoute("/_authenticated/ask")({
     q: typeof search.q === "string" ? search.q : undefined,
   }),
   beforeLoad: ({ search }) => {
-    throw redirect({ to: "/canvas", search: { q: search.q } });
+    throw redirect({ to: "/canvas", search: { q: search.q, seed: undefined, id: undefined } });
   },
 });
