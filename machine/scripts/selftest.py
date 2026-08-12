@@ -152,6 +152,16 @@ def services():
     # After a reboot, LM Studio's app can be running with its server off: models load, the
     # port does not listen, and every endpoint still answers 200 while nothing can think.
     # Check the port, not the process.
+    # A repair path nobody exercises is not a repair path. Three attempts to place this in
+    # doctor.sh landed after an early exit, after the final OK line, and inside a heredoc —
+    # each passed `bash -n` and each did nothing. Assert it exists and is scheduled.
+    guard = H / "scripts" / "lms-guard.sh"
+    sched = "lms-guard" in (H / "scripts" / "nightly.sh").read_text(errors="ignore")
+    rec(g, "lms-guard present and scheduled", guard.exists() and sched,
+        "runs before the nightly" if guard.exists() and sched
+        else f"exists={guard.exists()} scheduled={sched}",
+        "LM Studio's server does not survive a reboot; nothing would restart it")
+
     rec(g, "LM Studio :1234", s == 200, f"HTTP {s}", "lms server start")
 
     s, body = http("http://127.0.0.1:4000/v1/models", timeout=6)
