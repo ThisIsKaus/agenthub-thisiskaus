@@ -25,6 +25,7 @@ if [[ -f "$D" ]]; then
 fi
 /opt/homebrew/bin/uv run --project ~/AgentHub/console python ~/AgentHub/scripts/export_sessions.py --days 90
 ~/AgentHub/scripts/pressure_log.sh
+~/AgentHub/scripts/lms-guard.sh
 ~/AgentHub/scripts/residency reap
 ~/AgentHub/scripts/rotate.sh
 if [[ "$(date +%d)" == "01" ]]; then
