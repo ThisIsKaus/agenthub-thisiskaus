@@ -359,9 +359,13 @@ function OverviewPage() {
     <div className="space-y-6">
       <Omnibox />
 
-      <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
+      <FiguresBand />
 
       <DecisionStream />
+
+      <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
+
+
 
 
 
