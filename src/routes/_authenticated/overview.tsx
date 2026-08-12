@@ -8,6 +8,8 @@ import { SectionHeading } from "@/components/Section";
 import { MachineStatePanel } from "@/components/MachineStatePanel";
 import { DecisionStream } from "@/components/DecisionStream";
 import { Omnibox } from "@/components/Omnibox";
+import { FiguresBand } from "@/components/FiguresBand";
+import { Disclosure } from "@/components/Disclosure";
 
 import { AboutSystemBody } from "@/components/AboutSystemBody";
 import { BoardDiagram, type Zone } from "@/components/BoardDiagram";
@@ -359,9 +361,13 @@ function OverviewPage() {
     <div className="space-y-6">
       <Omnibox />
 
-      <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
+      <FiguresBand />
 
       <DecisionStream />
+
+      <MachineStatePanel plane={plane} machine={machine} updatedAt={state?.updated_at} />
+
+
 
 
 
@@ -412,11 +418,15 @@ function OverviewPage() {
         )}
       </section>
 
-      <details className="border-y border-rule bg-panel">
-        <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.245em] text-faint hover:text-copper">
-          The whole board · {age ?? "routing map"}
-        </summary>
-        <div className="border-t border-rule px-5 py-6">
+      <div className="border-y border-rule bg-panel px-5">
+        <Disclosure
+          summary={
+            <span className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
+              The whole board · {age ?? "routing map"}
+            </span>
+          }
+        >
+          <div className="py-2">
           <BoardDiagram
             zones={zones}
             caption={
@@ -445,18 +455,21 @@ function OverviewPage() {
               cost={`$${mtd.toFixed(2)} this month`}
             />
           </div>
-        </div>
-      </details>
+          </div>
+        </Disclosure>
+      </div>
 
-
-      <details className="border-y border-rule bg-panel">
-        <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.245em] text-faint hover:text-copper">
-          About this system
-        </summary>
-        <div className="border-t border-rule pt-6">
+      <div className="border-y border-rule bg-panel px-5">
+        <Disclosure
+          summary={
+            <span className="font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
+              About this system
+            </span>
+          }
+        >
           <AboutSystemBody />
-        </div>
-      </details>
+        </Disclosure>
+      </div>
 
       <p className="font-mono text-[10px] leading-relaxed text-faint">
         {aliasCount ?? "—"} router aliases · {evals?.set_size != null ? `${evals.set_size} golden eval items · ` : ""}

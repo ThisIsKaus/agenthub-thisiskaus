@@ -14,6 +14,7 @@ type ModelsPayload = {
   available?: unknown[];
   bench?: Bench[];
   aliases?: unknown[];
+  memory?: { pressure?: string; budget?: Record<string, unknown> } & Record<string, unknown>;
 };
 type KbPayload = { chunks?: number; documents?: number; sources?: unknown[] };
 type EvalScores = {

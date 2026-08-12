@@ -323,7 +323,7 @@ function TriageLane() {
       return;
     }
     await record(index, "canvas");
-    void navigate({ to: "/canvas", search: { id: fresh.id, seed: undefined } });
+    void navigate({ to: "/canvas", search: { q: undefined, id: fresh.id, seed: undefined } });
   }
 
   const arrived = items.length;
