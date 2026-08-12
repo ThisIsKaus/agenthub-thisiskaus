@@ -343,3 +343,34 @@ expensive half cannot be sampled.
 The transferable rule: before assuming a test is costly, check which layer the change touches.
 Ranking changes are nearly free and should be measured immediately. Embedding changes cost
 nineteen minutes and deserve a disproving argument before they are attempted at all.
+
+## The cascade ladder, measured over ten runs (v3.4, 13 Aug 2026)
+
+Kos asked whether the cascade costs more than it returns. The run records answer it.
+
+Six of ten runs merged a verified change. Four failed: two because the gate demanded zero
+self-test failures when the tree already had some — since fixed with a baseline comparison —
+one because a change genuinely broke two checks and was reverted, which is the gate working,
+and one because no tier produced a file.
+
+The ladder itself was the weak part, and not for the reason it appeared. Tier 2 attempted
+three times and produced nothing every time: once the 27B would not load inside the envelope,
+and twice it spent 263 and 390 seconds writing a unified diff when the prompt asks for a whole
+file. Tier 3 looked like one success in five, but three of those attempts never reached a
+model — two were the cascade correctly refusing multi-file work in zero seconds, and one was
+the memory rejection. Its real record is one genuine attempt, one success, 65 seconds.
+
+CORRECTION, same evening: the fix above was misdiagnosed. Line 383 already reads
+`start = args.tier or max(ctx["tier"], 3)`, so the floor was applied at the call site and the
+classifier's initial value of 2 was never the effective start. The three tier-2 runs were
+reached by an explicit --tier 2, not by default. Aligning the classifier to 3 is harmless and
+removes the confusion, but it fixed nothing.
+
+What stands: tier 2 produced no change in three deliberate attempts and burned 653 seconds
+writing diffs. Do not pass --tier 2 until a better local coder is benchmarked.
+
+Keeping: the gate, which has never merged a regression, and the refusal, which declines
+multi-file work before spending anything. Removing: tier 2 from the default path; it stays
+reachable with --tier 2 for when a better local coder is worth trying.
+
+The transferable point: a comment is not configuration. Assert the value the code uses.

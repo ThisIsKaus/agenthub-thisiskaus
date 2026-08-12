@@ -104,7 +104,13 @@ def router_call(alias, system, user, max_tokens=6000):
 def classify(intent):
     """Cheap rule-based pre-route. The literature is explicit that rules capture most of the
     value; a learned classifier is not worth its training cost at this volume."""
-    reasons, tier = [], 2
+    # Tier 3, not 2. Line 47 has said tier 3 is the local entry point since 1 August and the
+    # code started at 2 anyway — a comment documenting an intent nobody implemented. Measured
+    # across ten runs: tier 2 attempted three times, produced nothing three times, and burned
+    # 263s and 390s writing unified diffs when the prompt asks for a whole file. Tier 3
+    # attempted once for real and passed in 65s; its other two "failures" were the cascade
+    # correctly refusing multi-file work before any model ran.
+    reasons, tier = [], 3
 
     if ARCHITECTURAL.search(intent):
         tier = 4

@@ -613,6 +613,14 @@ def hygiene():
         n_load = int(loaded.strip().splitlines()[-1])
     except Exception:
         n_load = 0
+    # A comment said tier 3 was the entry point for twelve days while the code started at 2.
+    # Documentation is not configuration: assert the value the code actually uses.
+    csrc = (H / "build" / "cascade.py").read_text(errors="ignore")
+    m_t = re.search(r"reasons,\s*tier\s*=\s*\[\],\s*(\d)", csrc)
+    rec(g, "cascade entry tier is 3", bool(m_t) and m_t.group(1) == "3",
+        f"starts at tier {m_t.group(1)}" if m_t else "entry tier not found",
+        "tier 2 produced no change in three attempts and burned 653 seconds")
+
     rec(g, "cascade loads skill text", n_load > 200, f"{n_load} chars for one skill",
         "the cascade is building with no project context")
 
