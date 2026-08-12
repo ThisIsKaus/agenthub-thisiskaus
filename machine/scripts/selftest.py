@@ -149,6 +149,9 @@ def foundation():
 def services():
     g = "services"
     s, _ = http("http://127.0.0.1:1234/v1/models", timeout=6)
+    # After a reboot, LM Studio's app can be running with its server off: models load, the
+    # port does not listen, and every endpoint still answers 200 while nothing can think.
+    # Check the port, not the process.
     rec(g, "LM Studio :1234", s == 200, f"HTTP {s}", "lms server start")
 
     s, body = http("http://127.0.0.1:4000/v1/models", timeout=6)
