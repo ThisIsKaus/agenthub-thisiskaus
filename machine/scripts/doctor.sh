@@ -31,6 +31,15 @@ if $JSON_MODE; then
   "disk": {"status": "$DISK_STATUS", "free_gb": $FREE},
   "restic": {"configured": $RESTIC_CONFIGURED, "status": "$RESTIC_STATUS"}
 }
+# LM Studio's server does not survive a reboot even when the app relaunches. Models can be
+# pinned and resident while port 1234 is closed — endpoints answer 200 and nothing can reason.
+if ! /usr/sbin/lsof -nP -iTCP:1234 -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "  starting LM Studio server (port was closed)"
+  ~/.lmstudio/bin/lms server start >/dev/null 2>&1
+  sleep 6
+  ~/AgentHub/scripts/residency pin >/dev/null 2>&1
+fi
+
 EOF
   exit 0
 fi
@@ -49,12 +58,3 @@ if [[ -n "$FAIL" ]]; then
   exit 1
 fi
 echo "$(date -Iseconds) doctor OK" >> ~/AgentHub/logs/doctor.log
-
-# LM Studio's server does not survive a reboot even when the app relaunches. Models can be
-# pinned and resident while port 1234 is closed — endpoints answer 200 and nothing can reason.
-if ! /usr/sbin/lsof -nP -iTCP:1234 -sTCP:LISTEN >/dev/null 2>&1; then
-  echo "  starting LM Studio server (port was closed)"
-  ~/.lmstudio/bin/lms server start >/dev/null 2>&1
-  sleep 6
-  ~/AgentHub/scripts/residency pin >/dev/null 2>&1
-fi
