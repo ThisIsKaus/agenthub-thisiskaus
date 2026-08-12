@@ -35,7 +35,7 @@ function ageLine(live: boolean, provenance: string) {
 export function FiguresBand() {
   const local = useLocal();
   const live = local.available;
-  const { state, provenance, kb, models, factory: localFactory } = useBoardTelemetry(live);
+  const { state, provenance, kb, models, evals, factory: localFactory } = useBoardTelemetry(live);
 
   const { data: cost } = useQuery({
     queryKey: ["local", "board", "cost"],
@@ -91,9 +91,6 @@ export function FiguresBand() {
   const documents = num(kb?.documents) ?? num(state?.corpus?.documents);
 
   // RETRIEVAL — recall from the last eval
-  const results = [] as { scores?: Record<string, number> }[];
-  void results;
-  const { evals } = useBoardTelemetry(live);
   const evalResults = evals?.results ?? [];
   const lastEval = evalResults.length ? evalResults[evalResults.length - 1] : null;
   const recall = asPercent(lastEval?.scores?.recall);
@@ -180,7 +177,7 @@ export function FiguresBand() {
       detail: `${fmt(meteredCalls) ?? "0"} metered · month to date · ${stamp}`,
     },
     {
-      to: "/factory",
+      to: "/canvas",
       label: "WIP",
       value: wip != null ? `${wip}/${limit}` : null,
       detail: `factory work in progress · ${stamp}`,
