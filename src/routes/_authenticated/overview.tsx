@@ -416,7 +416,7 @@ function OverviewPage() {
         )}
       </section>
 
-      <details open className="border-y border-rule bg-panel">
+      <details className="border-y border-rule bg-panel">
         <summary className="cursor-pointer list-none px-5 py-4 font-mono text-[11px] uppercase tracking-[0.245em] text-faint">
           The whole board · {age ?? "routing map"}
         </summary>
